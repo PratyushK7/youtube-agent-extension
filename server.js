@@ -650,22 +650,23 @@ app.post('/api/get-transcripts', async (req, res) => {
   for (const id of videoIds) {
     try {
       console.log(`📡 YT-to-AI: Pulling Transcript for ${id}...`);
+      const transcript = await YoutubeTranscript.fetchTranscript(id).catch(err => {
+        console.warn(`⚠ Transcript fetch failed for ${id}, using visual fallback.`);
+        return null; 
+      });
       
-      // Robust Fetch with automated retry logic could be added here
-      const transcript = await YoutubeTranscript.fetchTranscript(id);
+      let formatted = '[TRANSCRIPT UNAVAILABLE: Analyze strategic direction based on Title and Screen Capture.]';
       
-      if (!transcript || transcript.length === 0) {
-        throw new Error('Transcript is empty');
+      if (transcript && transcript.length > 0) {
+        // Formatting with timestamps [mm:ss]
+        formatted = transcript.map(part => {
+          const totalSeconds = Math.floor(part.offset);
+          const minutes = Math.floor(totalSeconds / 60);
+          const seconds = totalSeconds % 60;
+          const time = `[${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}]`;
+          return `${time} ${part.text}`;
+        }).join(' ');
       }
-      
-      // Formatting with timestamps [mm:ss]
-      const formatted = transcript.map(part => {
-        const totalSeconds = Math.floor(part.offset);
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-        const time = `[${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}]`;
-        return `${time} ${part.text}`;
-      }).join(' ');
 
       results.push({ id, transcript: formatted });
     } catch (err) {
