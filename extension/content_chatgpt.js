@@ -59,45 +59,131 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     automateChatGPT(request.retryAttempt || 0);
   }
   if (request.action === 'FINAL_SYNTHESIS') {
-    generateMasterDossier(request.channelName);
+    generateMasterDossier(request.channelName, request.sessionId);
   }
 });
 
-async function syncToBackend(reportText, channelName) {
-  const data = await chrome.storage.local.get(['channelName', 'imageData']);
-  const finalChannel = channelName || data.channelName || 'Unknown Channel';
-  
-  console.log('YT-to-AI: Deep-scanning for Strategic JSON...');
-  let videos = [];
+// ─── Robust JSON Extraction ────────────────────────────────
+// Multi-stage extraction: never discard data silently
+
+function extractVideoJSON(text) {
+  // Stage 1: Try to find a JSON array [{...}, ...]
   try {
-    const jsonMatch = reportText.match(/\[\s*\{[\s\S]*\}\s*\]/);
-    if (jsonMatch) videos = JSON.parse(jsonMatch[0]);
-  } catch (e) {}
-  
-  await chrome.runtime.sendMessage({
-    action: 'SYNC_REPORT',
-    payload: {
-      channel: finalChannel,
-      screenshot: data.imageData,
-      report: reportText,
-      videos: videos,
-      promptUsed: 'Sequential Analysis'
+    const arrayMatch = text.match(/\[\s*\{[\s\S]*?\}\s*\]/);
+    if (arrayMatch) {
+      const parsed = JSON.parse(arrayMatch[0]);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        console.log('YT-to-AI: JSON extracted via array match.');
+        return { success: true, data: parsed[0], raw: text };
+      }
     }
-  });
-  showToast('Strategic Data Captured & Synced');
+  } catch (e) {}
+
+  // Stage 2: Try to find a single JSON object {...}
+  try {
+    const objMatch = text.match(/\{[\s\S]*?"hookType"[\s\S]*?\}/);
+    if (objMatch) {
+      const parsed = JSON.parse(objMatch[0]);
+      console.log('YT-to-AI: JSON extracted via single object match.');
+      return { success: true, data: parsed, raw: text };
+    }
+  } catch (e) {}
+
+  // Stage 3: Strip markdown code fences and retry
+  try {
+    const cleaned = text.replace(/```json?\s*\n?/g, '').replace(/```\s*/g, '').trim();
+    // Try array
+    const arrayMatch = cleaned.match(/\[\s*\{[\s\S]*?\}\s*\]/);
+    if (arrayMatch) {
+      const parsed = JSON.parse(arrayMatch[0]);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        console.log('YT-to-AI: JSON extracted after stripping code fences (array).');
+        return { success: true, data: parsed[0], raw: text };
+      }
+    }
+    // Try object
+    const objMatch = cleaned.match(/\{[\s\S]*?"hookType"[\s\S]*?\}/);
+    if (objMatch) {
+      const parsed = JSON.parse(objMatch[0]);
+      console.log('YT-to-AI: JSON extracted after stripping code fences (object).');
+      return { success: true, data: parsed, raw: text };
+    }
+  } catch (e) {}
+
+  // Stage 4: Extraction failed — return raw text as fallback
+  console.warn('YT-to-AI: JSON extraction failed. Storing raw response.');
+  return { success: false, data: null, raw: text };
 }
 
-async function monitorResponse(isFinal = false, channelName) {
+// ─── Save to Session via Background ────────────────────────
+
+async function saveVideoToSession(reportText) {
+  const storageData = await chrome.storage.local.get(['sessionId', 'imageData', 'videoTitle', 'step', 'videoId']);
+  const sessionId = storageData.sessionId;
+  
+  const extraction = extractVideoJSON(reportText);
+  
+  const videoData = extraction.success ? {
+    ...extraction.data,
+    title: extraction.data.title || storageData.videoTitle || '',
+    videoNumber: storageData.step || 1,
+    videoId: storageData.videoId || ''
+  } : {
+    title: storageData.videoTitle || 'Unknown',
+    videoNumber: storageData.step || 1,
+    videoId: storageData.videoId || '',
+    hookType: 'Parse Failed',
+    hookText: '',
+    hookFramework: '',
+    openingStructure: '',
+    scriptStructure: '',
+    storytellingFramework: '',
+    rehooksUsed: '',
+    retentionPattern: '',
+    ctaPlacement: '',
+    keyTakeaways: '',
+    thumbnailDescription: ''
+  };
+
+  if (sessionId) {
+    await new Promise(resolve => {
+      chrome.runtime.sendMessage({
+        action: 'SAVE_VIDEO_TO_SESSION',
+        sessionId,
+        videoData,
+        rawResponse: extraction.raw,
+        screenshot: storageData.imageData || ''
+      }, resolve);
+    });
+  }
+
+  showToast(`Video ${storageData.step || '?'} captured${extraction.success ? ' ✓ JSON' : ' ⚠ Raw text'}`);
+}
+
+async function monitorResponse(isFinal = false, channelName, sessionId) {
   console.log('YT-to-AI: Heartbeat Monitor Active...');
   let lastText = '';
   let stabilityCount = 0;
+  let tickCount = 0;
+  let handled = false; // Guard against double-fire
+  const MAX_TICKS = 120; // 4 minutes max (120 * 2s)
   
   const interval = setInterval(() => {
+    if (handled) return; // Already resolved — prevent double-fire
+    tickCount++;
     const messages = document.querySelectorAll('div[data-message-author-role="assistant"]');
-    if (messages.length === 0) return;
+    if (messages.length === 0) {
+      if (tickCount > MAX_TICKS) {
+        handled = true;
+        console.error('YT-to-AI: Monitor timed out waiting for response.');
+        clearInterval(interval);
+        if (!isFinal) chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'fail' });
+      }
+      return;
+    }
     const currentText = messages[messages.length - 1].innerText;
     
-    const isGenerating = !!document.querySelector('button[aria-label="Stop generating"], [data-testid="stop-button"]');
+    const isGenerating = !!document.querySelector('button[aria-label="Stop generating"], button[aria-label="Stop streaming"], [data-testid="stop-button"]');
     
     if (currentText === lastText && currentText.length > 20) {
       stabilityCount++;
@@ -105,54 +191,121 @@ async function monitorResponse(isFinal = false, channelName) {
       stabilityCount = 0;
     }
 
-    if (stabilityCount >= 2 && !isGenerating) {
+    if (stabilityCount >= 3 && !isGenerating) {
+      handled = true;
       console.log('✅ YT-to-AI: Stability Reached.');
       clearInterval(interval);
-      syncToBackend(currentText, channelName).then(() => {
-        if (!isFinal) chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'success' });
-      });
+      
+      if (isFinal) {
+        completeSession(currentText, sessionId).then(() => {
+          showToast('Master Synthesis Complete ✓');
+        });
+      } else {
+        saveVideoToSession(currentText).then(() => {
+          chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'success' });
+        }).catch(() => {
+          chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'success' });
+        });
+      }
+      return; // Early return — prevent timeout check from also firing
     }
+    
+    // Timeout failsafe
+    if (tickCount > MAX_TICKS) {
+      handled = true;
+      console.warn('YT-to-AI: Monitor timed out, treating as success.');
+      clearInterval(interval);
+      
+      const finalText = currentText || lastText;
+      if (isFinal) {
+        completeSession(finalText, sessionId);
+      } else {
+        saveVideoToSession(finalText).then(() => {
+          chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'success' });
+        }).catch(() => {
+          chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'fail' });
+        });
+      }
+    }
+    
     lastText = currentText;
   }, 2000);
 }
 
+async function completeSession(synthesisText, sessionId) {
+  const storageData = await chrome.storage.local.get(['sessionId', 'imageData']);
+  const sid = sessionId || storageData.sessionId;
+  if (!sid) {
+    console.warn('YT-to-AI: No session ID for final synthesis.');
+    return;
+  }
+  
+  await new Promise(resolve => {
+    chrome.runtime.sendMessage({
+      action: 'COMPLETE_SESSION',
+      sessionId: sid,
+      synthesis: synthesisText,
+      screenshot: storageData.imageData || ''
+    }, resolve);
+  });
+}
+
 async function automateChatGPT(retryAttempt = 0) {
-  const data = await chrome.storage.local.get(['pendingAnalysis', 'imageData', 'prompt', 'step', 'totalSteps']);
+  const data = await chrome.storage.local.get(['pendingAnalysis', 'imageData', 'prompt', 'step', 'totalSteps', 'sessionId', 'videoTitle', 'videoId']);
   if (!data.pendingAnalysis) return;
 
   // 🛡️ CRITICAL: Clear pending flag immediately to prevent loops
   await chrome.storage.local.remove('pendingAnalysis');
   
-  updateProgressBar(data.step || 1, data.totalSteps || 1);
-  console.log(`YT-to-AI: Processing Video ${data.step}/${data.totalSteps}`);
+  const step = data.step || 1;
+  const totalSteps = data.totalSteps || 1;
+  updateProgressBar(step, totalSteps);
+  console.log(`YT-to-AI: Processing Video ${step}/${totalSteps}`);
 
-  const waitForInput = () => new Promise(resolve => {
+  const waitForInput = () => new Promise((resolve, reject) => {
+    let elapsed = 0;
     const int = setInterval(() => {
-      const input = document.querySelector('#prompt-textarea');
+      const input = document.querySelector('#prompt-textarea, [contenteditable="true"][data-placeholder]');
       if (input) { clearInterval(int); resolve(input); }
+      elapsed += 500;
+      if (elapsed > 30000) { clearInterval(int); reject(new Error('ChatGPT input not found')); }
     }, 500);
   });
 
-  const promptInput = await waitForInput();
+  let promptInput;
+  try {
+    promptInput = await waitForInput();
+  } catch (e) {
+    console.error('YT-to-AI:', e.message);
+    chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'fail' });
+    return;
+  }
   promptInput.focus();
 
-  // Pulse-Paste Image
-  if (data.imageData) {
+  // Pulse-Paste Image (Req 2.2)
+  if (data.imageData && data.imageData.length > 100) {
     try {
       const resp = await fetch(data.imageData);
       const blob = await resp.blob();
-      const dt = new DataTransfer();
-      dt.items.add(new File([blob], 'snapshot.png', { type: blob.type }));
-      promptInput.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, clipboardData: dt }));
-    } catch (e) {}
+      if (blob.size > 2500) {
+        const dt = new DataTransfer();
+        dt.items.add(new File([blob], 'snapshot.png', { type: blob.type }));
+        promptInput.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, clipboardData: dt }));
+      }
+    } catch (e) {
+      console.warn('YT-to-AI: Image paste failed, continuing with text-only.', e);
+    }
   }
 
   // Inject Text
+  const promptText = data.prompt || `[Step ${step}/${totalSteps}] Analyze this video.`;
   setTimeout(() => {
-    document.execCommand('insertText', false, data.prompt);
+    document.execCommand('insertText', false, promptText);
     setTimeout(() => {
-      let sendBtn = document.querySelector('button[data-testid="send-button"]') || 
-                    document.querySelector('button.bg-black, button[aria-label="Send prompt"]');
+      const sendBtn = document.querySelector('button[data-testid="send-button"]') || 
+                      document.querySelector('button[aria-label="Send prompt"]') ||
+                      document.querySelector('form button[type="submit"]') ||
+                      document.querySelector('button.bg-black');
       if (sendBtn && !sendBtn.disabled) {
         sendBtn.click();
         monitorResponse();
@@ -165,16 +318,39 @@ async function automateChatGPT(retryAttempt = 0) {
   }, 2500); 
 }
 
-async function generateMasterDossier(channelName) {
-  const promptInput = document.querySelector('#prompt-textarea');
-  updateProgressBar(10, 10); // Final state
+async function generateMasterDossier(channelName, sessionId) {
+  const data = await chrome.storage.local.get(['totalSteps', 'sessionId']);
+  const total = data.totalSteps || 10;
+  const sid = sessionId || data.sessionId;
+  updateProgressBar(total, total); // Final state
   
-  const finalPrompt = `[PHASE: FINAL CHANNEL SYNTHESIS]\n\nBased on all videos, provide the final JSON Master Synthesis.`;
+  const waitForInput = () => new Promise((resolve, reject) => {
+    let elapsed = 0;
+    const int = setInterval(() => {
+      const input = document.querySelector('#prompt-textarea, [contenteditable="true"][data-placeholder]');
+      if (input) { clearInterval(int); resolve(input); }
+      elapsed += 500;
+      if (elapsed > 15000) { clearInterval(int); reject(new Error('Input not found')); }
+    }, 500);
+  });
+  
+  let promptInput;
+  try {
+    promptInput = await waitForInput();
+  } catch (e) {
+    console.error('YT-to-AI: Cannot find ChatGPT input for final synthesis.');
+    return;
+  }
+  
+  const finalPrompt = `[PHASE: FINAL CHANNEL SYNTHESIS]\n\nBased on all ${total} videos analyzed above, provide a comprehensive Master Strategic SOP. Include:\n1. Channel Identity & Positioning\n2. Content Strategy Patterns\n3. Hook Engineering Summary (most common types, best performers)\n4. Retention Strategy Overview\n5. Storytelling Framework Analysis\n6. CTA Strategy\n7. Actionable Recommendations\n\nProvide as detailed markdown.`;
   promptInput.focus();
   document.execCommand('insertText', false, finalPrompt);
   setTimeout(() => {
-    const sendBtn = document.querySelector('button[data-testid="send-button"]') || document.querySelector('button.bg-black');
-    if (sendBtn) { sendBtn.click(); monitorResponse(true, channelName); }
+    const sendBtn = document.querySelector('button[data-testid="send-button"]') ||
+                    document.querySelector('button[aria-label="Send prompt"]') ||
+                    document.querySelector('form button[type="submit"]') ||
+                    document.querySelector('button.bg-black');
+    if (sendBtn) { sendBtn.click(); monitorResponse(true, channelName, sid); }
   }, 1200);
 }
 

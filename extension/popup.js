@@ -85,10 +85,13 @@ document.getElementById('view-db').onclick = () => {
 };
 
 async function checkSOP() {
-  const data = await chrome.storage.local.get('lastMasterAnalysis');
+  const data = await chrome.storage.local.get(['sessionId', 'isSequential']);
   const statusEl = document.getElementById('sop-status');
   if (statusEl) {
-    if (data.lastMasterAnalysis) {
+    if (data.isSequential && data.sessionId) {
+      statusEl.innerText = 'IN PROGRESS';
+      statusEl.style.color = '#fb923c';
+    } else if (data.sessionId) {
       statusEl.innerText = 'LOADED';
       statusEl.style.color = '#10a37f';
     } else {

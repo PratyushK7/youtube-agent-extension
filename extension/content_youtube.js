@@ -52,13 +52,17 @@ async function navigateToSort(sortText) {
 }
 
 function scrapeVideoData(maxCount = 5) {
-  return Array.from(document.querySelectorAll('a#video-title-link'))
-              .slice(0, maxCount)
-              .map(a => {
-                const url = `https://www.youtube.com${a.getAttribute('href').split('&')[0]}`;
-                const id = url.split('v=')[1];
-                return { url, id };
-              });
+  const links = Array.from(document.querySelectorAll('a#video-title-link, a#video-title'));
+  return links
+    .filter(a => a.getAttribute('href')?.includes('/watch'))
+    .slice(0, maxCount)
+    .map(a => {
+      const href = a.getAttribute('href').split('&')[0];
+      const url = `https://www.youtube.com${href}`;
+      const id = new URLSearchParams(href.split('?')[1] || '').get('v');
+      return { url, id };
+    })
+    .filter(v => v.id);
 }
 
 function injectAnalyzerButton() {
@@ -84,7 +88,7 @@ function injectAnalyzerButton() {
 
   // --- Main Analyze Button ---
   const btnAnalyze = document.createElement('button');
-  btnAnalyze.className = 'yt-ai-analyzer-btn sequential-primary';
+  btnAnalyze.className = 'yt-ai-analyzer-btn sequential';
   btnAnalyze.innerHTML = `<span class="icon">🔍</span> Analyze Channel`;
   
   btnAnalyze.onclick = async () => {
@@ -105,7 +109,19 @@ function injectAnalyzerButton() {
     
     if (window.location.pathname.includes('/videos')) {
        await navigateToSort('popular');
-       const queueData = scrapeVideoData(depth);
+       // Wait for video grid to re-render after sort
+       await delay(3000);
+       let queueData = scrapeVideoData(depth);
+       // Retry scrape if empty (sort may still be loading)
+       if (queueData.length === 0) {
+         await delay(3000);
+         queueData = scrapeVideoData(depth);
+       }
+       if (queueData.length === 0) {
+         showStatusHUD('⚠ No videos found. Try scrolling down first.');
+         btnAnalyze.disabled = false;
+         return;
+       }
        const queue = queueData.map(v => v.id);
        const data = await chrome.storage.local.get(['activePrompt']);
        
@@ -113,14 +129,15 @@ function injectAnalyzerButton() {
          action: 'START_SEQUENTIAL',
          channelName: document.title.split('- YouTube')[0].trim(),
          queue: queue,
-         prompt: data.activePrompt
+         prompt: data.activePrompt || ''
        }, (res) => {
-         if (res?.success) showStatusHUD(`Launching Analysis for ${depth} Videos...`);
+         if (res?.success) showStatusHUD(`Launching Analysis for ${queue.length} Videos...`);
        });
     } else {
        // Navigate to videos first
        chrome.storage.local.set({ autoStartSeq: true, selectedDepth: depth }, () => {
-          window.location.href = window.location.pathname.endsWith('/videos') ? window.location.href : `${window.location.href}/videos`;
+          const currentUrl = window.location.href.replace(/\/$/, '');
+          window.location.href = currentUrl.includes('/videos') ? currentUrl : `${currentUrl}/videos`;
        });
     }
   };

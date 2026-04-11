@@ -1,7 +1,7 @@
 import express from 'express';
 import { google } from 'googleapis';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { readFileSync, writeFileSync, readdirSync, existsSync, appendFileSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, appendFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { YoutubeTranscript } from 'youtube-transcript/dist/youtube-transcript.esm.js';
@@ -16,7 +16,8 @@ const logError = (err, context = 'Server') => {
   const message = `[${timestamp}] [${context}] ${err.stack || err}\n`;
   console.error(message);
   try {
-    if (!existsSync(join(__dirname, 'data'))) readdirSync(join(__dirname, 'data')); // Ensure dir exists
+    const dataDir = join(__dirname, 'data');
+    if (!existsSync(dataDir)) { try { mkdirSync(dataDir, { recursive: true }); } catch {} }
     appendFileSync(ERROR_LOG, message);
   } catch (e) {
     console.error('Failed to write to error log:', e);
@@ -31,12 +32,6 @@ const app = express();
 app.use(express.static(join(__dirname, 'public')));
 app.use('/data', express.static(join(__dirname, 'data'))); // Serve data/screenshots
 app.use(express.json({ limit: '50mb' })); 
-
-// Global Error Handler for Express
-app.use((err, req, res, next) => {
-  logError(err, `${req.method} ${req.url}`);
-  res.status(500).json({ error: 'Internal Server Error', details: err.message });
-});
 
 const PORT = process.env.PORT || 3005;
 
@@ -556,6 +551,11 @@ app.post('/api/export-csv', (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ─── Google Sheets Export placeholder ─────────────────────────
+app.post('/api/export-sheets', (req, res) => {
+  res.status(501).json({ error: 'Google Sheets export requires OAuth setup. Use CSV export for now.' });
+});
+
 // ─── ANALYSIS HISTORY / PROMPTS ───────────────────────────────
 
 app.get('/api/prompts', (req, res) => {
@@ -577,10 +577,18 @@ app.post('/api/save-analysis', (req, res) => {
     const historyFile = join(__dirname, 'data', 'history.json');
     const id = Date.now().toString();
     
-    // Save screenshot
-    const imagePath = join(__dirname, 'data', 'screenshots', `cap_${id}.png`);
-    const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, '');
-    writeFileSync(imagePath, base64Data, 'base64');
+    // Ensure screenshots directory exists
+    const screenshotsDir = join(__dirname, 'data', 'screenshots');
+    if (!existsSync(screenshotsDir)) mkdirSync(screenshotsDir, { recursive: true });
+    
+    // Save screenshot (if provided)
+    let screenshotPath = '';
+    if (screenshot && screenshot.length > 100) {
+      const imagePath = join(screenshotsDir, `cap_${id}.png`);
+      const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, '');
+      writeFileSync(imagePath, base64Data, 'base64');
+      screenshotPath = `/data/screenshots/cap_${id}.png`;
+    }
 
     // Update history
     let history = [];
@@ -591,7 +599,7 @@ app.post('/api/save-analysis', (req, res) => {
     const entry = {
       id,
       channel,
-      screenshot: `/data/screenshots/cap_${id}.png`,
+      screenshot: screenshotPath,
       report: report || '',
       videos: videos || [], // Support for the 18+ metrics array
       promptUsed,
@@ -658,9 +666,9 @@ app.post('/api/get-transcripts', async (req, res) => {
       let formatted = '[TRANSCRIPT UNAVAILABLE: Analyze strategic direction based on Title and Screen Capture.]';
       
       if (transcript && transcript.length > 0) {
-        // Formatting with timestamps [mm:ss]
+        // Formatting with timestamps [mm:ss] — offset is in milliseconds
         formatted = transcript.map(part => {
-          const totalSeconds = Math.floor(part.offset);
+          const totalSeconds = Math.floor((part.offset || 0) / 1000);
           const minutes = Math.floor(totalSeconds / 60);
           const seconds = totalSeconds % 60;
           const time = `[${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}]`;
@@ -679,26 +687,206 @@ app.post('/api/get-transcripts', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
+// SESSION-BASED ANALYSIS API (Extension Sequential Flow)
+// ═══════════════════════════════════════════════════════════════
+
+const SESSIONS_FILE = join(__dirname, 'data', 'sessions.json');
+
+function readSessions() {
+  if (!existsSync(SESSIONS_FILE)) { writeFileSync(SESSIONS_FILE, '[]'); return []; }
+  return JSON.parse(readFileSync(SESSIONS_FILE, 'utf-8'));
+}
+
+function writeSessions(sessions) {
+  writeFileSync(SESSIONS_FILE, JSON.stringify(sessions, null, 2));
+}
+
+// Create a new analysis session
+app.post('/api/session/create', (req, res) => {
+  try {
+    const { channel, totalVideos, promptUsed } = req.body;
+    if (!channel) return res.status(400).json({ error: 'Channel name required' });
+
+    const sessions = readSessions();
+    const session = {
+      id: `ses_${Date.now()}`,
+      channel,
+      totalVideos: totalVideos || 0,
+      promptUsed: promptUsed || 'master_analysis',
+      status: 'in-progress',
+      videos: [],
+      synthesis: '',
+      startedAt: new Date().toISOString(),
+      completedAt: null
+    };
+
+    sessions.unshift(session);
+    writeSessions(sessions);
+    res.json({ success: true, session });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Append a single video analysis to a session
+app.put('/api/session/:id/video', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { videoData, rawResponse, screenshot } = req.body;
+
+    const sessions = readSessions();
+    const session = sessions.find(s => s.id === id);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    // Save screenshot if provided
+    let screenshotPath = '';
+    if (screenshot && screenshot.length > 100) {
+      const screenshotsDir = join(__dirname, 'data', 'screenshots');
+      if (!existsSync(screenshotsDir)) mkdirSync(screenshotsDir, { recursive: true });
+      const imgId = `${id}_v${session.videos.length + 1}`;
+      const imagePath = join(screenshotsDir, `${imgId}.png`);
+      const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, '');
+      writeFileSync(imagePath, base64Data, 'base64');
+      screenshotPath = `/data/screenshots/${imgId}.png`;
+    }
+
+    const entry = {
+      stepNumber: session.videos.length + 1,
+      ...(videoData || {}),
+      rawResponse: rawResponse || '',
+      screenshot: screenshotPath,
+      capturedAt: new Date().toISOString()
+    };
+
+    session.videos.push(entry);
+    writeSessions(sessions);
+    res.json({ success: true, videoCount: session.videos.length, entry });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Complete a session with final synthesis
+app.put('/api/session/:id/complete', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { synthesis, screenshot } = req.body;
+
+    const sessions = readSessions();
+    const session = sessions.find(s => s.id === id);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    session.synthesis = synthesis || '';
+    session.status = 'complete';
+    session.completedAt = new Date().toISOString();
+
+    // Save final synthesis screenshot
+    if (screenshot && screenshot.length > 100) {
+      const screenshotsDir = join(__dirname, 'data', 'screenshots');
+      if (!existsSync(screenshotsDir)) mkdirSync(screenshotsDir, { recursive: true });
+      const imagePath = join(screenshotsDir, `${id}_final.png`);
+      const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, '');
+      writeFileSync(imagePath, base64Data, 'base64');
+      session.finalScreenshot = `/data/screenshots/${id}_final.png`;
+    }
+
+    writeSessions(sessions);
+    res.json({ success: true, session });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Get a single session
+app.get('/api/session/:id', (req, res) => {
+  try {
+    const sessions = readSessions();
+    const session = sessions.find(s => s.id === req.params.id);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+    res.json({ success: true, session });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Get all sessions (for dashboard)
+app.get('/api/sessions', (req, res) => {
+  try {
+    const sessions = readSessions();
+    // Return summary (without heavy rawResponse/screenshot data)
+    const summaries = sessions.map(s => ({
+      id: s.id,
+      channel: s.channel,
+      totalVideos: s.totalVideos,
+      analyzedVideos: s.videos.length,
+      status: s.status,
+      promptUsed: s.promptUsed,
+      startedAt: s.startedAt,
+      completedAt: s.completedAt,
+      finalScreenshot: s.finalScreenshot || (s.videos.length ? s.videos[0].screenshot : ''),
+      hasSynthesis: !!s.synthesis
+    }));
+    res.json(summaries);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Export session as CSV
+app.get('/api/session/:id/csv', (req, res) => {
+  try {
+    const sessions = readSessions();
+    const session = sessions.find(s => s.id === req.params.id);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    const headers = [
+      'Video #', 'Title', 'Views', 'Duration (sec)',
+      'Hook Type', 'Hook Text', 'Hook Framework',
+      'Opening Structure', 'Script Structure', 'Storytelling Framework',
+      'Rehooks Used', 'Retention Pattern', 'CTA Placement',
+      'Key Takeaways', 'Thumbnail Description'
+    ];
+
+    const esc = (v) => { const s = String(v ?? ''); return (s.includes(',') || s.includes('"') || s.includes('\n')) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+
+    let csv = headers.map(esc).join(',') + '\n';
+    session.videos.forEach(v => {
+      csv += [
+        v.stepNumber || v.videoNumber, v.title, v.views, v.durationSec,
+        v.hookType, v.hookText, v.hookFramework,
+        v.openingStructure, v.scriptStructure, v.storytellingFramework,
+        v.rehooksUsed, v.retentionPattern, v.ctaPlacement,
+        Array.isArray(v.keyTakeaways) ? v.keyTakeaways.join('; ') : v.keyTakeaways,
+        v.thumbnailDescription
+      ].map(esc).join(',') + '\n';
+    });
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${session.channel || 'session'}_analysis.csv"`);
+    res.send(csv);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ═══════════════════════════════════════════════════════════════
 // START
 // ═══════════════════════════════════════════════════════════════
 // Fetch latest analysis for the dashboard
 app.get('/api/latest-analysis', (req, res) => {
-  const historyPath = path.join(__dirname, 'data', 'analysis_history.json');
-  if (!fs.existsSync(historyPath)) return res.json({ success: false, message: 'No history' });
+  const histFile = join(__dirname, 'data', 'history.json');
+  if (!existsSync(histFile)) return res.json({ success: false, message: 'No history' });
   
   try {
-    const history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
-    res.json({ success: true, analysis: history[history.length - 1] });
+    const history = JSON.parse(readFileSync(histFile, 'utf-8'));
+    if (!history.length) return res.json({ success: false, message: 'No history' });
+    res.json({ success: true, analysis: history[0] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// Create analysis directory if missing
-const dataDir = path.join(__dirname, 'data');
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
-const historyPath = path.join(dataDir, 'analysis_history.json');
-if (!fs.existsSync(historyPath)) fs.writeFileSync(historyPath, JSON.stringify([]));
+// Global Error Handler for Express (must be after all routes)
+app.use((err, req, res, next) => {
+  logError(err, `${req.method} ${req.url}`);
+  res.status(500).json({ error: 'Internal Server Error', details: err.message });
+});
+
+// Create data directories if missing
+const dataDir = join(__dirname, 'data');
+if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
+const screenshotsDir = join(dataDir, 'screenshots');
+if (!existsSync(screenshotsDir)) mkdirSync(screenshotsDir, { recursive: true });
+const historyStartupPath = join(dataDir, 'history.json');
+if (!existsSync(historyStartupPath)) writeFileSync(historyStartupPath, JSON.stringify([]));
 
 app.listen(PORT, '127.0.0.1', () => {
   console.clear();
