@@ -1,0 +1,117 @@
+/* content_youtube.css */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&family=Inter:wght@400;600&display=swap');
+
+.yt-ai-analyzer-container {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(15, 15, 15, 0.85);
+  padding: 15px;
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  transition: all 0.3s ease;
+}
+
+.yt-ai-analyzer-btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
+  color: white !important;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 15px rgba(204, 0, 0, 0.3);
+  width: 100%;
+  justify-content: center;
+}
+
+.yt-ai-analyzer-btn.sequential {
+  background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%);
+  box-shadow: 0 4px 15px rgba(0, 114, 255, 0.3);
+}
+
+.yt-ai-analyzer-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  filter: brightness(1.1);
+}
+
+.yt-ai-analyzer-btn:disabled {
+  background: #444 !important;
+  box-shadow: none !important;
+  cursor: wait;
+  opacity: 0.8;
+}
+
+/* Premium Status HUD */
+#yt-ai-status-hud {
+  position: fixed;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000000;
+  padding: 10px 25px;
+  background: rgba(10, 10, 10, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50px;
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  animation: hudSlideDown 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+  pointer-events: none;
+}
+
+@keyframes hudSlideDown {
+  from { top: -60px; opacity: 0; }
+  to { top: 15px; opacity: 1; }
+}
+
+.hud-pulse {
+  width: 10px;
+  height: 10px;
+  background: #00FF88;
+  border-radius: 50%;
+  box-shadow: 0 0 12px #00FF88;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+.capture-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0);
+  border: 4px solid transparent;
+  pointer-events: none;
+  z-index: 1000000;
+  transition: all 0.3s ease;
+}
+
+.capture-overlay.active {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(0, 198, 255, 0.4);
+  backdrop-filter: blur(2px);
+}

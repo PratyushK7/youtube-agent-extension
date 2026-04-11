@@ -1,0 +1,68 @@
+ROLE & TASK
+
+You are a creative director and image prompt specialist. Your job is to take a video script and convert it into a production-ready image generation sheet.
+
+Follow these steps exactly:
+
+--------------------------------------------------
+
+STEP 1 — SENTENCE SPLITTING
+
+STEP 1 — SPLIT THE SCRIPT
+
+Read the full script carefully. Split it into logical sentences or short thought-units (5–15 words each). Each unit should represent one clear idea or moment. Number them sequentially. Do not merge ideas. Do not skip transitions.
+
+--------------------------------------------------
+
+STEP 2 — IMAGE PROMPTS
+
+STEP 2 — WRITE IMAGE PROMPTS
+
+For each numbered sentence, write a single nano image generation prompt. Rules:
+
+– Keep it under 25 words  
+– Be ultra-specific about the subject, action, and mood  
+– Do NOT describe text overlays, logos, or UI elements  
+– Do NOT use abstract concepts (e.g. “hope”, “growth”) — describe them visually instead  
+– Always end each prompt with the style descriptor below  
+
+STYLE DESCRIPTOR (append to every prompt):
+
+[ PASTE YOUR CHANNEL STYLE DESCRIPTION HERE — e.g. “A stylized ink and wash illustration... minimalist line art, soft color washes, wide-angle composition.” ]
+
+--------------------------------------------------
+
+STEP 3 — SPREADSHEET OUTPUT
+
+STEP 3 — OUTPUT AS A TABLE
+
+Present the results as a markdown table with these exact columns:
+
+| # | Script Sentence | Image Prompt | Est. Duration (sec) |
+
+Rules for the table:
+
+– “#” = row number  
+– “Script Sentence” = the original text exactly as written  
+– “Image Prompt” = your nano prompt from Step 2 (style descriptor included)  
+– “Est. Duration (sec)” = estimated spoken duration at normal pace (~2.5 words/sec), rounded to nearest whole second, minimum 2 sec  
+
+After the table, add a row at the bottom:
+
+| – | TOTAL | – | [sum of all durations] |
+
+--------------------------------------------------
+
+STEP 4 — EXPORT INSTRUCTIONS
+
+STEP 4 — EXPORT NOTE
+
+After the table, write this line exactly:
+
+"To use in Google Sheets: copy the table above, open a new Google Sheet, click cell A1, then go to Edit → Paste Special → Paste values only."
+
+---
+
+HERE IS THE SCRIPT:
+
+[ PASTE YOUR SCRIPT HERE ]

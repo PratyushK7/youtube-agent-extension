@@ -1,0 +1,5 @@
+Analyze the style of this image, including color palette, lighting, composition, texture, and mood. Then generate a short, reusable image generation prompt (under 30 words) that captures that style, so I cai apply it to new images.
+
+Attach:
+
+Image Style Reference

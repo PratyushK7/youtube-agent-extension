@@ -1,0 +1,114 @@
+Analyze the provided YouTube videos by **opening and examining each individual video link directly** (do NOT rely on thumbnails or assumptions).
+
+You must perform **video-level analysis**, not surface-level inference.
+
+---
+
+## INPUT:
+
+A list of YouTube video URLs (mix of popular + recent).
+
+---
+
+## INSTRUCTIONS (MANDATORY WORKFLOW):
+
+For EACH video:
+
+1. **Watch the first 30–60 seconds carefully**
+
+   * Extract the EXACT hook (verbatim or near-verbatim)
+   * Identify hook type and psychological trigger
+
+2. **Scan the full video strategically**
+
+   * Jump to ~25%, 50%, 75%, and near end
+   * Identify:
+
+     * Rehooks (pattern interrupts, curiosity resets)
+     * Visual/style changes
+     * Pacing shifts
+
+3. **Analyze structure deeply**
+
+   * Break into content beats (not generic)
+   * Identify transitions and escalation points
+
+4. **Evaluate retention engineering**
+
+   * Why would viewers continue watching?
+   * Where are curiosity loops introduced/resolved?
+
+5. **Study thumbnail + title alignment**
+
+   * How the promise is made vs delivered
+
+6. **Optional but valuable**
+
+   * Scan comments for audience response patterns
+
+---
+
+## OUTPUT FORMAT:
+
+Return a **JSON array** with one object per video.
+
+Each object must contain:
+
+{
+"videoNumber": Number,
+"title": String,
+"url": String,
+"views": String,
+"durationSec": Number,
+
+"thumbnailDescription": String,
+
+"fullTranscript": "Summarized key spoken content (NOT N/A)",
+
+"hookType": "Direct Question | Bold Statement | Story Opening | Problem Agitation | Shock/Surprising Fact | Tutorial Opening",
+"hookText": "ACTUAL first 5–10 seconds (accurate, not guessed)",
+"hookFramework": "Psychological breakdown (e.g. Curiosity Gap + Specific Outcome)",
+
+"openingStructure": "Exact sequence (Hook → Proof → Context → Stakes etc.)",
+
+"scriptStructure": "Detailed beat-by-beat breakdown (no generic fluff)",
+
+"storytellingFramework": "e.g. Transformation Arc, Open Loop Looping, Listicle Stack",
+
+"rehooksUsed": "REAL phrases, edits, or moments used to retain attention",
+
+"retentionPattern": "How attention is maintained across timeline",
+
+"ctaPlacement": "Exact timing + type",
+
+"titleStrategy": "Why this title works psychologically",
+"thumbnailStrategy": "Why this thumbnail works (color, contrast, simplicity, curiosity)",
+
+"keyTakeaways": [
+"Specific actionable insight 1",
+"Specific actionable insight 2",
+"Specific actionable insight 3"
+]
+}
+
+---
+
+## STRICT RULES:
+
+* DO NOT guess — base everything on actual video observation
+* DO NOT write generic YouTube advice
+* DO NOT skip timestamps — you must simulate real viewing behavior
+* Prioritize **precision over speed**
+* Think like a **top 0.1% YouTube strategist**
+
+---
+
+## GOAL:
+
+Reverse-engineer:
+
+* What makes these videos work
+* How retention is engineered
+* What patterns can be replicated for growth
+
+The output should be detailed enough to directly inform content creation strategy.

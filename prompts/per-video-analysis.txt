@@ -1,0 +1,125 @@
+Analyze the provided YouTube video inputs.
+
+Each input will include:
+1. Thumbnail image
+2. Full transcript (or partial transcript)
+
+You must perform a **deep, video-level analysis** based ONLY on the provided materials.
+
+---
+
+## INPUT:
+
+A list of videos, each containing:
+- "thumbnail": (image or description)
+- "transcript": (full or partial spoken content)
+- "title": (if available)
+- "views": (if available)
+- "duration": (if available)
+
+---
+
+## INSTRUCTIONS (MANDATORY WORKFLOW):
+
+For EACH video:
+
+1. **Analyze the first 30–60 seconds from the transcript**
+   - Extract the EXACT hook (verbatim or near-verbatim)
+   - Identify hook type and psychological trigger
+
+2. **Scan the transcript strategically**
+   - Break into sections approximating:
+     - Beginning (0–25%)
+     - Early middle (25–50%)
+     - Late middle (50–75%)
+     - End (75–100%)
+   - Identify:
+     - Rehooks (curiosity resets, pattern interrupts)
+     - Pacing shifts
+     - Content escalation
+
+3. **Analyze structure deeply**
+   - Break into content beats (specific, not generic)
+   - Identify transitions and progression logic
+
+4. **Evaluate retention engineering**
+   - Why does the viewer continue watching?
+   - Where are curiosity loops introduced and resolved?
+
+5. **Analyze thumbnail + title alignment**
+   - What promise is made?
+   - How the transcript delivers on it
+
+6. **Infer audience psychology**
+   - What emotional triggers are used?
+   - What desire/pain is being targeted?
+
+---
+
+## OUTPUT FORMAT:
+
+Return a JSON array with one object per video.
+
+Each object must contain:
+
+{
+"videoNumber": Number,
+"title": String,
+"url": "N/A or provided",
+"views": String,
+"durationSec": Number,
+
+"thumbnailDescription": "Detailed breakdown of visual elements, colors, text, composition",
+
+"fullTranscript": "Condensed but structured summary of actual spoken content",
+
+"hookType": "Direct Question | Bold Statement | Story Opening | Problem Agitation | Shock/Surprising Fact | Tutorial Opening",
+
+"hookText": "ACTUAL first 5–10 seconds from transcript (accurate, not guessed)",
+
+"hookFramework": "Psychological breakdown (e.g. Curiosity Gap + Specific Outcome)",
+
+"openingStructure": "Exact sequence (Hook → Context → Stakes → Preview etc.)",
+
+"scriptStructure": "Detailed beat-by-beat breakdown (specific segments, no fluff)",
+
+"storytellingFramework": "e.g. Transformation Arc, Open Loop Looping, Listicle Stack",
+
+"rehooksUsed": "Actual phrases or moments in transcript that re-engage attention",
+
+"retentionPattern": "How attention is maintained across the video timeline",
+
+"ctaPlacement": "Where and how CTA appears (based on transcript)",
+
+"titleStrategy": "Why this title works psychologically",
+
+"thumbnailStrategy": "Why this thumbnail works (contrast, curiosity, clarity)",
+
+"keyTakeaways": [
+"Specific actionable insight 1",
+"Specific actionable insight 2",
+"Specific actionable insight 3"
+]
+}
+
+---
+
+## STRICT RULES:
+
+- DO NOT assume or hallucinate missing content
+- ONLY use transcript + thumbnail evidence
+- If something is unclear, mark it as "Not explicitly shown"
+- Be precise and strategic (think like a top YouTube growth consultant)
+- Avoid generic advice — extract patterns from THIS video only
+
+---
+
+## GOAL:
+
+Reverse-engineer:
+- Hook design
+- Retention engineering
+- Script structure
+- Thumbnail-title alignment
+
+So the output can directly inform high-performing content creation.
