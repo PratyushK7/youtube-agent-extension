@@ -67,7 +67,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // Ensure state is alive (MV3 may have restarted)
-  if (state.queue.length === 0 && ['VIDEO_READY', 'STEP_RESULT', 'SAVE_VIDEO_TO_SESSION', 'COMPLETE_SESSION'].includes(request.action)) {
+  if (state.queue.length === 0 && ['VIDEO_READY', 'STEP_RESULT', 'SAVE_VIDEO_TO_SESSION', 'COMPLETE_SESSION', 'SAVE_NICHE_BENDS'].includes(request.action)) {
     restoreState().then(() => {
       routeMessage(request, sender, sendResponse);
     });
@@ -107,6 +107,17 @@ function routeMessage(request, sender, sendResponse) {
     handleCompleteSession(request, sendResponse);
     return true;
   }
+
+  if (request.action === 'SAVE_NICHE_BENDS') {
+    handleSaveNicheBends(request, sendResponse);
+    return true;
+  }
+
+  if (request.action === 'RESUME_SEQUENTIAL') {
+    handleResumeSequential(request, sender, sendResponse);
+    return true;
+  }
+  
   return false;
 }
 
@@ -153,6 +164,21 @@ async function handleStartSequential(request, sender) {
   await saveState();
 
   chrome.tabs.update(state.ytTabId, { url: `https://www.youtube.com/watch?v=${state.queue[0]}` });
+}
+
+async function handleResumeSequential(request, sender, sendResponse) {
+  if (!state.isSequential || state.queue.length === 0 || state.currentIndex >= state.queue.length) {
+    sendResponse({ success: false, error: 'No active sequence to resume.' });
+    return;
+  }
+  console.log(`YT-to-AI: Resuming sequence from step ${state.currentIndex + 1}/${state.queue.length}`);
+  
+  // Create a fresh YouTube tab to kickstart the monitor
+  chrome.tabs.create({ url: `https://www.youtube.com/watch?v=${state.queue[state.currentIndex]}` }, (tab) => {
+    state.ytTabId = tab.id;
+    saveState();
+    sendResponse({ success: true });
+  });
 }
 
 async function handleVideoReady(request, sender) {
@@ -264,21 +290,24 @@ async function handleStepResult(request) {
     } else {
       // All videos done — trigger final synthesis
       state.isSequential = false;
-      await chrome.storage.local.remove(['isSequential', 'currentIndex', 'totalSteps']);
+      await chrome.storage.local.remove(['isSequential', 'currentIndex']);
       await saveState();
+      
       try {
         await chrome.tabs.get(state.chatTabId);
-        chrome.tabs.update(state.chatTabId, { active: true });
+        await chrome.tabs.update(state.chatTabId, { active: true });
       } catch (e) {
         const tab = await chrome.tabs.create({ url: 'https://chatgpt.com/' });
         state.chatTabId = tab.id;
         await saveState();
       }
-      await delay(500);
+      
+      await delay(1000);
       chrome.tabs.sendMessage(state.chatTabId, { 
         action: 'FINAL_SYNTHESIS',
         channelName: state.channelName,
-        sessionId: state.sessionId
+        sessionId: state.sessionId,
+        totalSteps: state.queue.length
       });
     }
   } else {
@@ -376,6 +405,25 @@ async function handleCompleteSession(request, sendResponse) {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ synthesis, screenshot })
+    });
+    const data = await res.json();
+    sendResponse({ success: true, data });
+  } catch (err) {
+    sendResponse({ success: false, error: err.message });
+  }
+}
+
+async function handleSaveNicheBends(request, sendResponse) {
+  const { sessionId, nicheBends } = request;
+  if (!sessionId) {
+    sendResponse({ success: false, error: 'No session ID' });
+    return;
+  }
+  try {
+    const res = await fetch(`${SERVER}/api/session/${sessionId}/niche-bends`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nicheBends })
     });
     const data = await res.json();
     sendResponse({ success: true, data });

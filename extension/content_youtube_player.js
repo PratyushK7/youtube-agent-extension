@@ -109,50 +109,109 @@ async function harvestVideoInfo() {
   }, 2000);
 }
 
-// Only trigger if we are in a Sequential Analysis flow
-chrome.storage.local.get(['isSequential'], async (data) => {
-  if (data.isSequential) {
-     console.log('YT-to-AI: Sequential Harvest Mode Active.');
-     
-     // Wait for video element (YouTube SPA may load it late)
-     const video = await waitForVideo();
-     
-     // MUTE-LOCK: Automatic muting + pause (Req 2.4)
-     let harvestComplete = false;
-     
-     const forceSilence = () => {
-       if (video && !harvestComplete) {
-         video.muted = true;
-         video.pause();
-       }
-     };
+const urlParams = new URLSearchParams(window.location.search);
 
-     // ANTI-PLAY SHIELD: Persistent listener prevents auto-resume during harvest
-     const playLock = () => {
-       if (!harvestComplete && video) {
-         video.pause();
-         video.muted = true;
-       }
-     };
+if (urlParams.get('analyze_scene') === 'true') {
+  console.log('YT-to-AI: Scene Analyzer Mode Activated.');
+  // Execute the multi-modal frame scraping
+  (async () => {
+    const sessionId = urlParams.get('sessionId');
+    const video = await waitForVideo();
+    
+    // Mute and pause the video immediately
+    video.muted = true;
+    video.pause();
 
-     if (video) {
-       video.addEventListener('play', playLock);
-       video.addEventListener('playing', playLock);
-       forceSilence();
-     }
+    showPlayerStatus('👁️ Scene Analyzer: Harvesting Cinematic Frames...');
+    
+    // Ensure metadata is loaded for duration
+    if (isNaN(video.duration) || video.duration === 0) {
+      await new Promise(r => {
+        video.addEventListener('loadedmetadata', r, { once: true });
+        // Force load if stuck
+        if (video.duration > 0) r();
+      });
+    }
 
-     // Trigger Harvest after page settles
-     setTimeout(async () => {
-       await harvestVideoInfo();
+    const duration = video.duration;
+    const timestamps = [duration * 0.2, duration * 0.4, duration * 0.6, duration * 0.8, duration * 0.95];
+    const frames = [];
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    for (let i = 0; i < timestamps.length; i++) {
+      showPlayerStatus(`👁️ Scene Analyzer: Snapping Frame ${i+1}/5...`);
+      
+      video.currentTime = timestamps[i];
+      // Wait for the player to finish rendering the seeked frame
+      await new Promise(r => {
+        const onSeeked = () => { video.removeEventListener('seeked', onSeeked); r(); };
+        video.addEventListener('seeked', onSeeked);
+        // Fallback timeout just in case it stalls
+        setTimeout(r, 2000);
+      });
+      // Small visual buffer
+      await new Promise(r => setTimeout(r, 400));
+
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      frames.push(canvas.toDataURL('image/jpeg', 0.85));
+    }
+
+    showPlayerStatus('🚀 Frames Captured! Uploading to Server...');
+
+    try {
+      const res = await fetch(`http://127.0.0.1:3005/api/session/${sessionId}/scene-frames`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ frames })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        showPlayerStatus('✅ Upload Complete. Transferring to Nano Banana (Gemini)...');
+        await chrome.storage.local.set({ sceneFramesBlobReady: true });
+        setTimeout(() => {
+          window.location.href = `https://gemini.google.com/app?scene_analyze=true&sessionId=${sessionId}`;
+        }, 1000);
+      } else {
+        showPlayerStatus('❌ Server Failed to Save Frames');
+      }
+    } catch (e) {
+      console.error(e);
+      showPlayerStatus('❌ API Connection Error');
+    }
+  })();
+} else {
+  // Only trigger if we are in a Sequential Analysis flow
+  chrome.storage.local.get(['isSequential'], async (data) => {
+    if (data.isSequential) {
+       console.log('YT-to-AI: Sequential Harvest Mode Active.');
        
-       // RELEASE THE PLAYER after harvest
-       harvestComplete = true;
+       const video = await waitForVideo();
+       
+       let harvestComplete = false;
+       const forceSilence = () => { if (video && !harvestComplete) { video.muted = true; video.pause(); } };
+       const playLock = () => { if (!harvestComplete && video) { video.pause(); video.muted = true; } };
+
        if (video) {
-         video.removeEventListener('play', playLock);
-         video.removeEventListener('playing', playLock);
-         video.muted = false; 
-         console.log('YT-to-AI: Player Restrictions Released.');
+         video.addEventListener('play', playLock);
+         video.addEventListener('playing', playLock);
+         forceSilence();
        }
-     }, 3500);
-  }
-});
+
+       setTimeout(async () => {
+         await harvestVideoInfo();
+         harvestComplete = true;
+         if (video) {
+           video.removeEventListener('play', playLock);
+           video.removeEventListener('playing', playLock);
+           video.muted = false; 
+           console.log('YT-to-AI: Player Restrictions Released.');
+         }
+       }, 3500);
+    }
+  });
+}

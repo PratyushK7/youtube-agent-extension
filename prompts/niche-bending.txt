@@ -15,7 +15,7 @@ You do not write fluff.
 Keep this tight. No filler language.
 
 NICHE BENDS:
-Generate exactly 3 niche bends.
+Generate exactly 15 detailed niche bends.
 Each bend must:
 • Be structurally different from the others
 • Sustain 30+ videos
@@ -25,19 +25,16 @@ Each bend must:
 • Contain built-in tension, decisions, tradeoffs, or consequences
 
 STRICT OUTPUT FORMAT (DO NOT BREAK)
-3 Niche Bends:
+15 Niche Bends:
 
 1. [Niche Name — MAX 3 WORDS]:
 → [Specific Title]
 → [Specific Title]
 → [Specific Title]
 
-2. [Niche Name — MAX 3 WORDS]:
-→ [Specific Title]
-→ [Specific Title]
-→ [Specific Title]
+[... continue this exact format for all 15 bends ...]
 
-3. [Niche Name — MAX 3 WORDS]:
+15. [Niche Name — MAX 3 WORDS]:
 → [Specific Title]
 → [Specific Title]
 → [Specific Title]
@@ -63,10 +60,10 @@ Good:
 • When Blockbuster rejected Netflix’s $50M offer
 
 VARIATION RULE
-Across the 3 bends:
-• One must use a ranking or hierarchy angle
-• One must use a timeline or breakdown angle
-• One must use a conflict or decision-based angle
+Across the 15 bends, ensure high diversity:
+• Use ranking or hierarchy angles
+• Use timeline or breakdown angles
+• Use conflict or decision-based angles
 Do not repeat the same title structure across bends.
 
 Do not use “How to” repeatedly.

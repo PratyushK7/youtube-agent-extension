@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ChannelLens — Strategic Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
   <style>
     /* ═══ Shared Design Tokens (mirrors style.css) ═══ */
     :root {
@@ -35,9 +38,9 @@
       --radius-lg: 16px;
       --radius-xl: 24px;
       --radius-full: 9999px;
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-      --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
-      --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
       --shadow-glow: 0 0 30px rgba(124, 131, 255, 0.15);
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
@@ -45,8 +48,63 @@
       --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    :root.light-theme {
+      --bg-primary: #f0f2f5;
+      --bg-secondary: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f8fafc;
+      --bg-elevated: #e2e8f0;
+      --border-subtle: rgba(0, 0, 0, 0.08);
+      --border-medium: rgba(0, 0, 0, 0.15);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    :root.light-theme .bg-grid {
+      display: none;
+    }
+
+    :root.light-theme header {
+      background: rgba(255, 255, 255, 0.9);
+      border-bottom-color: var(--border-medium);
+    }
+
+    :root.light-theme .nav-link:hover,
+    :root.light-theme .btn-ghost:hover,
+    :root.light-theme .tab-btn:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    :root.light-theme tbody tr:hover {
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    :root.light-theme .niche-card {
+      background: var(--bg-card);
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    :root.light-theme .niche-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(251, 146, 60, 0.4);
+    }
+
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+    }
 
     body {
       font-family: var(--font-sans);
@@ -58,293 +116,1180 @@
     }
 
     /* ═══ Background Effects ═══ */
-    .bg-effects { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-    .bg-orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.4; animation: orbFloat 20s ease-in-out infinite; }
-    .bg-orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(124,131,255,0.12), transparent 70%); top: -200px; right: -100px; }
-    .bg-orb-2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(56,189,248,0.08), transparent 70%); bottom: -100px; left: 10%; animation-delay: -10s; }
+    .bg-effects {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.4;
+      animation: orbFloat 20s ease-in-out infinite;
+    }
+
+    .bg-orb-1 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(124, 131, 255, 0.12), transparent 70%);
+      top: -200px;
+      right: -100px;
+    }
+
+    .bg-orb-2 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.08), transparent 70%);
+      bottom: -100px;
+      left: 10%;
+      animation-delay: -10s;
+    }
+
     .bg-grid {
-      position: absolute; inset: 0;
-      background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
       background-size: 60px 60px;
       mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
     }
-    @keyframes orbFloat { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-20px) scale(1.05); } 66% { transform: translate(-20px,15px) scale(0.95); } }
+
+    @keyframes orbFloat {
+
+      0%,
+      100% {
+        transform: translate(0, 0) scale(1);
+      }
+
+      33% {
+        transform: translate(30px, -20px) scale(1.05);
+      }
+
+      66% {
+        transform: translate(-20px, 15px) scale(0.95);
+      }
+    }
 
     /* ═══ Header ═══ */
     header {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(7,8,12,0.8);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(7, 8, 12, 0.8);
       backdrop-filter: blur(20px) saturate(1.5);
       border-bottom: 1px solid var(--border-subtle);
     }
+
     .header-inner {
-      max-width: 1400px; margin: 0 auto; padding: 16px 24px;
-      display: flex; align-items: center; justify-content: space-between;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
-    .logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-    .logo-icon { width: 32px; height: 32px; color: var(--accent-primary); }
-    .logo-text { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
-    .logo-accent { background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-    .header-nav { display: flex; align-items: center; gap: 8px; }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      color: var(--accent-primary);
+    }
+
+    .logo-text {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .logo-accent {
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .nav-link {
-      display: flex; align-items: center; gap: 6px;
-      color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; font-weight: 500;
-      padding: 8px 14px; border-radius: var(--radius-full); transition: var(--transition-fast);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: var(--radius-full);
+      transition: var(--transition-fast);
       border: 1px solid transparent;
     }
-    .nav-link:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
-    .nav-link.active { color: var(--accent-primary); background: rgba(124,131,255,0.08); border-color: rgba(124,131,255,0.2); }
+
+    .nav-link:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-link.active {
+      color: var(--accent-primary);
+      background: rgba(124, 131, 255, 0.08);
+      border-color: rgba(124, 131, 255, 0.2);
+    }
 
     /* ═══ Container ═══ */
-    .container { max-width: 1400px; margin: 0 auto; padding: 48px 24px 80px; position: relative; z-index: 1; }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+      position: relative;
+      z-index: 1;
+    }
 
     /* ═══ Page Title ═══ */
-    .page-header { margin-bottom: 40px; }
+    .page-header {
+      margin-bottom: 40px;
+    }
+
     .page-badge {
-      display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px;
-      border-radius: var(--radius-full); background: rgba(124,131,255,0.08); border: 1px solid rgba(124,131,255,0.15);
-      color: var(--accent-primary); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: var(--radius-full);
+      background: rgba(124, 131, 255, 0.08);
+      border: 1px solid rgba(124, 131, 255, 0.15);
+      color: var(--accent-primary);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
       margin-bottom: 16px;
     }
-    .page-title { font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px; }
-    .page-subtitle { font-size: 1rem; color: var(--text-secondary); max-width: 500px; }
+
+    .page-title {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+
+    .page-subtitle {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      max-width: 500px;
+    }
 
     /* ═══ Sessions Grid ═══ */
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 24px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 24px;
+    }
 
     .card {
-      background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl);
-      overflow: hidden; cursor: pointer; transition: var(--transition-base);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      cursor: pointer;
+      transition: var(--transition-base);
       position: relative;
     }
+
     .card::before {
-      content: ''; position: absolute; inset: 0; border-radius: inherit;
-      background: var(--gradient-card); opacity: 0; transition: var(--transition-base); z-index: 0;
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: var(--gradient-card);
+      opacity: 0;
+      transition: var(--transition-base);
+      z-index: 0;
     }
-    .card:hover { transform: translateY(-6px); border-color: var(--border-medium); box-shadow: var(--shadow-lg), var(--shadow-glow); }
-    .card:hover::before { opacity: 1; }
 
-    .card-thumb { width: 100%; height: 190px; background: var(--bg-secondary); position: relative; overflow: hidden; }
-    .card-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: 0.5; transition: var(--transition-base); }
-    .card:hover .card-thumb img { opacity: 0.85; transform: scale(1.03); }
-    .card-thumb-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 0.85rem; }
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: var(--border-medium);
+      box-shadow: var(--shadow-lg), var(--shadow-glow);
+    }
 
-    .card-badges { position: absolute; bottom: 12px; right: 12px; display: flex; gap: 6px; z-index: 2; }
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .card-thumb {
+      width: 100%;
+      height: 190px;
+      background: var(--bg-secondary);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.5;
+      transition: var(--transition-base);
+    }
+
+    .card:hover .card-thumb img {
+      opacity: 0.85;
+      transform: scale(1.03);
+    }
+
+    .card-thumb-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .card-badges {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      display: flex;
+      gap: 6px;
+      z-index: 2;
+    }
+
     .badge {
-      display: inline-flex; padding: 4px 10px; border-radius: var(--radius-full);
-      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; backdrop-filter: blur(8px);
+      display: inline-flex;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      backdrop-filter: blur(8px);
     }
-    .badge-count { background: rgba(124,131,255,0.9); color: white; }
-    .badge-complete { background: rgba(52,211,153,0.85); color: #052e16; }
-    .badge-progress { background: rgba(251,146,60,0.85); color: #431407; }
 
-    .card-body { padding: 20px 24px 24px; position: relative; z-index: 1; }
-    .card-title { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 8px; }
-    .card-meta { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 12px; }
-    .card-meta-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-muted); }
+    .badge-count {
+      background: rgba(124, 131, 255, 0.9);
+      color: white;
+    }
+
+    .badge-complete {
+      background: rgba(52, 211, 153, 0.85);
+      color: #052e16;
+    }
+
+    .badge-progress {
+      background: rgba(251, 146, 60, 0.85);
+      color: #431407;
+    }
+
+    .btn-delete-session {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-full);
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border-subtle);
+      color: rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      transition: var(--transition-base);
+      backdrop-filter: blur(8px);
+    }
+
+    .btn-delete-session:hover {
+      background: rgba(239, 68, 68, 0.9);
+      border-color: #ef4444;
+      color: white;
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+    }
+
+    .card-body {
+      padding: 20px 24px 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 8px;
+    }
+
+    .card-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .card-meta-dot {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
 
     .empty-state {
-      text-align: center; padding: 120px 24px; color: var(--text-muted);
-      background: var(--bg-card); border: 1px dashed var(--border-subtle); border-radius: var(--radius-xl);
+      text-align: center;
+      padding: 120px 24px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius-xl);
     }
-    .empty-state h3 { font-size: 1.3rem; color: var(--text-secondary); margin-bottom: 8px; }
+
+    .empty-state h3 {
+      font-size: 1.3rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
 
     /* ═══ Session Detail ═══ */
-    #session-view { display: none; }
+    #session-view {
+      display: none;
+    }
 
     .session-header {
-      display: flex; justify-content: space-between; align-items: flex-start; gap: 24px;
-      margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-subtle);
     }
-    .session-title { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 6px; }
-    .session-meta { font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .session-meta-badge {
-      padding: 3px 10px; border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.04em;
-    }
-    .session-meta-badge.complete { background: rgba(52,211,153,0.12); color: var(--accent-emerald); }
-    .session-meta-badge.progress { background: rgba(251,146,60,0.12); color: var(--accent-warm); }
 
-    .header-actions { display: flex; gap: 8px; flex-shrink: 0; }
-    .btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 10px 18px; border-radius: var(--radius-full);
-      font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600;
-      cursor: pointer; transition: var(--transition-base); border: 1px solid var(--border-medium);
-      text-decoration: none; white-space: nowrap;
+    .session-title {
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
     }
-    .btn-ghost { background: transparent; color: var(--text-secondary); }
-    .btn-ghost:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
-    .btn-accent { background: rgba(52,211,153,0.08); color: var(--accent-emerald); border-color: rgba(52,211,153,0.2); }
-    .btn-accent:hover { background: rgba(52,211,153,0.15); border-color: rgba(52,211,153,0.4); box-shadow: 0 0 20px rgba(52,211,153,0.15); }
+
+    .session-meta {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .session-meta-badge {
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .session-meta-badge.complete {
+      background: rgba(52, 211, 153, 0.12);
+      color: var(--accent-emerald);
+    }
+
+    .session-meta-badge.progress {
+      background: rgba(251, 146, 60, 0.12);
+      color: var(--accent-warm);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: var(--radius-full);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition-base);
+      border: 1px solid var(--border-medium);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+    }
+
+    .btn-accent {
+      background: rgba(52, 211, 153, 0.08);
+      color: var(--accent-emerald);
+      border-color: rgba(52, 211, 153, 0.2);
+    }
+
+    .btn-accent:hover {
+      background: rgba(52, 211, 153, 0.15);
+      border-color: rgba(52, 211, 153, 0.4);
+      box-shadow: 0 0 20px rgba(52, 211, 153, 0.15);
+    }
 
     /* ═══ Tab Bar ═══ */
-    .tab-bar { display: flex; gap: 4px; margin-bottom: 32px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 4px; }
-    .tab-btn {
-      flex: 1; padding: 10px 16px; border: none; border-radius: var(--radius-md);
-      background: transparent; color: var(--text-muted); font-family: var(--font-sans);
-      font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: var(--transition-fast);
-      display: flex; align-items: center; justify-content: center; gap: 8px;
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 32px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 4px;
     }
-    .tab-btn:hover { color: var(--text-secondary); background: rgba(255,255,255,0.03); }
-    .tab-btn.active { background: var(--bg-elevated); color: var(--text-primary); box-shadow: var(--shadow-sm); }
-    .tab-icon { font-size: 1rem; }
 
-    .tab-content { display: none; animation: fadeIn 0.3s ease-out; }
-    .tab-content.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: var(--radius-md);
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .tab-btn.active {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tab-icon {
+      font-size: 1rem;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
     /* ═══ Aggregate Insights ═══ */
-    .agg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .agg-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
     .agg-card {
-      background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
-      padding: 24px; transition: var(--transition-base);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: var(--transition-base);
     }
-    .agg-card:hover { border-color: var(--border-medium); box-shadow: var(--shadow-md); }
+
+    .agg-card:hover {
+      border-color: var(--border-medium);
+      box-shadow: var(--shadow-md);
+    }
+
     .agg-card-header {
-      display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
-      font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
     }
-    .agg-icon { width: 32px; height: 32px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
-    .agg-icon-purple { background: rgba(124,131,255,0.1); }
-    .agg-icon-green { background: rgba(52,211,153,0.1); }
-    .agg-icon-blue { background: rgba(56,189,248,0.1); }
-    .agg-icon-orange { background: rgba(251,146,60,0.1); }
 
-    .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-subtle); font-size: 0.88rem; }
-    .stat-row:last-child { border-bottom: none; }
-    .stat-label { color: var(--text-secondary); }
-    .stat-value { font-weight: 700; font-family: var(--font-mono); color: var(--accent-primary); font-size: 0.85rem; }
+    .agg-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
 
-    .chart-container { width: 100%; min-height: 180px; }
+    .agg-icon-purple {
+      background: rgba(124, 131, 255, 0.1);
+    }
+
+    .agg-icon-green {
+      background: rgba(52, 211, 153, 0.1);
+    }
+
+    .agg-icon-blue {
+      background: rgba(56, 189, 248, 0.1);
+    }
+
+    .agg-icon-orange {
+      background: rgba(251, 146, 60, 0.1);
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 0.88rem;
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .stat-value {
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--accent-primary);
+      font-size: 0.85rem;
+      text-align: right;
+      word-wrap: break-word;
+    }
+
+    .chart-container {
+      width: 100%;
+      min-height: 180px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: visible;
+      padding: 10px 0;
+    }
 
     /* ═══ Metrics Table ═══ */
-    .table-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); overflow: hidden; }
-    .table-toolbar {
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      padding: 16px 24px; border-bottom: 1px solid var(--border-subtle);
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
     }
-    .table-toolbar-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-    .layout-toggle { display: flex; gap: 4px; background: var(--bg-secondary); border-radius: var(--radius-md); padding: 3px; }
+
+    .table-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .table-toolbar-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .layout-toggle {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 3px;
+    }
+
     .layout-btn {
-      padding: 6px 14px; border: none; border-radius: var(--radius-sm); background: transparent;
-      color: var(--text-muted); font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: var(--transition-fast);
+      padding: 6px 14px;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition-fast);
       font-family: var(--font-sans);
     }
-    .layout-btn.active { background: var(--bg-elevated); color: var(--text-primary); box-shadow: var(--shadow-sm); }
 
-    .table-scroll { overflow-x: auto; overflow-y: auto; max-height: 700px; }
-    .table-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
-    .table-scroll::-webkit-scrollbar-track { background: var(--bg-secondary); }
-    .table-scroll::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 3px; }
-
-    table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.8rem; min-width: 1600px; }
-    thead { position: sticky; top: 0; z-index: 5; }
-    th {
-      background: var(--bg-elevated); color: var(--text-muted); font-weight: 600; font-size: 0.7rem;
-      text-transform: uppercase; letter-spacing: 0.05em; padding: 12px 14px; text-align: left;
-      white-space: nowrap; border-bottom: 1px solid var(--border-medium);
+    .layout-btn.active {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
     }
-    td { padding: 12px 14px; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); vertical-align: top; line-height: 1.6; }
-    tbody tr { transition: var(--transition-fast); }
-    tbody tr:hover { background: rgba(124,131,255,0.03); }
-    tbody tr:hover td { color: var(--text-primary); }
+
+    .table-scroll {
+      overflow-x: auto;
+      overflow-y: auto;
+      max-height: 700px;
+    }
+
+    .table-scroll::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+
+    .table-scroll::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+
+    .table-scroll::-webkit-scrollbar-thumb {
+      background: var(--bg-elevated);
+      border-radius: 3px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.8rem;
+      min-width: 1600px;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    th {
+      background: var(--bg-elevated);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 12px 14px;
+      text-align: left;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border-medium);
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      vertical-align: top;
+      line-height: 1.6;
+    }
+
+    tbody tr {
+      transition: var(--transition-fast);
+    }
+
+    tbody tr:hover {
+      background: rgba(124, 131, 255, 0.03);
+    }
+
+    tbody tr:hover td {
+      color: var(--text-primary);
+    }
 
     .cell-expand {
-      max-height: 60px; overflow: hidden; cursor: pointer; position: relative; transition: max-height 0.3s;
+      max-height: 60px;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      transition: max-height 0.3s;
     }
+
     .cell-expand::after {
-      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 24px;
-      background: linear-gradient(transparent, var(--bg-card)); pointer-events: none; transition: var(--transition-fast);
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 24px;
+      background: linear-gradient(transparent, var(--bg-card));
+      pointer-events: none;
+      transition: var(--transition-fast);
     }
-    .cell-expand.expanded { max-height: none; }
-    .cell-expand.expanded::after { display: none; }
+
+    .cell-expand.expanded {
+      max-height: none;
+    }
+
+    .cell-expand.expanded::after {
+      display: none;
+    }
 
     .hook-badge {
-      display: inline-flex; padding: 3px 10px; border-radius: var(--radius-full);
-      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em;
-      background: rgba(124,131,255,0.1); color: var(--accent-primary);
+      display: inline-flex;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      background: rgba(124, 131, 255, 0.1);
+      color: var(--accent-primary);
     }
 
     /* ═══ Video Cards ═══ */
-    .video-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+    .video-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+    }
+
     .v-card {
-      background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
-      padding: 24px; transition: var(--transition-base);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: var(--transition-base);
     }
-    .v-card:hover { border-color: var(--border-medium); transform: translateY(-3px); box-shadow: var(--shadow-md); }
 
-    .v-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-    .v-card-num { font-weight: 800; font-family: var(--font-mono); font-size: 0.9rem; color: var(--accent-primary); }
-    .v-card-title { font-weight: 700; font-size: 1rem; line-height: 1.4; margin-bottom: 16px; }
+    .v-card:hover {
+      border-color: var(--border-medium);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
 
-    .v-card-section { margin-bottom: 14px; }
+    .v-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .v-card-num {
+      font-weight: 800;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: var(--accent-primary);
+    }
+
+    .v-card-title {
+      font-weight: 700;
+      font-size: 1rem;
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+
+    .v-card-section {
+      margin-bottom: 14px;
+    }
+
     .v-card-label {
-      font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
-      color: var(--text-muted); margin-bottom: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
     }
-    .v-card-value { font-size: 0.85rem; line-height: 1.6; color: var(--text-secondary); }
-    .v-card-divider { height: 1px; background: var(--border-subtle); margin: 16px 0; }
 
-    .v-card-raw { margin-top: 14px; }
-    .v-card-raw summary { cursor: pointer; color: var(--text-muted); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
-    .v-card-raw-content { margin-top: 10px; font-size: 0.78rem; color: var(--text-muted); white-space: pre-wrap; max-height: 200px; overflow-y: auto; font-family: var(--font-mono); line-height: 1.5; padding: 12px; background: var(--bg-secondary); border-radius: var(--radius-sm); }
+    .v-card-value {
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .v-card-divider {
+      height: 1px;
+      background: var(--border-subtle);
+      margin: 16px 0;
+    }
+
+    .v-card-raw {
+      margin-top: 14px;
+    }
+
+    .v-card-raw summary {
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .v-card-raw-content {
+      margin-top: 10px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      line-height: 1.5;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+    }
 
     /* ═══ Synthesis ═══ */
     .synthesis-card {
-      background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
       overflow: hidden;
     }
+
     .synthesis-header {
-      padding: 24px 32px 20px; border-bottom: 1px solid var(--border-subtle); background: var(--gradient-card);
+      padding: 24px 32px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--gradient-card);
     }
+
     .synthesis-badge {
-      display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px;
-      border-radius: var(--radius-full); background: rgba(124,131,255,0.1); border: 1px solid rgba(124,131,255,0.2);
-      color: var(--accent-primary); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      background: rgba(124, 131, 255, 0.1);
+      border: 1px solid rgba(124, 131, 255, 0.2);
+      color: var(--accent-primary);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
       margin-bottom: 10px;
     }
-    .synthesis-title { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; }
+
+    .synthesis-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
 
     .synthesis-body {
-      padding: 32px; font-size: 0.92rem; line-height: 1.8; color: var(--text-secondary);
+      padding: 32px;
+      font-size: 0.95rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
     }
-    .synthesis-body h1, .synthesis-body h2, .synthesis-body h3 { color: var(--text-primary); margin-top: 24px; margin-bottom: 12px; }
-    .synthesis-body h2 { font-size: 1.15rem; padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle); }
-    .synthesis-body h3 { font-size: 1rem; }
-    .synthesis-body p { margin-bottom: 14px; }
-    .synthesis-body strong { color: var(--text-primary); }
-    .synthesis-body em { color: var(--accent-primary); font-style: normal; font-weight: 500; }
-    .synthesis-body li { margin-bottom: 6px; margin-left: 20px; }
-    .synthesis-body hr { border: none; border-top: 1px solid var(--border-subtle); margin: 24px 0; }
 
-    .synthesis-empty { padding: 80px 32px; text-align: center; color: var(--text-muted); }
-    .synthesis-empty-icon { font-size: 2.5rem; margin-bottom: 16px; opacity: 0.3; }
+    .sop-section-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-top: 32px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .sop-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(124, 131, 255, 0.1);
+      color: var(--accent-primary);
+      padding: 6px;
+      border-radius: 8px;
+      font-size: 1.1rem;
+    }
+
+    .sop-subsection-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-top: 24px;
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+
+    .sop-h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-top: 20px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sop-p {
+      margin-bottom: 16px;
+      color: var(--text-secondary);
+    }
+
+    .sop-ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sop-ul li {
+      position: relative;
+      padding-left: 20px;
+      color: var(--text-secondary);
+    }
+
+    .sop-bullet {
+      position: absolute;
+      left: 0;
+      top: 10px;
+      width: 6px;
+      height: 6px;
+      background: var(--accent-primary);
+      border-radius: 50%;
+      opacity: 0.8;
+    }
+
+    .sop-quote {
+      border-left: 3px solid var(--accent-indigo);
+      padding-left: 16px;
+      margin: 20px 0;
+      font-style: italic;
+      color: var(--text-muted);
+      background: var(--bg-elevated);
+      padding: 16px;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    }
+
+    .sop-divider {
+      height: 1px;
+      background: var(--border-subtle);
+      margin: 32px 0;
+    }
+
+    .synthesis-body strong {
+      color: var(--text-primary);
+    }
+
+    .synthesis-body em {
+      color: var(--accent-primary);
+      font-style: normal;
+      font-weight: 500;
+    }
+
+    .synthesis-body code {
+      font-family: var(--font-mono);
+      background: var(--bg-elevated);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: var(--accent-warm);
+    }
+
+    /* ═══ Niche Bends Grid ═══ */
+    .niche-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      text-align: left;
+      margin-top: 10px;
+    }
+
+    .niche-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: var(--transition-base);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .niche-card:hover {
+      border-color: rgba(251, 146, 60, 0.5);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .niche-card-number {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .niche-card-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.3;
+      margin-bottom: 16px;
+      letter-spacing: -0.01em;
+    }
+
+    .niche-card-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+    }
+
+    .niche-card-list li {
+      position: relative;
+      padding-left: 18px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .niche-card-list li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--accent-warm);
+      opacity: 0.8;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+    }
+
+    .synthesis-empty {
+      padding: 80px 32px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .synthesis-empty-icon {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
 
     /* ═══ Responsive ═══ */
     @media (max-width: 768px) {
-      .grid { grid-template-columns: 1fr; }
-      .session-header { flex-direction: column; }
-      .header-actions { width: 100%; }
-      .btn { flex: 1; justify-content: center; }
-      .tab-bar { flex-wrap: wrap; }
-      .agg-grid { grid-template-columns: 1fr; }
-      .video-cards { grid-template-columns: 1fr; }
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .session-header {
+        flex-direction: column;
+      }
+
+      .header-actions {
+        width: 100%;
+      }
+
+      .btn {
+        flex: 1;
+        justify-content: center;
+      }
+
+      .tab-bar {
+        flex-wrap: wrap;
+      }
+
+      .agg-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .video-cards {
+        grid-template-columns: 1fr;
+      }
     }
 
     /* ═══ Scrollbar ═══ */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg-primary); }
-    ::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
 
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-in { animation: fadeInUp 0.5s ease-out both; }
-    .delay-1 { animation-delay: 0.1s; }
-    .delay-2 { animation-delay: 0.2s; }
-    .delay-3 { animation-delay: 0.3s; }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-elevated);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-in {
+      animation: fadeInUp 0.5s ease-out both;
+    }
+
+    .delay-1 {
+      animation-delay: 0.1s;
+    }
+
+    .delay-2 {
+      animation-delay: 0.2s;
+    }
+
+    .delay-3 {
+      animation-delay: 0.3s;
+    }
   </style>
 </head>
+
 <body>
   <div class="bg-effects">
     <div class="bg-orb bg-orb-1"></div>
@@ -354,25 +1299,33 @@
 
   <header>
     <div class="header-inner">
-      <a href="index.html" class="logo">
+      <a href="dashboard.html" class="logo">
         <div class="logo-icon">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
           </svg>
         </div>
         <span class="logo-text">Channel<span class="logo-accent">Lens</span></span>
       </a>
       <nav class="header-nav">
-        <a href="index.html" class="nav-link">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          Analyzer
-        </a>
         <a href="dashboard.html" class="nav-link active">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
           Dashboard
         </a>
+        <button id="theme-toggle" class="nav-link" style="background:transparent;cursor:pointer;border:none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5" />
+            <path
+              d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+          </svg>
+        </button>
       </nav>
     </div>
   </header>
@@ -381,11 +1334,20 @@
   <div id="sessions-grid-view" class="container">
     <div class="page-header animate-in">
       <div class="page-badge">Extension Analysis History</div>
-      <h1 class="page-title">Strategic <span style="background:var(--gradient-primary);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Dashboard</span></h1>
-      <p class="page-subtitle">All your ChatGPT-powered channel analyses in one place. Click a session to explore deep metrics.</p>
+      <h1 class="page-title">Strategic <span
+          style="background:var(--gradient-primary);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Dashboard</span>
+      </h1>
+      <p class="page-subtitle">All your ChatGPT-powered channel analyses in one place. Click a session to explore deep
+        metrics.</p>
     </div>
-    <div id="sessions-grid" class="grid animate-in delay-1"></div>
-    <div id="empty-state" class="empty-state animate-in delay-1" style="display:none;">
+    <div id="loading-indicator" style="text-align:center; padding: 40px; color: var(--text-muted);">
+      <div
+        style="width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px;">
+      </div>
+      Loading your sessions...
+    </div>
+    <div id="sessions-grid" class="grid"></div>
+    <div id="empty-state" class="empty-state" style="display:none;">
       <p style="font-size:2.5rem;margin-bottom:16px;opacity:0.3">&#x1F50D;</p>
       <h3>No analysis sessions yet</h3>
       <p>Use the browser extension to analyze a YouTube channel with ChatGPT.</p>
@@ -395,55 +1357,48 @@
   <!-- ═══ Session Detail ═══ -->
   <div id="session-view" class="container">
     <div class="session-header animate-in">
-      <div>
-        <h1 id="session-title" class="session-title"></h1>
-        <div class="session-meta">
-          <span id="session-meta-text"></span>
-          <span id="session-meta-badge" class="session-meta-badge"></span>
+      <div style="display:flex; align-items:center; gap: 16px;">
+        <button id="btn-back" class="btn btn-ghost"
+          style="padding: 0; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--border-medium);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div>
+          <h1 id="session-title" class="session-title"></h1>
+          <div class="session-meta">
+            <span id="session-meta-text"></span>
+            <span id="session-meta-badge" class="session-meta-badge"></span>
+          </div>
         </div>
       </div>
       <div class="header-actions">
-        <button id="btn-export-csv" class="btn btn-accent">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Export CSV
+        <button id="btn-scene-analyzer" class="btn"
+          style="background: rgba(167, 139, 250, 0.1); color: #a78bfa; border-color: rgba(167, 139, 250, 0.3);">
+          👁️ Analyze Scene
         </button>
-        <button id="btn-back" class="btn btn-ghost">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          Back
+        <button id="btn-niche-bend" class="btn"
+          style="background: rgba(251,146,60,0.1); color: var(--accent-warm); border-color: rgba(251,146,60,0.3);">
+          🔥 Niche Bender
+        </button>
+        <button id="btn-export-csv" class="btn btn-accent">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Export CSV
         </button>
       </div>
     </div>
 
     <div class="tab-bar animate-in delay-1">
-      <button class="tab-btn active" data-tab="aggregate"><span class="tab-icon">&#x1F4CA;</span> Insights</button>
-      <button class="tab-btn" data-tab="metrics"><span class="tab-icon">&#x1F4CB;</span> Full Metrics</button>
+      <button class="tab-btn active" data-tab="metrics"><span class="tab-icon">&#x1F4CB;</span> Full Metrics</button>
       <button class="tab-btn" data-tab="synthesis"><span class="tab-icon">&#x1F4DD;</span> Master Synthesis</button>
     </div>
 
-    <!-- Tab: Aggregate -->
-    <div id="tab-aggregate" class="tab-content active">
-      <div class="agg-grid">
-        <div class="agg-card">
-          <div class="agg-card-header"><div class="agg-icon agg-icon-purple">&#x1F3AF;</div> Hook Type Distribution</div>
-          <div id="chart-hooks" class="chart-container"></div>
-        </div>
-        <div class="agg-card">
-          <div class="agg-card-header"><div class="agg-icon agg-icon-green">&#x1F4D6;</div> Storytelling Frameworks</div>
-          <div id="chart-storytelling" class="chart-container"></div>
-        </div>
-        <div class="agg-card">
-          <div class="agg-card-header"><div class="agg-icon agg-icon-blue">&#x2139;&#xFE0F;</div> Session Summary</div>
-          <div id="summary-stats"></div>
-        </div>
-        <div class="agg-card">
-          <div class="agg-card-header"><div class="agg-icon agg-icon-orange">&#x1F504;</div> Retention Patterns</div>
-          <div id="retention-list"></div>
-        </div>
-      </div>
-    </div>
-
     <!-- Tab: Full Metrics -->
-    <div id="tab-metrics" class="tab-content">
+    <div id="tab-metrics" class="tab-content active">
       <div class="table-card">
         <div class="table-toolbar">
           <span class="table-toolbar-label" id="metrics-count"></span>
@@ -483,7 +1438,10 @@
       <div class="synthesis-card">
         <div class="synthesis-header">
           <div class="synthesis-badge">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14"><path d="M12 2a7 7 0 0 1 7 7c0 3-2 5.5-4 7.5L12 22l-3-5.5C7 14.5 5 12 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14">
+              <path d="M12 2a7 7 0 0 1 7 7c0 3-2 5.5-4 7.5L12 22l-3-5.5C7 14.5 5 12 5 9a7 7 0 0 1 7-7z" />
+              <circle cx="12" cy="9" r="2" />
+            </svg>
             AI Strategic Report
           </div>
           <div class="synthesis-title">Master Channel Synthesis</div>
@@ -495,11 +1453,69 @@
           </div>
         </div>
       </div>
+      <div class="synthesis-card" style="margin-top: 24px;" id="niche-bends-card">
+        <div class="synthesis-header">
+          <div class="synthesis-badge"
+            style="background: rgba(251,146,60,0.1); border-color: rgba(251,146,60,0.2); color: var(--accent-warm);">
+            🔥 Strategy
+          </div>
+          <div class="synthesis-title">15 Detailed Niche Bends</div>
+        </div>
+        <div id="niche-bends-content" class="synthesis-body">
+          <div class="synthesis-empty">
+            <p>No niche bends generated yet.<br>Click "🔥 Niche Bender" (top right) to extract the strategic frameworks.
+            </p>
+          </div>
+        </div>
+      </div>
+      <!-- ═══ Scene Analysis Output ═══ -->
+      <div id="scene-analysis-card" class="synthesis-card" style="margin-top: 32px">
+        <div class="synthesis-header">
+          <div class="synthesis-badge"
+            style="color: #a78bfa; border-color: rgba(167, 139, 250, 0.3); background: rgba(167, 139, 250, 0.1);">VISION
+            AI</div>
+          <div class="synthesis-title">Scene Structural Analysis</div>
+        </div>
+        <div id="scene-analysis-content" class="synthesis-body">
+          <div class="synthesis-empty">
+            <p>No scene analysis available yet.<br>Click "👁️ Analyze Scene" to extract styles from the top video.</p>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <!-- ═══ Frame Gallery Modal ═══ -->
+  <div id="gallery-modal"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+    <button id="btn-close-gallery"
+      style="position:absolute; top:20px; right:30px; background:transparent; border:none; color:white; font-size:2rem; cursor:pointer;">&times;</button>
+    <div id="gallery-container" style="display:flex; gap:20px; max-width:90%; overflow-x:auto; padding:20px;"></div>
+  </div>
+
+  <div id="status-debug"
+    style="position:fixed; bottom:10px; right:10px; font-size:10px; color:rgba(255,255,255,0.2); z-index:9999;">JS
+    LOADED</div>
+  <div class="footer"
+    style="text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.75rem; border-top: 1px solid var(--border-subtle); margin-top: 60px;">
+    YouTube Agent Dashboard v1.4.5 • Restored Build
   </div>
 
   <script>
     let currentSession = null;
+    let pollInterval = null;
+
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+      themeToggle.addEventListener('click', () => {
+        document.documentElement.classList.toggle('light-theme');
+        const isLight = document.documentElement.classList.contains('light-theme');
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      });
+      if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.add('light-theme');
+      }
+    }
 
     const esc = (s) => {
       if (!s) return '';
@@ -509,52 +1525,110 @@
 
     // ═══ Load Sessions ═══
     async function loadSessions() {
+      const debug = document.getElementById('status-debug');
+      if (debug) debug.textContent = 'FETCHING...';
       try {
         const res = await fetch('/api/sessions');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const sessions = await res.json();
+
+        if (debug) debug.textContent = `RECVD ${sessions.length}`;
+
         const grid = document.getElementById('sessions-grid');
         const empty = document.getElementById('empty-state');
+        const loader = document.getElementById('loading-indicator');
 
-        if (!sessions.length) { empty.style.display = 'block'; grid.style.display = 'none'; return; }
-        empty.style.display = 'none'; grid.style.display = 'grid';
+        if (loader) loader.style.display = 'none';
 
-        grid.innerHTML = sessions.map(s => `
-          <div class="card" onclick="openSession('${s.id}')">
-            <div class="card-thumb">
-              ${s.finalScreenshot ? `<img src="${s.finalScreenshot}" alt="">` : '<div class="card-thumb-empty">No screenshot</div>'}
-              <div class="card-badges">
-                <span class="badge badge-count">${s.analyzedVideos}/${s.totalVideos} videos</span>
-                <span class="badge ${s.status === 'complete' ? 'badge-complete' : 'badge-progress'}">${s.status === 'complete' ? 'Complete' : 'In Progress'}</span>
+        if (!sessions.length) {
+          empty.style.display = 'block';
+          grid.style.display = 'none';
+          return;
+        }
+
+        empty.style.display = 'none';
+        grid.style.display = 'grid';
+
+        grid.innerHTML = sessions.map(s => {
+          try {
+            return `
+              <div class="card" onclick="openSession('${s.id}')" style="position:relative;">
+                <button class="btn-delete-session" onclick="event.stopPropagation(); confirmDelete('${s.id}', '${esc(s.channel)}')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+                </button>
+                <div class="card-thumb">
+                  ${s.finalScreenshot ? `<img src="${s.finalScreenshot}" alt="">` : '<div class="card-thumb-empty">No screenshot</div>'}
+                  <div class="card-badges">
+                    <span class="badge badge-count">${s.analyzedVideos}/${s.totalVideos} videos</span>
+                    <span class="badge ${s.status === 'complete' ? 'badge-complete' : 'badge-progress'}">${s.status === 'complete' ? 'Complete' : 'In Progress'}</span>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="card-title">${esc(s.channel)}</div>
+                  <div class="card-meta">
+                    <span>${new Date(s.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <span class="card-meta-dot"></span>
+                    <span>${s.hasSynthesis ? 'Has synthesis' : 'No synthesis'}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="card-body">
-              <div class="card-title">${esc(s.channel)}</div>
-              <div class="card-meta">
-                <span>${new Date(s.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                <span class="card-meta-dot"></span>
-                <span>${s.hasSynthesis ? 'Has synthesis' : 'No synthesis'}</span>
-              </div>
-            </div>
-          </div>
-        `).join('');
+            `;
+          } catch (e) {
+            console.error('Error rendering session:', s, e);
+            return '';
+          }
+        }).join('');
+        if (debug) debug.textContent = 'DONE';
       } catch (err) {
         console.error('Failed to load sessions:', err);
+        if (debug) debug.textContent = 'ERR: ' + err.message;
+        const loader = document.getElementById('loading-indicator');
+        if (loader) loader.style.display = 'none';
         document.getElementById('empty-state').style.display = 'block';
         document.getElementById('sessions-grid').style.display = 'none';
       }
     }
 
+    async function confirmDelete(id, name) {
+      if (!confirm(`Are you sure you want to PERMANENTLY delete the analysis session for "${name}"?\n\nThis will also delete ALL associated screenshots and data.`)) return;
+
+      try {
+        const res = await fetch(`/api/session/${id}`, { method: 'DELETE' });
+
+        // Handle non-JSON responses (like 404/500 HTML pages)
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+          const data = await res.json();
+          if (data.success) {
+            if (localStorage.getItem(`analysis_${name}`)) localStorage.removeItem(`analysis_${name}`);
+            loadSessions();
+          } else {
+            alert('Failed to delete: ' + (data.error || 'Unknown error'));
+          }
+        } else {
+          const text = await res.text();
+          console.error('Non-JSON response:', text);
+          alert(`Server Error (${res.status}): The server didn't return a valid JSON response. Please restart the server and try again.`);
+        }
+      } catch (err) {
+        alert('Error communicating with server: ' + err.message);
+      }
+    }
+
     // ═══ Open Session ═══
-    async function openSession(id) {
+    async function openSession(id, isSilent = false) {
       try {
         const res = await fetch(`/api/session/${id}`);
         const data = await res.json();
         if (!data.success) return;
 
         currentSession = data.session;
-        document.getElementById('sessions-grid-view').style.display = 'none';
-        document.getElementById('session-view').style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        if (!isSilent) {
+          document.getElementById('sessions-grid-view').style.display = 'none';
+          document.getElementById('session-view').style.display = 'block';
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
         document.getElementById('session-title').textContent = currentSession.channel;
         document.getElementById('session-meta-text').textContent =
@@ -565,11 +1639,32 @@
 
         document.getElementById('metrics-count').textContent = `${currentSession.videos.length} videos analyzed`;
 
-        renderAggregate(currentSession.videos);
         renderMetricsTable(currentSession.videos);
         renderMetricsCards(currentSession.videos);
-        renderSynthesis(currentSession.synthesis);
-        switchTab('aggregate');
+        renderSynthesis(currentSession.synthesis, currentSession.nicheBends, currentSession.sceneAnalysis, currentSession.sceneFrames);
+
+        if (!isSilent) switchTab('metrics');
+
+        // Polling logic for Live Dashboard Sync (Anti-Cache version)
+        if (currentSession.status === 'in-progress') {
+          if (!pollInterval) {
+            pollInterval = setInterval(() => {
+              if (currentSession && currentSession.status === 'in-progress') {
+                openSession(currentSession.id, true);
+                loadSessions();
+              } else {
+                clearInterval(pollInterval);
+                pollInterval = null;
+              }
+            }, 3500);
+          }
+        } else {
+          if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+          }
+        }
+
       } catch (err) { console.error('Failed to open session:', err); }
     }
 
@@ -597,6 +1692,8 @@
     document.getElementById('btn-back').addEventListener('click', () => {
       document.getElementById('session-view').style.display = 'none';
       document.getElementById('sessions-grid-view').style.display = 'block';
+      if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+      loadSessions(); // Reload data grid upon returning
       currentSession = null;
     });
 
@@ -604,65 +1701,40 @@
       if (currentSession) window.open(`/api/session/${currentSession.id}/csv`, '_blank');
     });
 
-    // ═══ Aggregate ═══
-    function renderAggregate(videos) {
-      if (!videos.length) return;
-      renderDonut('chart-hooks', countField(videos, 'hookType'), ['#7c83ff','#34d399','#fb923c','#f87171','#a78bfa','#38bdf8','#facc15','#e879f9']);
-      renderDonut('chart-storytelling', countField(videos, 'storytellingFramework'), ['#34d399','#7c83ff','#fb923c','#f87171','#a78bfa','#38bdf8','#facc15','#e879f9']);
+    document.getElementById('btn-niche-bend').addEventListener('click', () => {
+      if (currentSession) {
+        if (currentSession.nicheBends) {
+          if (!confirm("Niche bend is already generated. Do you want to generate new?")) return;
+        } else {
+          if (!confirm("Do you want to generate the niche bend?")) return;
+        }
+        window.open(`https://chatgpt.com/?niche_bend=true&sessionId=${currentSession.id}`, '_blank');
+      }
+    });
 
-      const hooks = countField(videos, 'hookType');
-      const frameworks = countField(videos, 'storytellingFramework');
-      document.getElementById('summary-stats').innerHTML = `
-        <div class="stat-row"><span class="stat-label">Videos Analyzed</span><span class="stat-value">${videos.length}</span></div>
-        <div class="stat-row"><span class="stat-label">Most Common Hook</span><span class="stat-value">${esc(hooks[0]?.name || 'N/A')}</span></div>
-        <div class="stat-row"><span class="stat-label">Hook Frequency</span><span class="stat-value">${hooks[0]?.count || 0}/${videos.length}</span></div>
-        <div class="stat-row"><span class="stat-label">Top Framework</span><span class="stat-value">${esc(frameworks[0]?.name || 'N/A')}</span></div>
-        <div class="stat-row"><span class="stat-label">JSON Parse Rate</span><span class="stat-value">${videos.filter(v => v.hookType && v.hookType !== 'Parse Failed').length}/${videos.length}</span></div>
-      `;
+    document.getElementById('btn-scene-analyzer').addEventListener('click', () => {
+      if (currentSession && currentSession.videos.length > 0) {
+        if (currentSession.sceneAnalysis) {
+          if (!confirm("Scene analysis is already generated. Do you want to generate new?")) return;
+        } else {
+          if (!confirm("Do you want to generate the scene analysis?")) return;
+        }
+        const targetVideoId = currentSession.videos[0].id || currentSession.videos[0].videoId;
+        window.open(`https://www.youtube.com/watch?v=${targetVideoId}&analyze_scene=true&sessionId=${currentSession.id}`, '_blank');
+      }
+    });
 
-      const patterns = videos.filter(v => v.retentionPattern).map(v => v.retentionPattern);
-      document.getElementById('retention-list').innerHTML = patterns.length
-        ? patterns.map((p, i) => `<div class="stat-row"><span class="stat-label">Video ${i+1}</span><span style="color:var(--text-secondary);font-size:0.8rem;max-width:200px;text-align:right">${esc(String(p).substring(0,80))}</span></div>`).join('')
-        : '<div style="padding:24px;text-align:center;color:var(--text-muted)">No retention data</div>';
-    }
+    document.getElementById('btn-close-gallery').addEventListener('click', () => {
+      document.getElementById('gallery-modal').style.display = 'none';
+    });
 
-    function countField(videos, field) {
-      const counts = {};
-      videos.forEach(v => {
-        const val = String(v[field] || '').trim();
-        if (val && val !== '-' && val !== 'Parse Failed' && val !== 'Unknown') counts[val] = (counts[val] || 0) + 1;
-      });
-      return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
-    }
 
-    function renderDonut(id, data, colors) {
-      const el = document.getElementById(id);
-      if (!data.length) { el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted)">No data</div>'; return; }
-      const size = 180, cx = size/2, cy = size/2, oR = size/2-8, iR = oR*0.58;
-      const total = data.reduce((a,d) => a + d.count, 0);
-      let svg = `<svg width="${size}" height="${size + data.length*22 + 8}" style="display:block">`;
-      let angle = -Math.PI/2;
-      data.forEach((seg, i) => {
-        const a = (seg.count/total)*2*Math.PI, ea = angle+a, la = a > Math.PI ? 1 : 0;
-        svg += `<path d="M ${cx+oR*Math.cos(angle)} ${cy+oR*Math.sin(angle)} A ${oR} ${oR} 0 ${la} 1 ${cx+oR*Math.cos(ea)} ${cy+oR*Math.sin(ea)} L ${cx+iR*Math.cos(ea)} ${cy+iR*Math.sin(ea)} A ${iR} ${iR} 0 ${la} 0 ${cx+iR*Math.cos(angle)} ${cy+iR*Math.sin(angle)} Z" fill="${colors[i%colors.length]}" opacity="0.8" style="transition:opacity 0.2s" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.8'"/>`;
-        angle = ea;
-      });
-      svg += `<text x="${cx}" y="${cy-2}" text-anchor="middle" fill="white" font-weight="800" font-size="22" font-family="'JetBrains Mono',monospace">${total}</text>`;
-      svg += `<text x="${cx}" y="${cy+14}" text-anchor="middle" fill="#555a6e" font-size="9" font-weight="600" letter-spacing="0.08em">TOTAL</text>`;
-      data.forEach((seg, i) => {
-        const y = size+12+i*22;
-        svg += `<circle cx="10" cy="${y}" r="4" fill="${colors[i%colors.length]}"/>`;
-        svg += `<text x="22" y="${y+4}" fill="#8b8fa3" font-size="12" font-family="'Inter',sans-serif">${esc(seg.name)} <tspan fill="#555a6e">(${seg.count})</tspan></text>`;
-      });
-      svg += '</svg>';
-      el.innerHTML = svg;
-    }
 
     // ═══ Metrics Table ═══
     function renderMetricsTable(videos) {
       document.getElementById('metrics-tbody').innerHTML = videos.map((v, i) => `
         <tr>
-          <td style="font-weight:700;color:var(--accent-primary);font-family:var(--font-mono)">${v.stepNumber||v.videoNumber||i+1}</td>
+          <td style="font-weight:700;color:var(--accent-primary);font-family:var(--font-mono)">${v.stepNumber || v.videoNumber || i + 1}</td>
           <td style="font-weight:600;color:var(--text-primary)">${esc(v.title)}</td>
           <td><span class="hook-badge">${esc(v.hookType)}</span></td>
           <td><div class="cell-expand" onclick="this.classList.toggle('expanded')">${esc(v.hookText)}</div></td>
@@ -689,7 +1761,7 @@
           ['Key Takeaways', v.keyTakeaways], ['Thumbnail', v.thumbnailDescription]
         ];
         return `<div class="v-card">
-          <div class="v-card-top"><span class="v-card-num">#${v.stepNumber||v.videoNumber||i+1}</span><span class="hook-badge">${esc(v.hookType)}</span></div>
+          <div class="v-card-top"><span class="v-card-num">#${v.stepNumber || v.videoNumber || i + 1}</span><span class="hook-badge">${esc(v.hookType)}</span></div>
           <div class="v-card-title">${esc(v.title)}</div>
           ${fields.map(([label, val]) => val ? `<div class="v-card-section"><div class="v-card-label">${label}</div><div class="v-card-value">${esc(val)}</div></div>` : '').join('')}
           ${v.rawResponse ? `<div class="v-card-divider"></div><details class="v-card-raw"><summary>Raw ChatGPT Response</summary><div class="v-card-raw-content">${esc(v.rawResponse)}</div></details>` : ''}
@@ -698,18 +1770,145 @@
     }
 
     // ═══ Synthesis ═══
-    function renderSynthesis(text) {
+    function renderSynthesis(text, bendsText) {
       const el = document.getElementById('synthesis-content');
-      if (!text) { el.innerHTML = '<div class="synthesis-empty"><div class="synthesis-empty-icon">&#x1F4DD;</div><p>No synthesis generated yet.<br>Complete all video analyses to generate the master SOP.</p></div>'; return; }
-      let html = text
-        .replace(/^### (.+)$/gm, '<h3>$1</h3>').replace(/^## (.+)$/gm, '<h2>$1</h2>').replace(/^# (.+)$/gm, '<h1>$1</h1>')
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/^[•\-] (.+)$/gm, '<li>$1</li>').replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-        .replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-      el.innerHTML = '<p>' + html + '</p>';
+      const bendsEl = document.getElementById('niche-bends-content');
+      const bendsCard = document.getElementById('niche-bends-card');
+
+      const formatMarkdown = (md) => {
+        let lines = md.split('\n');
+        let html = '';
+        let inList = false;
+
+        lines.forEach(line => {
+          let trimmed = line.trim();
+
+          let formattedLine = trimmed
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/_(.*?)_/g, '<em>$1</em>')
+            .replace(/`(.*?)`/g, '<code>$1</code>');
+
+          if (/^#\s+(.*)/.test(trimmed)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += `<div class="sop-section-title"><span class="sop-icon">📦</span>${formattedLine.replace(/^#\s+/, '')}</div>`;
+          }
+          else if (/^##\s+(.*)/.test(trimmed)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += `<div class="sop-subsection-title">${formattedLine.replace(/^##\s+/, '')}</div>`;
+          }
+          else if (/^###\s+(.*)/.test(trimmed)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += `<h3 class="sop-h3">${formattedLine.replace(/^###\s+/, '')}</h3>`;
+          }
+          else if (/^(?:-|\*|•|\+)\s+(.*)/.test(trimmed)) {
+            if (!inList) { html += '<ul class="sop-ul">'; inList = true; }
+            html += `<li><span class="sop-bullet"></span>${formattedLine.replace(/^(?:-|\*|•|\+)\s+/, '')}</li>`;
+          }
+          else if (/^\d+\.\s+(.*)/.test(trimmed)) {
+            if (!inList) { html += '<ul class="sop-ul">'; inList = true; }
+            html += `<li><strong>${trimmed.match(/^\d+\./)[0]}</strong> ${formattedLine.replace(/^\d+\.\s+/, '')}</li>`;
+          }
+          else if (/^>/.test(trimmed)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += `<blockquote class="sop-quote">${formattedLine.replace(/^>\s*/, '')}</blockquote>`;
+          }
+          else if (trimmed === '') {
+            if (inList) { html += '</ul>'; inList = false; }
+          }
+          else if (/^---/.test(trimmed) || /^___/.test(trimmed)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<div class="sop-divider"></div>';
+          }
+          else {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += `<p class="sop-p">${formattedLine}</p>`;
+          }
+        });
+        if (inList) html += '</ul>';
+        return html;
+      };
+
+      if (!text) {
+        el.innerHTML = '<div class="synthesis-empty"><div class="synthesis-empty-icon">&#x1F4DD;</div><p>No synthesis generated yet.<br>Complete all video analyses to generate the master SOP.</p></div>';
+      } else {
+        el.innerHTML = formatMarkdown(text);
+      }
+
+      if (!bendsText) {
+        bendsEl.innerHTML = '<div class="synthesis-empty"><p>No niche bends generated yet.<br>Click "🔥 Niche Bender" (top right) to extract the strategic frameworks.</p></div>';
+      } else {
+        const lines = bendsText.split('\n');
+        const bendsList = [];
+        let currentBend = null;
+
+        lines.forEach(line => {
+          const trimmed = line.trim();
+          if (!trimmed) return;
+
+          if (/^(?:\*\*?)?\d+\.\s+/.test(trimmed)) {
+            if (currentBend && currentBend.items.length > 0) bendsList.push(currentBend);
+            let title = trimmed.replace(/^(?:\*\*?)?\d+\.\s+/, '').replace(/:?\*?\*?$/, '').trim();
+            title = title.replace(/^\[/, '').replace(/\]$/, '');
+            currentBend = { title, items: [] };
+          }
+          else if (currentBend && /^(?:→|\-|\*|•)\s+/.test(trimmed)) {
+            currentBend.items.push(trimmed.replace(/^(?:→|\-|\*|•)\s+/, '').trim());
+          }
+        });
+        if (currentBend && currentBend.items.length > 0) bendsList.push(currentBend);
+
+        if (bendsList.length > 0) {
+          let gridHtml = '<div class="niche-grid">';
+          bendsList.forEach((b, i) => {
+            gridHtml += `
+              <div class="niche-card">
+                <div class="niche-card-number">Concept ${i + 1}</div>
+                <div class="niche-card-title">${esc(b.title)}</div>
+                <ul class="niche-card-list">
+                  ${b.items.map(item => `<li>${esc(item)}</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          });
+          gridHtml += '</div>';
+          bendsEl.innerHTML = gridHtml;
+        } else {
+          // Fallback if parsing fails to find the structure
+          bendsEl.innerHTML = '<p>' + formatMarkdown(bendsText) + '</p>';
+        }
+      }
+
+      const sceneEl = document.getElementById('scene-analysis-content');
+
+      if (sceneAnalysis || (sceneFrames && sceneFrames.length > 0)) {
+        let framesPreview = '';
+        if (sceneFrames && sceneFrames.length > 0) {
+          // Cinematic Channel Art Strip (Anti-Escape version)
+          const galleryHtml = sceneFrames.map(src => `<img src='${src}' style='max-height:80vh; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.5);'>`).join('').replace(/'/g, "&apos;");
+          framesPreview = `
+            <div style="display:flex; width:100%; height:180px; border-radius:12px; overflow:hidden; margin-bottom:16px; cursor:pointer; box-shadow:0 10px 30px rgba(0,0,0,0.4);" class="scene-frames-preview" onclick="document.getElementById('gallery-container').innerHTML = '${galleryHtml}'; document.getElementById('gallery-modal').style.display='flex';">
+              ${sceneFrames.map(src => `<img src="${src}" style="flex:1; object-fit:cover; min-width:0; transition: transform 0.3s ease, filter 0.3s ease;" onmouseover="this.style.transform='scale(1.08)'; this.style.filter='brightness(1.2)';" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)';">`).join('')}
+            </div>
+            <div style="margin-bottom: 24px;">
+              <button class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 14px;" onclick="document.querySelector('.scene-frames-preview').click()">📁 Open High-Res Frame Gallery</button>
+            </div>
+          `;
+        }
+
+        sceneEl.innerHTML = framesPreview + formatMarkdown(sceneAnalysis || "No text analysis provided.");
+        sceneEl.innerHTML += `
+          <div style="margin-top: 24px; text-align: right; border-top: 1px solid var(--border); padding-top: 16px;">
+            <button class="btn btn-primary" style="display:inline-flex; align-items:center; gap:8px;" onclick="navigator.clipboard.writeText(\`${(sceneAnalysis || '').replace(/`/g, '\\`')}\`); this.innerHTML='&#10003; Copied!'; setTimeout(()=>this.innerHTML='📋 Copy Vision Prompt', 2000);">📋 Copy Vision Prompt</button>
+          </div>
+        `;
+      } else {
+        sceneEl.innerHTML = '<div class="synthesis-empty"><p>No scene analysis available yet.<br>Click "👁️ Analyze Scene" to extract styles from the top video.</p></div>';
+      }
     }
 
     loadSessions();
   </script>
 </body>
+
 </html>

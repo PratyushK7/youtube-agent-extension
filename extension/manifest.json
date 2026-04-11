@@ -12,6 +12,7 @@
   "host_permissions": [
     "https://*.youtube.com/*",
     "https://*.chatgpt.com/*",
+    "https://gemini.google.com/*",
     "http://localhost:3005/*",
     "http://127.0.0.1:3005/*",
     "<all_urls>"
@@ -28,6 +29,10 @@
     {
       "matches": ["https://*.chatgpt.com/*"],
       "js": ["content_chatgpt.js"]
+    },
+    {
+      "matches": ["https://gemini.google.com/*"],
+      "js": ["content_gemini.js"]
     }
   ],
   "action": {

@@ -159,3 +159,46 @@ function injectAnalyzerButton() {
 setInterval(() => {
   injectAnalyzerButton();
 }, 2000);
+
+// Auto-navigate to first search result if requested by Dashboard
+{
+  const searchUrlParams = new URLSearchParams(window.location.search);
+  if (window.location.pathname === '/results' && searchUrlParams.get('analyze_scene') === 'true') {
+    showStatusHUD('🔍 Finding video...');
+    
+    function navigateToVideo(firstVideo) {
+      if (window.hasNavigated) return;
+      window.hasNavigated = true;
+      let targetHref = firstVideo.href;
+      targetHref += targetHref.includes('?') ? '&' : '?';
+      targetHref += `analyze_scene=true&sessionId=${searchUrlParams.get('sessionId')}`;
+      
+      // Inject to native DOM just in case the user clicks it manually
+      firstVideo.href = targetHref;
+      
+      setTimeout(() => {
+        showStatusHUD('🚀 Redirecting to Player...');
+        window.location.href = targetHref;
+        // Hard fallback if SPA blocks it
+        setTimeout(() => { window.location.assign(targetHref); }, 500);
+      }, 800);
+    }
+
+    const observer = new MutationObserver(() => {
+      const firstVideo = document.querySelector('ytd-video-renderer a#thumbnail, ytd-video-renderer a#video-title');
+      if (firstVideo && firstVideo.href && firstVideo.href.includes('/watch')) {
+        observer.disconnect();
+        navigateToVideo(firstVideo);
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    setTimeout(() => {
+      const firstVideo = document.querySelector('ytd-video-renderer a#thumbnail, ytd-video-renderer a#video-title');
+      if (firstVideo && firstVideo.href && firstVideo.href.includes('/watch')) {
+        observer.disconnect();
+        navigateToVideo(firstVideo);
+      }
+    }, 1500);
+  }
+}

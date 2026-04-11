@@ -85,7 +85,7 @@ document.getElementById('view-db').onclick = () => {
 };
 
 async function checkSOP() {
-  const data = await chrome.storage.local.get(['sessionId', 'isSequential']);
+  const data = await chrome.storage.local.get(['sessionId', 'isSequential', '_bgState']);
   const statusEl = document.getElementById('sop-status');
   if (statusEl) {
     if (data.isSequential && data.sessionId) {
@@ -97,6 +97,20 @@ async function checkSOP() {
     } else {
       statusEl.innerText = 'NONE';
       statusEl.style.color = '#aaa';
+    }
+  }
+
+  const resumeBtn = document.getElementById('resume-session');
+  if (data._bgState && data._bgState.queue && data._bgState.queue.length > 0 && data._bgState.currentIndex < data._bgState.queue.length) {
+    if (resumeBtn) {
+      resumeBtn.style.display = 'flex';
+      resumeBtn.onclick = () => {
+        chrome.runtime.sendMessage({ action: 'RESUME_SEQUENTIAL' }, (response) => {
+          if(response && response.success) {
+            window.close(); // Close popup
+          }
+        });
+      };
     }
   }
 }

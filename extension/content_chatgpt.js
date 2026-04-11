@@ -59,7 +59,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     automateChatGPT(request.retryAttempt || 0);
   }
   if (request.action === 'FINAL_SYNTHESIS') {
-    generateMasterDossier(request.channelName, request.sessionId);
+    generateMasterDossier(request.channelName, request.totalSteps);
   }
 });
 
@@ -318,11 +318,13 @@ async function automateChatGPT(retryAttempt = 0) {
   }, 2500); 
 }
 
-async function generateMasterDossier(channelName, sessionId) {
-  const data = await chrome.storage.local.get(['totalSteps', 'sessionId']);
-  const total = data.totalSteps || 10;
-  const sid = sessionId || data.sessionId;
-  updateProgressBar(total, total); // Final state
+async function generateMasterDossier(channelName, passedTotalSteps) {
+  console.log('YT-to-AI: Initiating Final Synthesis Phase...');
+  
+  const data = await chrome.storage.local.get(['sessionId']);
+  const total = passedTotalSteps || 1;
+  const sid = channelName || data.sessionId;
+  updateProgressBar(total, total); // Reflect 100% completion based on actual count
   
   const waitForInput = () => new Promise((resolve, reject) => {
     let elapsed = 0;
@@ -355,6 +357,217 @@ async function generateMasterDossier(channelName, sessionId) {
 }
 
 // Init
+async function handleNicheBendTrigger(sessionId) {
+  console.log('YT-to-AI: Initiating Niche Bender Bridge for session:', sessionId);
+  showToast('Niche Bender Triggered. Fetching Dossier...');
+  
+  try {
+    const sessionRes = await fetch(`http://127.0.0.1:3005/api/session/${sessionId}`);
+    const sessionData = await sessionRes.json();
+    if (!sessionData.success) throw new Error('Could not fetch session');
+    
+    const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
+    const promptsData = await promptsRes.json();
+    const benderPrompt = promptsData.find(p => p.id === 'niche-bending.txt')?.content;
+    
+    if (!benderPrompt) throw new Error('niche-bending.txt not found');
+    
+    const metricsStr = JSON.stringify(sessionData.session.videos, null, 2);
+    const synthesisStr = sessionData.session.synthesis || '[No Master Synthesis Available - Proceeding with Video Metrics]';
+    
+    const finalInjection = `[MEGA-PROMPT INJECTION: YT RESEARCH DOSSIER -> NICHE BENDER]\n\n` +
+      `Here is the verified Strategic Dossier for: ${sessionData.session.channel}\n\n` +
+      `### MASTER REVERSE ENGINEERING REPORT:\n` +
+      `${synthesisStr}\n\n` +
+      `### RAW VIDEO METRICS:\n` +
+      `\`\`\`json\n${metricsStr}\n\`\`\`\n\n` +
+      `---\n\n` +
+      `EXECUTE THE FOLLOWING SYSTEM PROTOCOL USING THE DATA ABOVE AS THE 'PROVEN FORMAT':\n\n` +
+      `${benderPrompt}`;
+      
+    const waitForInput = () => new Promise((resolve, reject) => {
+      let elapsed = 0;
+      const int = setInterval(() => {
+        const input = document.querySelector('#prompt-textarea, [contenteditable="true"][data-placeholder]');
+        if (input) { clearInterval(int); resolve(input); }
+        elapsed += 500;
+        if (elapsed > 15000) { clearInterval(int); reject(new Error('Input not found')); }
+      }, 500);
+    });
+    
+    const promptInput = await waitForInput();
+    promptInput.focus();
+    document.execCommand('insertText', false, finalInjection);
+    
+    setTimeout(() => {
+      const sendBtn = document.querySelector('button[data-testid="send-button"]') || 
+                      document.querySelector('button[aria-label="Send prompt"]') ||
+                      document.querySelector('form button[type="submit"]') ||
+                      document.querySelector('button.bg-black');
+      if (sendBtn && !sendBtn.disabled) {
+        sendBtn.click();
+        monitorNicheBendResponse(sessionId);
+      }
+    }, 1500);
+
+  } catch (err) {
+    console.error('Niche Bender failed:', err);
+    showToast('Error: ' + err.message);
+  }
+}
+
+async function monitorNicheBendResponse(sessionId) {
+  console.log('YT-to-AI: Monitor Active for Niche Bender...');
+  let lastText = '';
+  let stabilityCount = 0;
+  let tickCount = 0;
+  let handled = false;
+  const MAX_TICKS = 150; // 5 minutes (15 bends takes longer)
+  
+  const interval = setInterval(() => {
+    if (handled) return;
+    tickCount++;
+    const messages = document.querySelectorAll('div[data-message-author-role="assistant"]');
+    if (messages.length === 0) return;
+    
+    const currentText = messages[messages.length - 1].innerText;
+    const isGenerating = !!document.querySelector('button[aria-label="Stop generating"], button[aria-label="Stop streaming"], [data-testid="stop-button"]');
+    
+    if (currentText === lastText && currentText.length > 50) {
+      stabilityCount++;
+    } else {
+      stabilityCount = 0;
+    }
+
+    if (stabilityCount >= 3 && !isGenerating) {
+      handled = true;
+      clearInterval(interval);
+      chrome.runtime.sendMessage({ action: 'SAVE_NICHE_BENDS', sessionId, nicheBends: currentText }, (response) => {
+        if (response && response.success) {
+          showToast('15 Niche Bends Saved to Dashboard ✓');
+        } else {
+          showToast('Failed to save Bends ⚠');
+        }
+      });
+    } else if (tickCount > MAX_TICKS) {
+      handled = true;
+      clearInterval(interval);
+      chrome.runtime.sendMessage({ action: 'SAVE_NICHE_BENDS', sessionId, nicheBends: currentText }, (response) => {
+        showToast('Niche Bends Saved (Timeout) ✓');
+      });
+    }
+    
+    lastText = currentText;
+  }, 2000);
+}
+
+async function handleSceneAnalyzerTrigger(sessionId) {
+  showToast('Initializing Vision AI Pipeline...');
+  
+  try {
+    const el = await waitForElm('#prompt-textarea');
+    el.focus();
+
+    // Fetch the stored session to get the frame paths
+    const sessRes = await fetch(`http://127.0.0.1:3005/api/session/${sessionId}`);
+    const sessData = await sessRes.json();
+    if (!sessData.success || !sessData.session.sceneFrames || sessData.session.sceneFrames.length === 0) {
+      throw new Error("No Scene Frames found on server.");
+    }
+    
+    showToast('Injecting 5 Cinematic Frames...');
+    
+    // Construct Multi-Image Paste Event
+    const dt = new DataTransfer();
+    for (let i = 0; i < sessData.session.sceneFrames.length; i++) {
+        const url = `http://127.0.0.1:3005${sessData.session.sceneFrames[i]}`;
+        const res = await fetch(url);
+        const blob = await res.blob();
+        const file = new File([blob], `scene_${i}.png`, { type: 'image/png' });
+        dt.items.add(file);
+    }
+
+    const pasteEvent = new ClipboardEvent('paste', {
+      clipboardData: dt,
+      bubbles: true,
+      cancelable: true
+    });
+    el.dispatchEvent(pasteEvent);
+    
+    // Let DOM update the image preview thumbnails
+    await new Promise(r => setTimeout(r, 2000));
+
+    // Fetch Prompt
+    const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
+    const prompts = await promptsRes.json();
+    const scenePrompt = prompts.find(p => p.id === 'scene-analyzer.txt');
+    const promptText = scenePrompt ? scenePrompt.content : "Analyze these images and tell me the composition.";
+
+    document.execCommand('insertText', false, promptText);
+    
+    setTimeout(() => {
+      const sendBtn = document.querySelector('button[data-testid="send-button"]') || 
+                      document.querySelector('button[aria-label="Send prompt"]') ||
+                      document.querySelector('button.bg-black');
+      if (sendBtn && !sendBtn.disabled) {
+        showToast('Running Multi-Modal Analysis...');
+        sendBtn.click();
+        monitorSceneAnalyzerResponse(sessionId);
+      }
+    }, 1500);
+
+  } catch (err) {
+    console.error('Scene Analyzer failed:', err);
+    showToast('Error: ' + err.message);
+  }
+}
+
+async function monitorSceneAnalyzerResponse(sessionId) {
+  let lastText = '';
+  let stabilityCount = 0;
+  let tickCount = 0;
+  let handled = false;
+  const MAX_TICKS = 150;
+  
+  const interval = setInterval(async () => {
+    if (handled) return;
+    tickCount++;
+    const messages = document.querySelectorAll('div[data-message-author-role="assistant"]');
+    if (messages.length === 0) return;
+    
+    const currentText = messages[messages.length - 1].innerText;
+    const isGenerating = !!document.querySelector('button[aria-label="Stop generating"], button[aria-label="Stop streaming"], [data-testid="stop-button"]');
+    
+    if (currentText === lastText && currentText.length > 50) stabilityCount++;
+    else stabilityCount = 0;
+
+    if ((stabilityCount >= 3 && !isGenerating) || tickCount > MAX_TICKS) {
+      handled = true;
+      clearInterval(interval);
+      try {
+        await fetch(`http://127.0.0.1:3005/api/session/${sessionId}/scene-analysis`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sceneAnalysis: currentText })
+        });
+        showToast(tickCount > MAX_TICKS ? 'Vision Analysis Saved (Timeout) ✓' : 'Vision Analysis Saved to Dashboard ✓');
+      } catch (err) {
+        showToast('Failed to save Vision Analysis ⚠');
+      }
+    }
+    lastText = currentText;
+  }, 2000);
+}
+
 window.addEventListener('load', () => {
-  chrome.storage.local.get(['pendingAnalysis'], (d) => { if (d.pendingAnalysis) automateChatGPT(); });
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('niche_bend') === 'true') {
+    const sessionId = params.get('sessionId');
+    if (sessionId) handleNicheBendTrigger(sessionId);
+  } else if (params.get('scene_analyze') === 'true') {
+    const sessionId = params.get('sessionId');
+    if (sessionId) handleSceneAnalyzerTrigger(sessionId);
+  } else {
+    chrome.storage.local.get(['pendingAnalysis'], (d) => { if (d.pendingAnalysis) automateChatGPT(); });
+  }
 });
