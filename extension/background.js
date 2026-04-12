@@ -292,7 +292,8 @@ async function handleVideoReady(request, sender) {
       prompt: `[SEQUENTIAL ANALYSIS STEP ${state.currentIndex + 1}/${state.queue.length}]\n\n` + 
               `VIDEO TITLE: ${request.videoTitle}\n` +
               `TRANSCRIPT:\n${request.transcript}\n\n` +
-              `INSTRUCTION: Analyze this video completely. Return a JSON object with these fields: videoNumber, title, hookType, hookText, hookFramework, openingStructure, scriptStructure, storytellingFramework, rehooksUsed, retentionPattern, ctaPlacement, keyTakeaways, thumbnailDescription, titleStrategy, thumbnailStrategy.\n\n` +
+              `INSTRUCTION: Analyze this video completely. Return ONLY a single pure JSON object. No conversational filler, no introductions, no closing remarks. Just the JSON.\n\n` +
+              `JSON Fields: videoNumber, title, hookType, hookText, hookFramework, openingStructure, scriptStructure, storytellingFramework, rehooksUsed, retentionPattern, ctaPlacement, keyTakeaways, thumbnailDescription, titleStrategy, thumbnailStrategy.\n\n` +
               `---\n\n${state.basePrompt}`
     };
 

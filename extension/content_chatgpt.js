@@ -67,6 +67,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // Multi-stage extraction: never discard data silently
 
 function extractVideoJSON(text) {
+  // Ultra-Resilient Stage: Find any block that looks like { ... "hookType" ... }
+  try {
+    const blockMatch = text.match(/\{[\s\S]*?"hookType"[\s\S]*?\}/);
+    if (blockMatch) {
+       // Deep Clean: sometimes AI adds markdown code fences inside the match
+       let cleaned = blockMatch[0].replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+       try {
+         const parsed = JSON.parse(cleaned);
+         console.log('YT-to-AI: JSON extracted via ultra-resilient object match.');
+         return { success: true, data: parsed, raw: text };
+       } catch (jsonErr) {
+         // Fallback: try to fix common JSON errors like trailing commas
+         let fixed = cleaned.replace(/,\s*([\]}])/g, '$1');
+         try {
+           const parsedFixed = JSON.parse(fixed);
+           return { success: true, data: parsedFixed, raw: text };
+         } catch (e) {}
+       }
+    }
+  } catch (e) {}
+
   // Stage 1: Try to find a JSON array [{...}, ...]
   try {
     const arrayMatch = text.match(/\[\s*\{[\s\S]*?\}\s*\]/);
@@ -79,38 +100,18 @@ function extractVideoJSON(text) {
     }
   } catch (e) {}
 
-  // Stage 2: Try to find a single JSON object {...}
+  // Stage 2: Last-Ditch substring capture
   try {
-    const objMatch = text.match(/\{[\s\S]*?"hookType"[\s\S]*?\}/);
-    if (objMatch) {
-      const parsed = JSON.parse(objMatch[0]);
-      console.log('YT-to-AI: JSON extracted via single object match.');
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      const candidate = text.substring(firstBrace, lastBrace + 1);
+      const parsed = JSON.parse(candidate);
+      console.log('YT-to-AI: JSON extracted via last-ditch substring.');
       return { success: true, data: parsed, raw: text };
     }
   } catch (e) {}
 
-  // Stage 3: Strip markdown code fences and retry
-  try {
-    const cleaned = text.replace(/```json?\s*\n?/g, '').replace(/```\s*/g, '').trim();
-    // Try array
-    const arrayMatch = cleaned.match(/\[\s*\{[\s\S]*?\}\s*\]/);
-    if (arrayMatch) {
-      const parsed = JSON.parse(arrayMatch[0]);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        console.log('YT-to-AI: JSON extracted after stripping code fences (array).');
-        return { success: true, data: parsed[0], raw: text };
-      }
-    }
-    // Try object
-    const objMatch = cleaned.match(/\{[\s\S]*?"hookType"[\s\S]*?\}/);
-    if (objMatch) {
-      const parsed = JSON.parse(objMatch[0]);
-      console.log('YT-to-AI: JSON extracted after stripping code fences (object).');
-      return { success: true, data: parsed, raw: text };
-    }
-  } catch (e) {}
-
-  // Stage 4: Extraction failed — return raw text as fallback
   console.warn('YT-to-AI: JSON extraction failed. Storing raw response.');
   return { success: false, data: null, raw: text };
 }

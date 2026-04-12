@@ -6,7 +6,7 @@ You must perform **video-level analysis**, not surface-level inference.
 
 ## INPUT:
 
-A list of YouTube video URLs (mix of popular + recent).
+A list of popular youtube videos deep analysis
 
 ---
 
@@ -50,9 +50,9 @@ For EACH video:
 
 ## OUTPUT FORMAT:
 
-Return a **JSON array** with one object per video.
+Return a **single structured .md file** containing one section per video.
 
-Each object must contain:
+Each video section must contain:
 
 {
 "videoNumber": Number,
@@ -95,10 +95,19 @@ Each object must contain:
 
 ## FINAL STEP: MASTER SYNTHESIS
 
-After providing the JSON array for individual videos, you will be asked for a **Master Strategic SOP**. 
+After providing all video analyses, include a **Master Strategic SOP at the end of the SAME .md file**. 
 
 **Requirement for Master SOP (Synthesis):**
 - create a .md file with proper structuring and ease of reading
+- include:
+  1. Channel Identity & Positioning
+  2. Content Strategy Patterns
+  3. Hook Engineering Summary (most common types, best performers)
+  4. Retention Strategy Overview
+  5. Storytelling Framework Analysis
+  6. CTA Strategy
+  7. Actionable Recommendations
+
 ---
 
 ## STRICT RULES:
@@ -108,6 +117,9 @@ After providing the JSON array for individual videos, you will be asked for a **
 * DO NOT skip timestamps — you must simulate real viewing behavior
 * Prioritize **precision over speed**
 * Think like a **top 0.1% YouTube strategist**
+* DO NOT output JSON separately
+* DO NOT split output into multiple responses
+* EVERYTHING must be inside **ONE SINGLE .md FILE OUTPUT**
 
 ---
 
