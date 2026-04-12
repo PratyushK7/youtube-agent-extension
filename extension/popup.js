@@ -1,4 +1,25 @@
 const promptSelect = document.getElementById('prompt-select');
+const openYouTubeButton = document.getElementById('open-yt');
+const dashboardButton = document.getElementById('view-db');
+
+function setLoading(button, isLoading) {
+  if (!button) return;
+  button.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+  button.disabled = Boolean(isLoading);
+}
+
+function showToast(message, variant = 'success') {
+  const stack = document.getElementById('toast-stack');
+  if (!stack) return;
+
+  const toast = document.createElement('div');
+  toast.className = 'ds-toast';
+  toast.dataset.variant = variant;
+  toast.textContent = message;
+  stack.appendChild(toast);
+
+  window.setTimeout(() => toast.remove(), 2400);
+}
 
 async function loadPrompts() {
   try {
@@ -7,56 +28,54 @@ async function loadPrompts() {
 
     const res = await fetch('http://127.0.0.1:3005/api/prompts', { signal: controller.signal });
     clearTimeout(timeoutId);
-    
+
     const prompts = await res.json();
     let optionsHtml = '';
-    
-    const master = prompts.find(p => p.id === 'master_analysis.txt');
+
+    const master = prompts.find((p) => p.id === 'master_analysis.txt');
     if (master) {
       optionsHtml += `
         <optgroup label="Deep Research Engine">
-          <option value="${master.id}" data-content="${encodeURIComponent(master.content).replace(/'/g, "&apos;")}">
+          <option value="${master.id}" data-content="${encodeURIComponent(master.content).replace(/'/g, '&apos;')}">
             FULL CHANNEL METRICS (STRATEGIC SOP)
           </option>
         </optgroup>`;
     }
-    
-    const tools = prompts.filter(p => !p.id.includes('master_analysis'));
+
+    const tools = prompts.filter((p) => !p.id.includes('master_analysis'));
     if (tools.length > 0) {
-      optionsHtml += `<optgroup label="Analytical Tools">`;
-      optionsHtml += tools.map(p => `
-        <option value="${p.id}" data-content="${encodeURIComponent(p.content).replace(/'/g, "&apos;")}">
+      optionsHtml += '<optgroup label="Analytical Tools">';
+      optionsHtml += tools.map((p) => `
+        <option value="${p.id}" data-content="${encodeURIComponent(p.content).replace(/'/g, '&apos;')}">
           ${p.name.toUpperCase()}
         </option>
       `).join('');
-      optionsHtml += `</optgroup>`;
+      optionsHtml += '</optgroup>';
     }
-    
+
     promptSelect.innerHTML = optionsHtml;
-    
-    // Load last used and SYNC with latest server content
+
     const saved = await chrome.storage.local.get('selectedPromptId');
     if (saved.selectedPromptId) {
       promptSelect.value = saved.selectedPromptId;
-      
-      // Force update the activePrompt content if it exists in the new list
-      const latest = prompts.find(p => p.id === saved.selectedPromptId);
+      const latest = prompts.find((p) => p.id === saved.selectedPromptId);
       if (latest) {
         await chrome.storage.local.set({ activePrompt: latest.content });
-        console.log('Popup: Synced activePrompt with latest server content.');
       }
     } else {
-      promptSelect.dispatchEvent(new Event('change')); 
+      promptSelect.dispatchEvent(new Event('change'));
     }
   } catch (e) {
     console.error('Popup: Connection to local server failed.', e);
     promptSelect.innerHTML = '<option value="">ERROR: Run .command on Desktop</option>';
-    const statusEl = document.querySelector('.stat span:last-child');
+
+    const statusEl = document.getElementById('sop-status');
     if (statusEl) {
-      statusEl.style.color = '#ff4444';
-      statusEl.style.fontWeight = 'bold';
-      statusEl.innerText = 'OFFLINE (Wake server)';
+      statusEl.className = 'stat-val offline';
+      statusEl.innerText = 'OFFLINE';
     }
+
+    showToast('Server offline. Start local backend.', 'warning');
   }
 }
 
@@ -65,23 +84,30 @@ promptSelect.onchange = async () => {
     if (!promptSelect.selectedOptions || promptSelect.selectedOptions.length === 0) return;
     const option = promptSelect.selectedOptions[0];
     if (!option.getAttribute('data-content')) return;
-    
+
     const content = decodeURIComponent(option.getAttribute('data-content'));
-    await chrome.storage.local.set({ 
+    await chrome.storage.local.set({
       selectedPromptId: promptSelect.value,
-      activePrompt: content
+      activePrompt: content,
     });
   } catch (err) {
     console.error('Popup: Failed to save selected prompt:', err);
+    showToast('Unable to save prompt selection.', 'danger');
   }
 };
 
-document.getElementById('open-yt').onclick = () => {
-  chrome.tabs.create({ url: 'https://youtube.com' });
+openYouTubeButton.onclick = () => {
+  setLoading(openYouTubeButton, true);
+  chrome.tabs.create({ url: 'https://youtube.com' }, () => {
+    setLoading(openYouTubeButton, false);
+  });
 };
 
-document.getElementById('view-db').onclick = () => {
-  chrome.tabs.create({ url: 'http://127.0.0.1:3005/dashboard.html' });
+dashboardButton.onclick = () => {
+  setLoading(dashboardButton, true);
+  chrome.tabs.create({ url: 'http://127.0.0.1:3005/dashboard.html' }, () => {
+    setLoading(dashboardButton, false);
+  });
 };
 
 async function checkSOP() {
@@ -90,13 +116,13 @@ async function checkSOP() {
   if (statusEl) {
     if (data.isSequential && data.sessionId) {
       statusEl.innerText = 'IN PROGRESS';
-      statusEl.style.color = '#fb923c';
+      statusEl.className = 'stat-val progress';
     } else if (data.sessionId) {
       statusEl.innerText = 'LOADED';
-      statusEl.style.color = '#10a37f';
+      statusEl.className = 'stat-val online';
     } else {
       statusEl.innerText = 'NONE';
-      statusEl.style.color = '#aaa';
+      statusEl.className = 'stat-val none';
     }
   }
 
@@ -105,9 +131,13 @@ async function checkSOP() {
     if (resumeBtn) {
       resumeBtn.style.display = 'flex';
       resumeBtn.onclick = () => {
+        setLoading(resumeBtn, true);
         chrome.runtime.sendMessage({ action: 'RESUME_SEQUENTIAL' }, (response) => {
-          if(response && response.success) {
-            window.close(); // Close popup
+          if (response && response.success) {
+            window.close();
+          } else {
+            setLoading(resumeBtn, false);
+            showToast('Unable to resume session.', 'warning');
           }
         });
       };

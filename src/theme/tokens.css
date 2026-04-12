@@ -1,0 +1,33 @@
+@import url('../../design-system/foundation.css');
+
+:root {
+  color-scheme: dark;
+
+  /* Semantic colors */
+  --color-bg-page: #07080c;
+  --color-bg-surface: #111320;
+  --color-bg-surface-elevated: #1a1e30;
+  --color-bg-muted: #0d0f16;
+
+  --color-text-default: #f0f1f5;
+  --color-text-muted: #8b8fa3;
+  --color-text-subtle: #555a6e;
+
+  --color-border-default: rgba(255, 255, 255, 0.08);
+  --color-border-muted: rgba(255, 255, 255, 0.05);
+  --color-border-strong: rgba(255, 255, 255, 0.18);
+
+  --color-brand: var(--color-primary-400);
+  --color-brand-hover: #9399ff;
+  --color-success: var(--color-success-500);
+  --color-warning: var(--color-warning-500);
+  --color-danger: var(--color-danger-500);
+
+  --focus-ring: var(--shadow-focus);
+  --gradient-brand: linear-gradient(135deg, #7c83ff, #a78bfa, #38bdf8);
+
+  /* Component-level defaults */
+  --component-height-sm: 2rem;
+  --component-height-md: 2.5rem;
+  --component-height-lg: 2.75rem;
+}
