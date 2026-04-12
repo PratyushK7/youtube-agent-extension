@@ -1,0 +1,79 @@
+/* Shared UI tokens + utilities for popup and injected HUD controls */
+:root {
+  --ui-bg: #07080c;
+  --ui-surface: #111320;
+  --ui-surface-elevated: #181b2b;
+  --ui-border: rgba(255, 255, 255, 0.14);
+  --ui-text: #f6f7fb;
+  --ui-text-muted: #b6bdd4;
+  --ui-text-soft: #9aa3bf;
+  --ui-primary: #8d93ff;
+  --ui-primary-2: #b69bff;
+  --ui-focus: #64d2ff;
+  --ui-success: #34d399;
+  --ui-warn: #fb923c;
+  --ui-danger: #f87171;
+  --ui-radius-md: 10px;
+  --ui-radius-lg: 14px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 20px;
+  --ui-hit-min: 44px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+:where(button, [role='button'], input, select, textarea, a, summary):focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(100, 210, 255, 0.25);
+}
+
+:where(button, select, input, a, [role='button']) {
+  min-height: var(--ui-hit-min);
+}
+
+.ui-shell {
+  width: min(100%, 400px);
+  margin-inline: auto;
+}
+
+.ui-stack-2 > * + * { margin-top: var(--ui-space-2); }
+.ui-stack-3 > * + * { margin-top: var(--ui-space-3); }
+.ui-stack-4 > * + * { margin-top: var(--ui-space-4); }
+
+.ui-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ui-space-3);
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --ui-space-4: 14px;
+    --ui-space-5: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ui-shell { width: min(100%, 100vw - 20px); }
+  .ui-grid-2 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --ui-hit-min: 46px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

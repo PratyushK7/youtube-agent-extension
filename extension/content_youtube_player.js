@@ -4,7 +4,9 @@ function showPlayerStatus(text) {
   if (!hud) {
     hud = document.createElement('div');
     hud.id = 'yt-ai-status-hud';
-    hud.innerHTML = '<div class="hud-pulse"></div><span id="yt-ai-status-text"></span>';
+    hud.setAttribute('role', 'status');
+    hud.setAttribute('aria-live', 'polite');
+    hud.innerHTML = '<div class="hud-pulse" aria-hidden="true"></div><span id="yt-ai-status-text"></span>';
     document.body.appendChild(hud);
   }
   document.getElementById('yt-ai-status-text').innerText = text;

@@ -9,7 +9,9 @@ function showStatusHUD(text) {
   if (!hud) {
     hud = document.createElement('div');
     hud.id = 'yt-ai-status-hud';
-    hud.innerHTML = '<div class="hud-pulse"></div><span id="yt-ai-status-text"></span>';
+    hud.setAttribute('role', 'status');
+    hud.setAttribute('aria-live', 'polite');
+    hud.innerHTML = '<div class="hud-pulse" aria-hidden="true"></div><span id="yt-ai-status-text"></span>';
     document.body.appendChild(hud);
   }
   document.getElementById('yt-ai-status-text').innerText = text;
@@ -72,16 +74,18 @@ function injectAnalyzerButton() {
   if (!isChannel && !isWatch) return;
   if (document.getElementById('yt-ai-analyzer-container')) return;
 
-  const container = document.createElement('div');
+  const container = document.createElement('section');
   container.id = 'yt-ai-analyzer-container';
   container.className = 'yt-ai-analyzer-container premium-suite';
+  container.setAttribute('role', 'region');
+  container.setAttribute('aria-label', 'ChannelLens analysis controls');
 
   // --- Scan Depth Selector ---
   const depthRow = document.createElement('div');
   depthRow.className = 'hud-depth-row';
   depthRow.innerHTML = `
-    <label>Scan Depth:</label>
-    <select id="yt-depth-dropdown">
+    <label for="yt-depth-dropdown">Scan Depth:</label>
+    <select id="yt-depth-dropdown" aria-label="Video scan depth">
       ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${n===5 ? 'selected' : ''}>${n} Videos</option>`).join('')}
     </select>
   `;
@@ -89,7 +93,9 @@ function injectAnalyzerButton() {
   // --- Main Analyze Button ---
   const btnAnalyze = document.createElement('button');
   btnAnalyze.className = 'yt-ai-analyzer-btn sequential';
-  btnAnalyze.innerHTML = `<span class="icon">🔍</span> Analyze Channel`;
+  btnAnalyze.type = 'button';
+  btnAnalyze.setAttribute('aria-label', 'Analyze this channel');
+  btnAnalyze.innerHTML = `<span class="icon" aria-hidden="true">🔍</span> Analyze Channel`;
   
   btnAnalyze.onclick = async () => {
     btnAnalyze.disabled = true;
