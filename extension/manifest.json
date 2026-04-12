@@ -24,7 +24,7 @@
     {
       "matches": ["https://*.youtube.com/*"],
       "js": ["content_youtube.js", "content_youtube_player.js"],
-      "css": ["content_youtube.css"]
+      "css": ["ui.css", "content_youtube.css"]
     },
     {
       "matches": ["https://*.chatgpt.com/*"],

@@ -51,7 +51,7 @@ async function loadPrompts() {
   } catch (e) {
     console.error('Popup: Connection to local server failed.', e);
     promptSelect.innerHTML = '<option value="">ERROR: Run .command on Desktop</option>';
-    const statusEl = document.querySelector('.stat span:last-child');
+    const statusEl = document.querySelector('.stat-val.online');
     if (statusEl) {
       statusEl.style.color = '#ff4444';
       statusEl.style.fontWeight = 'bold';
