@@ -24,10 +24,12 @@ Each bend must:
 • Create real curiosity
 • Contain built-in tension, decisions, tradeoffs, or consequences
 
-STRICT OUTPUT FORMAT (DO NOT BREAK)
+STRICT OUTPUT FORMAT (MANDATORY MARKDOWN)
 15 Niche Bends:
 
-1. [Niche Name — MAX 3 WORDS]:
+Use Markdown headers (e.g., # Concept Name) and lists to make this visually striking.
+
+1. # [Niche Name — MAX 3 WORDS]
 → [Specific Title]
 → [Specific Title]
 → [Specific Title]

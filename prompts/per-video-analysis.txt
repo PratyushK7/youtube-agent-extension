@@ -69,31 +69,31 @@ Each object must contain:
 "views": String,
 "durationSec": Number,
 
-"thumbnailDescription": "Detailed breakdown of visual elements, colors, text, composition",
+"thumbnailDescription": "Detailed Markdown breakdown of visual elements, colors, text, composition",
 
-"fullTranscript": "Condensed but structured summary of actual spoken content",
+"fullTranscript": "Condensed but structured Markdown summary of actual spoken content",
 
 "hookType": "Direct Question | Bold Statement | Story Opening | Problem Agitation | Shock/Surprising Fact | Tutorial Opening",
 
 "hookText": "ACTUAL first 5–10 seconds from transcript (accurate, not guessed)",
 
-"hookFramework": "Psychological breakdown (e.g. Curiosity Gap + Specific Outcome)",
+"hookFramework": "Psychological breakdown in Markdown (e.g. Curiosity Gap + Specific Outcome)",
 
-"openingStructure": "Exact sequence (Hook → Context → Stakes → Preview etc.)",
+"openingStructure": "Exact sequence as a Markdown list (Hook → Context → Stakes → Preview etc.)",
 
-"scriptStructure": "Detailed beat-by-beat breakdown (specific segments, no fluff)",
+"scriptStructure": "Detailed beat-by-beat Markdown breakdown (specific segments, no fluff)",
 
-"storytellingFramework": "e.g. Transformation Arc, Open Loop Looping, Listicle Stack",
+"storytellingFramework": "Markdown description (e.g. Transformation Arc, Open Loop Looping, Listicle Stack)",
 
-"rehooksUsed": "Actual phrases or moments in transcript that re-engage attention",
+"rehooksUsed": "Markdown list of actual phrases or moments in transcript that re-engage attention",
 
-"retentionPattern": "How attention is maintained across the video timeline",
+"retentionPattern": "Markdown description of how attention is maintained across the video timeline",
 
-"ctaPlacement": "Where and how CTA appears (based on transcript)",
+"ctaPlacement": "Where and how CTA appears as Markdown",
 
-"titleStrategy": "Why this title works psychologically",
+"titleStrategy": "Markdown explanation of why this title works",
 
-"thumbnailStrategy": "Why this thumbnail works (contrast, curiosity, clarity)",
+"thumbnailStrategy": "Markdown explanation of why this thumbnail works",
 
 "keyTakeaways": [
 "Specific actionable insight 1",

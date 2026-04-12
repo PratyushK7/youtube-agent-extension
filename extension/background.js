@@ -113,8 +113,23 @@ function routeMessage(request, sender, sendResponse) {
     return true;
   }
 
+  if (request.action === 'SAVE_SCENE_ANALYSIS') {
+    handleSaveSceneAnalysis(request, sendResponse);
+    return true;
+  }
+
+  if (request.action === 'SAVE_NICHE_BENDS') {
+    handleSaveNicheBends(request, sendResponse);
+    return true;
+  }
+
   if (request.action === 'RESUME_SEQUENTIAL') {
     handleResumeSequential(request, sender, sendResponse);
+    return true;
+  }
+
+  if (request.action === 'DASHBOARD_TRIGGER_SYNTHESIS') {
+    handleDashboardTriggerSynthesis(request, sendResponse);
     return true;
   }
   
@@ -122,6 +137,51 @@ function routeMessage(request, sender, sendResponse) {
 }
 
 // --- Logic Handlers ---
+
+async function handleDashboardTriggerSynthesis(request, sendResponse) {
+  const { sessionId, channelName, totalVideos } = request;
+  state.sessionId = sessionId;
+  state.channelName = channelName;
+  state.isSequential = false;
+
+  // Create/Focus ChatGPT tab
+  chrome.tabs.query({ url: '*://chatgpt.com/*' }, (tabs) => {
+    if (tabs.length > 0) {
+      state.chatTabId = tabs[0].id;
+      chrome.tabs.update(state.chatTabId, { active: true }, () => {
+        setTimeout(() => {
+          chrome.tabs.sendMessage(state.chatTabId, {
+            action: 'FINAL_SYNTHESIS',
+            channelName,
+            sessionId,
+            totalSteps: totalVideos
+          });
+        }, 1500);
+      });
+    } else {
+      chrome.tabs.create({ url: 'https://chatgpt.com/' }, (tab) => {
+        state.chatTabId = tab.id;
+        // Wait for page load
+        const listener = (tabId, changeInfo) => {
+          if (tabId === tab.id && changeInfo.status === 'complete') {
+            chrome.tabs.onUpdated.removeListener(listener);
+            setTimeout(() => {
+              chrome.tabs.sendMessage(tab.id, {
+                action: 'FINAL_SYNTHESIS',
+                channelName,
+                sessionId,
+                totalSteps: totalVideos
+              });
+            }, 3000);
+          }
+        };
+        chrome.tabs.onUpdated.addListener(listener);
+      });
+    }
+  });
+
+  sendResponse({ success: true });
+}
 
 async function handleStartSequential(request, sender) {
   // Create a server-side session first
@@ -302,7 +362,7 @@ async function handleStepResult(request) {
         await saveState();
       }
       
-      await delay(1000);
+      await delay(1200);
       chrome.tabs.sendMessage(state.chatTabId, { 
         action: 'FINAL_SYNTHESIS',
         channelName: state.channelName,
@@ -407,6 +467,7 @@ async function handleCompleteSession(request, sendResponse) {
       body: JSON.stringify({ synthesis, screenshot })
     });
     const data = await res.json();
+    focusDashboardTab();
     sendResponse({ success: true, data });
   } catch (err) {
     sendResponse({ success: false, error: err.message });
@@ -426,8 +487,50 @@ async function handleSaveNicheBends(request, sendResponse) {
       body: JSON.stringify({ nicheBends })
     });
     const data = await res.json();
+    focusDashboardTab();
     sendResponse({ success: true, data });
   } catch (err) {
     sendResponse({ success: false, error: err.message });
   }
+}
+
+async function handleSaveSceneAnalysis(request, sendResponse) {
+  const { sessionId, sceneAnalysis } = request;
+  if (!sessionId) {
+    sendResponse({ success: false, error: 'No session ID' });
+    return;
+  }
+  try {
+    const res = await fetch(`${SERVER}/api/session/${sessionId}/scene-analysis`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sceneAnalysis })
+    });
+    const data = await res.json();
+    focusDashboardTab();
+    sendResponse({ success: true, data });
+  } catch (err) {
+    sendResponse({ success: false, error: err.message });
+  }
+}
+
+async function focusDashboardTab() {
+  console.log('YT-to-AI: Searching for Dashboard tab...');
+  // Query for any tab containing dashboard.html on common local ports
+  chrome.tabs.query({}, (tabs) => {
+    const dashboardTab = tabs.find(t => 
+      t.url && (t.url.includes('127.0.0.1:3005') || t.url.includes('localhost:3005'))
+    );
+
+    if (dashboardTab) {
+      console.log('YT-to-AI: Dashboard found! Switching focus...');
+      chrome.tabs.update(dashboardTab.id, { active: true });
+      chrome.windows.update(dashboardTab.windowId, { focused: true });
+      
+      // Force an immediate UI refresh
+      chrome.tabs.sendMessage(dashboardTab.id, { action: 'FORCE_REFRESH' });
+    } else {
+      console.warn('YT-to-AI: Dashboard tab not found. Please keep it open at http://127.0.0.1:3005');
+    }
+  });
 }

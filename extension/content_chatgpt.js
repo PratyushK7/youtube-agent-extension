@@ -59,7 +59,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     automateChatGPT(request.retryAttempt || 0);
   }
   if (request.action === 'FINAL_SYNTHESIS') {
-    generateMasterDossier(request.channelName, request.totalSteps);
+    generateMasterDossier(request.channelName, request.totalSteps, request.sessionId);
   }
 });
 
@@ -181,7 +181,33 @@ async function monitorResponse(isFinal = false, channelName, sessionId) {
       }
       return;
     }
-    const currentText = messages[messages.length - 1].innerText;
+    // ─── Enhanced Markdown Capture ──────────────────────────
+    const lastMessage = messages[messages.length - 1];
+    
+    const extractMarkdown = (el) => {
+      // 1. Try to find a markdown code block first
+      const codeBlock = el.querySelector('pre code.language-markdown, pre code');
+      if (codeBlock && codeBlock.textContent.includes('#')) {
+        return codeBlock.textContent;
+      }
+
+      // 2. Clone to avoid messing with live DOM
+      const clone = el.cloneNode(true);
+      
+      // Simple reconstruction for headings if innerText stripped them
+      clone.querySelectorAll('h1').forEach(h => h.innerHTML = '# ' + h.innerHTML + '\n\n');
+      clone.querySelectorAll('h2').forEach(h => h.innerHTML = '## ' + h.innerHTML + '\n\n');
+      clone.querySelectorAll('h3').forEach(h => h.innerHTML = '### ' + h.innerHTML + '\n\n');
+      clone.querySelectorAll('li').forEach(li => li.innerHTML = '- ' + li.innerHTML + '\n');
+      clone.querySelectorAll('p').forEach(p => p.innerHTML = p.innerHTML + '\n\n');
+      clone.querySelectorAll('strong, b').forEach(s => s.innerHTML = '**' + s.innerHTML + '**');
+      
+      return clone.innerText;
+    };
+
+    const currentTextRaw = lastMessage.innerText;
+    // If the text seems to have lost its headings but has structure, use the enhanced extractor
+    const currentText = (isFinal && !currentTextRaw.includes('#')) ? extractMarkdown(lastMessage) : currentTextRaw;
     
     const isGenerating = !!document.querySelector('button[aria-label="Stop generating"], button[aria-label="Stop streaming"], [data-testid="stop-button"]');
     
@@ -318,12 +344,12 @@ async function automateChatGPT(retryAttempt = 0) {
   }, 2500); 
 }
 
-async function generateMasterDossier(channelName, passedTotalSteps) {
+async function generateMasterDossier(channelName, passedTotalSteps, passedSessionId) {
   console.log('YT-to-AI: Initiating Final Synthesis Phase...');
   
   const data = await chrome.storage.local.get(['sessionId']);
   const total = passedTotalSteps || 1;
-  const sid = channelName || data.sessionId;
+  const sid = passedSessionId || data.sessionId;
   updateProgressBar(total, total); // Reflect 100% completion based on actual count
   
   const waitForInput = () => new Promise((resolve, reject) => {
@@ -344,7 +370,24 @@ async function generateMasterDossier(channelName, passedTotalSteps) {
     return;
   }
   
-  const finalPrompt = `[PHASE: FINAL CHANNEL SYNTHESIS]\n\nBased on all ${total} videos analyzed above, provide a comprehensive Master Strategic SOP. Include:\n1. Channel Identity & Positioning\n2. Content Strategy Patterns\n3. Hook Engineering Summary (most common types, best performers)\n4. Retention Strategy Overview\n5. Storytelling Framework Analysis\n6. CTA Strategy\n7. Actionable Recommendations\n\nProvide as detailed markdown.`;
+  // Fetch Dynamic Prompt from Server
+  let finalPrompt = "";
+  try {
+    const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
+    const promptsData = await promptsRes.json();
+    const dossierPrompt = promptsData.find(p => p.id === 'master_analysis.txt')?.content;
+    
+    if (dossierPrompt) {
+        finalPrompt = `[PHASE: FINAL CHANNEL SYNTHESIS]\n\n` +
+                      `Based on all ${total} videos analyzed above, execute the following protocol:\n\n` +
+                      `${dossierPrompt}`;
+    } else {
+        throw new Error('master_analysis.txt not found on sub-server');
+    }
+  } catch (err) {
+    console.warn('YT-to-AI: Falling back to internal synthesis prompt.', err);
+    finalPrompt = `[PHASE: FINAL CHANNEL SYNTHESIS]\n\nBased on all ${total} videos analyzed above, provide a comprehensive Master Strategic SOP (Markdown).`;
+  }
   promptInput.focus();
   document.execCommand('insertText', false, finalPrompt);
   setTimeout(() => {
@@ -559,15 +602,37 @@ async function monitorSceneAnalyzerResponse(sessionId) {
   }, 2000);
 }
 
-window.addEventListener('load', () => {
+// ─── Entry Point & URL Trigger Logic ────────────────────────
+async function initializeTriggers() {
   const params = new URLSearchParams(window.location.search);
-  if (params.get('niche_bend') === 'true') {
-    const sessionId = params.get('sessionId');
-    if (sessionId) handleNicheBendTrigger(sessionId);
-  } else if (params.get('scene_analyze') === 'true') {
-    const sessionId = params.get('sessionId');
-    if (sessionId) handleSceneAnalyzerTrigger(sessionId);
-  } else {
-    chrome.storage.local.get(['pendingAnalysis'], (d) => { if (d.pendingAnalysis) automateChatGPT(); });
+  const sessionId = params.get('sessionId');
+  const channelName = params.get('channelName');
+
+  if (params.get('trigger_synthesis') === 'true' && sessionId) {
+    const totalVideos = params.get('totalVideos');
+    showToast('🚀 Synthesis Mode: Initializing Master Dossier...');
+    generateMasterDossier(channelName, parseInt(totalVideos || '1'), sessionId);
+    return;
   }
-});
+
+  if (params.get('niche_bend') === 'true' && sessionId) {
+    showToast('🚀 Strategy Mode: Initializing Niche Bender...');
+    handleNicheBendTrigger(sessionId);
+    return;
+  }
+
+  // Fallback to sequential flow check
+  chrome.storage.local.get(['pendingAnalysis'], (data) => {
+    if (data.pendingAnalysis) {
+      showToast('🚀 Sequential Mode: Resuming Analysis...');
+      automateChatGPT();
+    }
+  });
+}
+
+// Support both immediate and delayed load (ChatGPT SPA can be tricky)
+if (document.readyState === 'complete') {
+  initializeTriggers();
+} else {
+  window.addEventListener('load', initializeTriggers);
+}

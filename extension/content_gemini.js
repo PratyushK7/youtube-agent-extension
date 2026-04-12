@@ -39,10 +39,11 @@ const RESPONSE_SELECTOR = 'message-content, div.model-response-text';
 const STOP_SELECTOR = 'button[aria-label="Stop response"], .generating-indicator';
 
 async function handleNanoBananaSequence(sessionId) {
-  showToast('Initializing Nano Banana...');
+  showToast('Initializing Nano Banana (Vision)...');
   
   try {
     const el = await waitForElm(INPUT_SELECTOR);
+    await new Promise(r => setTimeout(r, 1500)); // Stabilization
     el.focus();
 
     // Fetch the stored session to get the frame paths
@@ -52,7 +53,7 @@ async function handleNanoBananaSequence(sessionId) {
       throw new Error("No Scene Frames found on server.");
     }
     
-    showToast('Dropping 5 Cinematic Frames...');
+    showToast('Injecting 5 Cinematic Frames...');
     
     // Construct Multi-Image Paste Event
     const dt = new DataTransfer();
@@ -71,28 +72,30 @@ async function handleNanoBananaSequence(sessionId) {
     });
     el.dispatchEvent(pasteEvent);
     
-    // Wait slightly longer for Nano Banana to encode 5 images in the UI
-    await new Promise(r => setTimeout(r, 4500));
+    // 🛡️ Give Gemini plenty of time to process 5 high-res frames
+    showToast('Encoding Visual Data (Processing Frames)...');
+    await new Promise(r => setTimeout(r, 7000));
 
     // Fetch Prompt
     const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
     const prompts = await promptsRes.json();
     const scenePrompt = prompts.find(p => p.id === 'scene-analyzer.txt');
-    const promptText = scenePrompt ? scenePrompt.content : "Analyze these images and tell me the composition.";
+    const promptText = scenePrompt ? scenePrompt.content : "Analyze these images and provide a high-end style analysis and image prompt.";
 
+    el.focus();
     document.execCommand('insertText', false, promptText);
     
     setTimeout(() => {
       const sendBtn = document.querySelector(SEND_BUTTON_SELECTOR);
       if (sendBtn && !sendBtn.disabled) {
-        showToast('Running Nano Banana Generation...');
+        showToast('Running Nano Banana Analysis...');
         sendBtn.click();
         monitorNanoBananaResponse(sessionId);
       } else {
-        showToast('Click Send manually (Send button obscured).');
+        showToast('Ready! Please click Send manually.');
         monitorNanoBananaResponse(sessionId);
       }
-    }, 2500);
+    }, 3000);
 
   } catch (err) {
     console.error('Nano Banana failed:', err);
@@ -113,7 +116,23 @@ async function monitorNanoBananaResponse(sessionId) {
     const messages = document.querySelectorAll(RESPONSE_SELECTOR);
     if (messages.length === 0) return;
     
-    const currentText = messages[messages.length - 1].innerText;
+    // ─── Enhanced Markdown Capture ──────────────────────────
+    const lastMessage = messages[messages.length - 1];
+    const extractMarkdown = (el) => {
+      const clone = el.cloneNode(true);
+      clone.querySelectorAll('h1').forEach(h => h.innerHTML = '# ' + h.innerHTML + '\n\n');
+      clone.querySelectorAll('h2').forEach(h => h.innerHTML = '## ' + h.innerHTML + '\n\n');
+      clone.querySelectorAll('h3').forEach(h => h.innerHTML = '### ' + h.innerHTML + '\n\n');
+      clone.querySelectorAll('li').forEach(li => li.innerHTML = '- ' + li.innerHTML + '\n');
+      clone.querySelectorAll('p').forEach(p => p.innerHTML = p.innerHTML + '\n\n');
+      clone.querySelectorAll('strong, b').forEach(s => s.innerHTML = '**' + s.innerHTML + '**');
+      return clone.innerText;
+    };
+
+    const currentTextRaw = lastMessage.innerText;
+    // For Gemini, we always try to preserve structure for scene analysis logic
+    const currentText = (currentTextRaw.length > 50 && !currentTextRaw.includes('#')) ? extractMarkdown(lastMessage) : currentTextRaw;
+    
     const isGenerating = !!document.querySelector(STOP_SELECTOR);
     
     if (currentText === lastText && currentText.length > 50) stabilityCount++;

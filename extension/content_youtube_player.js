@@ -11,17 +11,31 @@ function showPlayerStatus(text) {
 }
 
 // Wait for video element to appear in DOM (YouTube SPA may not have it immediately)
-function waitForVideo(timeout = 8000) {
+function waitForVideo(timeout = 10000) {
   return new Promise((resolve) => {
-    const existing = document.querySelector('video');
-    if (existing) return resolve(existing);
-    const observer = new MutationObserver(() => {
+    const check = () => {
       const vid = document.querySelector('video');
-      if (vid) { observer.disconnect(); resolve(vid); }
+      // Ensure it's not a tiny hidden preview or empty element
+      if (vid && vid.src && vid.videoWidth > 0) return true;
+      return false;
+    };
+
+    if (check()) return resolve(document.querySelector('video'));
+
+    const observer = new MutationObserver(() => {
+      if (check()) { observer.disconnect(); resolve(document.querySelector('video')); }
     });
     observer.observe(document.body, { childList: true, subtree: true });
-    setTimeout(() => { observer.disconnect(); resolve(document.querySelector('video')); }, timeout);
+    
+    setTimeout(() => { 
+      observer.disconnect(); 
+      resolve(document.querySelector('video')); 
+    }, timeout);
   });
+}
+
+function isAdPlaying() {
+  return !!document.querySelector('.ad-showing, .ad-interrupting');
 }
 
 async function harvestVideoInfo() {
@@ -112,53 +126,90 @@ async function harvestVideoInfo() {
 const urlParams = new URLSearchParams(window.location.search);
 
 if (urlParams.get('analyze_scene') === 'true') {
-  console.log('YT-to-AI: Scene Analyzer Mode Activated.');
-  // Execute the multi-modal frame scraping
+  console.log('YT-to-AI: Scene Analyzer Mode Detected. Initializing stabilization...');
+  
   (async () => {
-    const sessionId = urlParams.get('sessionId');
-    const video = await waitForVideo();
+    // 🛡️ Stabilization Delay: Ensure YouTube's SPA transition is solid
+    showPlayerStatus('👁️ Scene Analyzer: Stabilizing Environment...');
+    await new Promise(r => setTimeout(r, 2000));
     
-    // Mute and pause the video immediately
+    const sessionId = urlParams.get('sessionId');
+    let video = await waitForVideo();
+    
+    if (!video) {
+      showPlayerStatus('❌ Error: Could not find video player.');
+      return;
+    }
+
+    // 🛡️ Ad Detection: Pause if ad is playing
+    if (isAdPlaying()) {
+      showPlayerStatus('👁️ Waiting for Ad to Finish/Skip...');
+      while (isAdPlaying()) {
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      showPlayerStatus('👁️ Ad Cleared. Stabilizing again...');
+      await new Promise(r => setTimeout(r, 2000));
+      video = await waitForVideo(); // Re-grab video just in case
+    }
+
+    // Mute and pause immediately to control state
     video.muted = true;
     video.pause();
 
-    showPlayerStatus('👁️ Scene Analyzer: Harvesting Cinematic Frames...');
+    showPlayerStatus('👁️ Scene Analyzer: Waiting for Video Metadata...');
     
     // Ensure metadata is loaded for duration
-    for(let w=0; w<20; w++) {
-      if(!isNaN(video.duration) && video.duration > 0) break;
+    let metadataWaitCount = 0;
+    while(isNaN(video.duration) || video.duration <= 0) {
+      metadataWaitCount++;
+      if (metadataWaitCount > 30) { // 15 seconds max
+        showPlayerStatus('❌ Error: Video metadata timeout.');
+        return;
+      }
       await new Promise(r => setTimeout(r, 500));
     }
 
-
     const duration = video.duration;
-    const timestamps = [duration * 0.2, duration * 0.4, duration * 0.6, duration * 0.8, duration * 0.95];
+    const timestamps = [duration * 0.15, duration * 0.35, duration * 0.55, duration * 0.75, duration * 0.9];
     const frames = [];
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
     for (let i = 0; i < timestamps.length; i++) {
-      showPlayerStatus(`👁️ Scene Analyzer: Snapping Frame ${i+1}/5...`);
-      
-      video.currentTime = timestamps[i];
-      // Wait for the player to finish rendering the seeked frame
-      await new Promise(r => {
-        const onSeeked = () => { video.removeEventListener('seeked', onSeeked); r(); };
-        video.addEventListener('seeked', onSeeked);
-        // Fallback timeout just in case it stalls
-        setTimeout(r, 2000);
-      });
-      // Small visual buffer
-      await new Promise(r => setTimeout(r, 400));
+      try {
+        showPlayerStatus(`👁️ Scene Analyzer: Snapping Frame ${i+1}/${timestamps.length}...`);
+        
+        video.currentTime = timestamps[i];
+        
+        // Wait for the player to finish rendering the seeked frame
+        await new Promise(r => {
+          const onSeeked = () => { 
+            video.removeEventListener('seeked', onSeeked); 
+            r(); 
+          };
+          video.addEventListener('seeked', onSeeked);
+          setTimeout(r, 3000); // 3s max per frame seek
+        });
 
-      canvas.width = video.videoWidth || 1280;
-      canvas.height = video.videoHeight || 720;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      frames.push(canvas.toDataURL('image/jpeg', 0.85));
+        // Small visual buffer for rendering
+        await new Promise(r => setTimeout(r, 500));
+
+        canvas.width = video.videoWidth || 1280;
+        canvas.height = video.videoHeight || 720;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        frames.push(canvas.toDataURL('image/jpeg', 0.85));
+      } catch (frameErr) {
+        console.warn(`Frame ${i} snap failed, skipping...`, frameErr);
+      }
     }
 
-    showPlayerStatus('🚀 Frames Captured! Uploading to Server...');
+    if (frames.length === 0) {
+      showPlayerStatus('❌ Error: Failed to capture any frames.');
+      return;
+    }
+
+    showPlayerStatus(`🚀 ${frames.length} Frames Captured! Sending to Server...`);
 
     try {
       const res = await fetch(`http://127.0.0.1:3005/api/session/${sessionId}/scene-frames`, {
@@ -169,17 +220,17 @@ if (urlParams.get('analyze_scene') === 'true') {
       const data = await res.json();
       
       if (data.success) {
-        showPlayerStatus('✅ Upload Complete. Transferring to Nano Banana (Gemini)...');
+        showPlayerStatus('✅ Upload Complete. Transferring to AI Brain...');
         await chrome.storage.local.set({ sceneFramesBlobReady: true });
         setTimeout(() => {
           window.location.href = `https://gemini.google.com/app?scene_analyze=true&sessionId=${sessionId}`;
-        }, 1000);
+        }, 1200);
       } else {
         showPlayerStatus('❌ Server Failed to Save Frames');
       }
     } catch (e) {
       console.error(e);
-      showPlayerStatus('❌ API Connection Error');
+      showPlayerStatus('❌ API Connection Error. Check Server.');
     }
   })();
 } else {
