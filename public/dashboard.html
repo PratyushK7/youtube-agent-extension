@@ -11,453 +11,798 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
     rel="stylesheet">
   <style>
-    /* 
-    ================================================================
-    🧱 CHANNEL LENS DESIGN SYSTEM v2.0
-    Linear-inspired, High-Density SaaS UI
-    ================================================================
-    */
+    /* ═══ Shared Design Tokens (mirrors style.css) ═══ */
     :root {
-      /* Colors: Neutral Deep Slate */
-      --gray-0: #000000;
-      --gray-50: #fafafa;
-      --gray-100: #f5f5f5;
-      --gray-200: #e5e5e5;
-      --gray-300: #d4d4d4;
-      --gray-400: #a3a3a3;
-      --gray-500: #737373;
-      --gray-600: #525252;
-      --gray-700: #404040;
-      --gray-800: #262626;
-      --gray-900: #171717;
-      --gray-950: #0a0a0a;
-
-      /* Brand Palette (SaaS Blue/Purple) */
-      --brand-primary: #5558ff;
-      --brand-secondary: #a78bfa;
-      --brand-glow: rgba(85, 88, 255, 0.15);
-
-      /* Semantic Colors */
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --info: #3b82f6;
-
-      /* Surfaces */
-      --bg-dash: #050607;
-      --bg-card: #0d0e11;
-      --bg-card-hover: #121419;
-      --bg-modal: #0d0f12;
-      --border-dash: rgba(255, 255, 255, 0.06);
-      --border-dash-hover: rgba(255, 255, 255, 0.12);
-
-      /* Typography */
-      --font-sans: 'Inter', -apple-system, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-
-      /* Spacing & Utilities */
-      --radius-sm: 6px;
-      --radius-md: 10px;
-      --radius-lg: 14px;
-      --radius-xl: 20px;
+      --bg-primary: #07080c;
+      --bg-secondary: #0d0f16;
+      --bg-card: #111320;
+      --bg-card-hover: #161a2a;
+      --bg-elevated: #1a1e30;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-medium: rgba(255, 255, 255, 0.1);
+      --border-focus: rgba(124, 131, 255, 0.4);
+      --text-primary: #f0f1f5;
+      --text-secondary: #8b8fa3;
+      --text-muted: #555a6e;
+      --accent-primary: #7c83ff;
+      --accent-secondary: #a78bfa;
+      --accent-tertiary: #38bdf8;
+      --accent-warm: #fb923c;
+      --accent-rose: #f472b6;
+      --accent-emerald: #34d399;
+      --accent-red: #f87171;
+      --gradient-primary: linear-gradient(135deg, #7c83ff, #a78bfa, #38bdf8);
+      --gradient-card: linear-gradient(145deg, rgba(124, 131, 255, 0.05), rgba(56, 189, 248, 0.03));
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
       --radius-full: 9999px;
-
-      --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.5);
-      --shadow-premium: 0 8px 30px rgba(0, 0, 0, 0.7);
-      
-      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+      --shadow-glow: 0 0 30px rgba(124, 131, 255, 0.15);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root.light-theme {
+      --bg-primary: #f0f2f5;
+      --bg-secondary: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f8fafc;
+      --bg-elevated: #e2e8f0;
+      --border-subtle: rgba(0, 0, 0, 0.08);
+      --border-medium: rgba(0, 0, 0, 0.15);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    :root.light-theme .bg-grid {
+      display: none;
+    }
+
+    :root.light-theme header {
+      background: rgba(255, 255, 255, 0.9);
+      border-bottom-color: var(--border-medium);
+    }
+
+    :root.light-theme .nav-link:hover,
+    :root.light-theme .btn-ghost:hover,
+    :root.light-theme .tab-btn:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    :root.light-theme tbody tr:hover {
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    :root.light-theme .niche-card {
+      background: var(--bg-card);
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    :root.light-theme .niche-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(251, 146, 60, 0.4);
+    }
+
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+    }
 
     body {
-      background: var(--bg-dash);
-      color: white;
       font-family: var(--font-sans);
-      -webkit-font-smoothing: antialiased;
-      line-height: 1.5;
-      min-height: 100vh;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
       overflow-x: hidden;
+      min-height: 100vh;
     }
 
-    /* ════ LAYOUT & NAVIGATION ════ */
-
-    header {
+    /* ═══ Background Effects ═══ */
+    .bg-effects {
       position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 64px;
-      background: rgba(5, 6, 7, 0.7);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border-dash);
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      padding: 0 32px;
-    }
-
-    .nav-inner {
-      width: 100%;
-      max-width: 1400px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
-      color: white;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      font-size: 1.1rem;
-    }
-
-    .brand-logo {
-      width: 28px;
-      height: 28px;
-      background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
-      border-radius: 7px;
-      display: flex; align-items: center; justify-content: center;
-    }
-
-    .main-nav { display: flex; gap: 4px; }
-    .nav-btn {
-      padding: 6px 12px;
-      border-radius: 6px;
-      color: var(--gray-400);
-      text-decoration: none;
-      font-size: 0.875rem;
-      font-weight: 500;
-      transition: var(--transition);
-    }
-    .nav-btn:hover { color: white; background: rgba(255,255,255,0.05); }
-    .nav-btn.active { color: white; background: rgba(255,255,255,0.08); }
-
-    /* ════ DASHBOARD WRAPPER ════ */
-
-    .app-container {
-      width: 100%;
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 100px 32px 40px;
-    }
-
-    .section-header {
-      margin-bottom: 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-    }
-
-    .title-stack h1 {
-      font-size: 2rem;
-      font-weight: 800;
-      letter-spacing: -0.04em;
-      margin-bottom: 4px;
-    }
-    .title-stack p {
-      color: var(--gray-400);
-      font-size: 0.95rem;
-    }
-
-    /* ════ CARDS (SESSIONS) ════ */
-
-    .grid-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 20px;
-    }
-
-    .session-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-dash);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      cursor: pointer;
-      transition: var(--transition);
-      position: relative;
-    }
-
-    .session-card:hover {
-      border-color: var(--brand-secondary);
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 20px var(--brand-glow);
-    }
-
-    .card-visual {
-      height: 180px;
-      background: #000;
-      position: relative;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
       overflow: hidden;
     }
 
-    .card-visual img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      opacity: 0.6;
-      transition: transform 0.8s ease;
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.4;
+      animation: orbFloat 20s ease-in-out infinite;
     }
-    .session-card:hover .card-visual img { transform: scale(1.08); opacity: 0.8; }
 
-    .card-overlay {
+    .bg-orb-1 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(124, 131, 255, 0.12), transparent 70%);
+      top: -200px;
+      right: -100px;
+    }
+
+    .bg-orb-2 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.08), transparent 70%);
+      bottom: -100px;
+      left: 10%;
+      animation-delay: -10s;
+    }
+
+    .bg-grid {
       position: absolute;
       inset: 0;
-      background: linear-gradient(transparent, rgba(0,0,0,0.8));
+      background-image: linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
     }
 
-    .status-pill {
-      position: absolute;
-      top: 12px; left: 12px;
-      padding: 4px 10px;
-      border-radius: 99px;
-      font-size: 0.7rem;
+    @keyframes orbFloat {
+
+      0%,
+      100% {
+        transform: translate(0, 0) scale(1);
+      }
+
+      33% {
+        transform: translate(30px, -20px) scale(1.05);
+      }
+
+      66% {
+        transform: translate(-20px, 15px) scale(0.95);
+      }
+    }
+
+    /* ═══ Header ═══ */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(7, 8, 12, 0.8);
+      backdrop-filter: blur(20px) saturate(1.5);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      color: var(--accent-primary);
+    }
+
+    .logo-text {
+      font-size: 1.15rem;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
     }
-    .status-pill.complete { background: rgba(16, 185, 129, 0.2); color: #10b981; }
-    .status-pill.processing { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
 
-    .card-content {
-      padding: 20px;
+    .logo-accent {
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: var(--radius-full);
+      transition: var(--transition-fast);
+      border: 1px solid transparent;
+    }
+
+    .nav-link:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-link.active {
+      color: var(--accent-primary);
+      background: rgba(124, 131, 255, 0.08);
+      border-color: rgba(124, 131, 255, 0.2);
+    }
+
+    /* ═══ Container ═══ */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ═══ Page Title ═══ */
+    .page-header {
+      margin-bottom: 40px;
+    }
+
+    .page-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: var(--radius-full);
+      background: rgba(124, 131, 255, 0.08);
+      border: 1px solid rgba(124, 131, 255, 0.15);
+      color: var(--accent-primary);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .page-title {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+
+    .page-subtitle {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      max-width: 500px;
+    }
+
+    /* ═══ Sessions Grid ═══ */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      cursor: pointer;
+      transition: var(--transition-base);
+      position: relative;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: var(--gradient-card);
+      opacity: 0;
+      transition: var(--transition-base);
+      z-index: 0;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: var(--border-medium);
+      box-shadow: var(--shadow-lg), var(--shadow-glow);
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .card-thumb {
+      width: 100%;
+      height: 190px;
+      background: var(--bg-secondary);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.5;
+      transition: var(--transition-base);
+    }
+
+    .card:hover .card-thumb img {
+      opacity: 0.85;
+      transform: scale(1.03);
+    }
+
+    .card-thumb-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .card-badges {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      display: flex;
+      gap: 6px;
+      z-index: 2;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      backdrop-filter: blur(8px);
+    }
+
+    .badge-count {
+      background: rgba(124, 131, 255, 0.9);
+      color: white;
+    }
+
+    .badge-complete {
+      background: rgba(52, 211, 153, 0.85);
+      color: #052e16;
+    }
+
+    .badge-progress {
+      background: rgba(251, 146, 60, 0.85);
+      color: #431407;
+    }
+
+    .btn-delete-session {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-full);
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border-subtle);
+      color: rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      transition: var(--transition-base);
+      backdrop-filter: blur(8px);
+    }
+
+    .btn-delete-session:hover {
+      background: rgba(239, 68, 68, 0.9);
+      border-color: #ef4444;
+      color: white;
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+    }
+
+    .card-body {
+      padding: 20px 24px 24px;
+      position: relative;
+      z-index: 1;
     }
 
     .card-title {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       font-weight: 700;
-      margin-bottom: 12px;
-      display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+      letter-spacing: -0.01em;
+      margin-bottom: 8px;
     }
 
-    .progress-track {
-      height: 6px;
-      background: var(--gray-800);
-      border-radius: 99px;
-      margin-bottom: 16px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--brand-primary), var(--brand-secondary));
-      transition: width 1s ease;
-    }
-
-    .card-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      color: var(--gray-500);
+    .card-meta {
       font-size: 0.8rem;
-      font-weight: 500;
-    }
-
-    /* ════ SESSION DETAIL VIEW ════ */
-
-    #session-view { display: none; }
-
-    .detail-header {
-      margin-bottom: 24px;
-      padding-bottom: 24px;
-      border-bottom: 1px solid var(--border-dash);
+      color: var(--text-muted);
       display: flex;
-      justify-content: space-between;
       align-items: center;
-    }
-
-    .badge-row { display: flex; gap: 8px; margin-top: 12px; }
-    .badge {
-      padding: 4px 10px;
-      border-radius: 6px;
-      background: var(--gray-800);
-      color: var(--gray-300);
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-
-    /* ════ TABS SYSTEM ════ */
-
-    .tab-nav {
-      background: var(--gray-950);
-      border: 1px solid var(--border-dash);
-      padding: 4px;
-      border-radius: 12px;
-      display: flex;
-      gap: 4px;
-      margin-bottom: 24px;
-    }
-
-    .tab-trigger {
-      flex: 1;
-      padding: 8px;
-      border: none;
-      background: transparent;
-      color: var(--gray-500);
-      font-weight: 600;
-      font-size: 0.85rem;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: var(--transition);
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
-    .tab-trigger:hover { color: var(--gray-200); }
-    .tab-trigger.active { background: var(--gray-800); color: white; }
-
-    /* ════ DATA TABLES ════ */
-
-    .table-container {
-      background: var(--bg-card);
-      border: 1px solid var(--border-dash);
-      border-radius: var(--radius-lg);
-      overflow-x: auto;
-      scrollbar-width: thin;
-      scrollbar-color: var(--gray-800) transparent;
-    }
-
-    table { width: 100%; border-collapse: collapse; text-align: left; }
-    th {
-      padding: 14px 20px;
-      background: rgba(255,255,255,0.02);
-      border-bottom: 1px solid var(--border-dash);
-      color: var(--gray-500);
-      text-transform: uppercase;
-      font-size: 0.65rem;
-      font-weight: 800;
-      letter-spacing: 0.1em;
-      white-space: nowrap;
-      position: sticky; top: 0;
-    }
-    td {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border-dash);
-      font-size: 0.875rem;
-      vertical-align: middle;
-      color: var(--gray-300);
-    }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: rgba(255,255,255,0.01); color: white; }
-
-    .tag {
-      display: inline-flex;
-      padding: 4px 8px;
-      border-radius: 5px;
-      background: rgba(85, 88, 255, 0.1);
-      color: var(--brand-primary);
-      font-size: 0.7rem;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .clamped-text {
-      max-width: 200px;
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-      overflow: hidden;
-      cursor: zoom-in;
-      transition: var(--transition);
-    }
-    .clamped-text.expanded { -webkit-line-clamp: 100; max-width: 400px; cursor: zoom-out; }
-
-    /* ════ BUTTONS ════ */
-
-    .btn {
-      padding: 10px 18px;
-      border-radius: var(--radius-md);
-      font-weight: 600;
-      font-size: 0.875rem;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      transition: var(--transition);
-      border: 1px solid transparent;
-      font-family: var(--font-sans);
-    }
-
-    .btn-primary {
-      background: white; color: black;
-    }
-    .btn-primary:hover { background: var(--gray-200); transform: translateY(-1px); }
-    .btn-primary:active { transform: translateY(0); }
-
-    .btn-secondary {
-      background: rgba(255,255,255,0.05);
-      border-color: var(--border-dash);
-      color: white;
-    }
-    .btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: var(--gray-600); }
-
-    .btn-danger {
-      color: var(--danger);
-      background: rgba(239, 68, 68, 0.1);
-      border-color: rgba(239, 68, 68, 0.2);
-    }
-    .btn-danger:hover { background: var(--danger); color: white; }
-
-    /* ════ SYNTHESIS & SOP ════ */
-
-    .synthesis-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: flex-start; }
-    .sop-sheet {
-      background: var(--bg-card);
-      border: 1px solid var(--border-dash);
-      border-radius: var(--radius-lg);
-      padding: 40px;
-      line-height: 1.8;
-    }
-    .sop-h2 { font-size: 1.5rem; font-weight: 800; margin: 32px 0 16px; letter-spacing: -0.02em; }
-    .sop-p { color: var(--gray-300); margin-bottom: 20px; }
-    .sop-ul { margin-bottom: 20px; padding-left: 20px; }
-    .sop-li { margin-bottom: 8px; position: relative; list-style: none; }
-    .sop-li::before { content: ''; position: absolute; left: -20px; top: 10px; width: 6px; height: 1px; background: var(--brand-primary); }
-
-    /* ════ MODALS ════ */
-
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-      backdrop-filter: blur(8px);
-      z-index: 2000;
-      display: none; align-items: center; justify-content: center;
-      padding: 20px;
-    }
-    .modal-sheet {
-      background: var(--bg-modal);
-      border: 1px solid var(--border-dash);
-      border-radius: var(--radius-xl);
-      width: 100%; max-width: 480px;
-      padding: 32px;
-      box-shadow: var(--shadow-premium);
-      animation: modalSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    @keyframes modalSlide { from { opacity:0; transform: translateY(20px) scale(0.95); } to { opacity:1; transform: translateY(0) scale(1); } }
-
-    /* ════ UTILS ════ */
-    .shimmer {
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-    }
-    @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
-
-    .empty-well {
-      height: 200px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      color: var(--gray-500);
-      border: 1px dashed var(--border-dash);
-      border-radius: 12px;
       gap: 12px;
     }
 
-    /* ════ SCENE GALLERY ════ */
-    #gallery-modal {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.98);
-      z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center;
+    .card-meta-dot {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--text-muted);
     }
-    .gallery-stage { position:relative; width: 90%; height: 80vh; display: flex; align-items: center; justify-content: center; }
-    .gallery-img { max-width: 100%; max-height: 100%; border-radius: 12px; box-shadow: 0 40px 100px #000; }
-  </style>
+
+    .empty-state {
+      text-align: center;
+      padding: 120px 24px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius-xl);
+    }
+
+    .empty-state h3 {
+      font-size: 1.3rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    /* ═══ Session Detail ═══ */
+    #session-view {
+      display: none;
+    }
+
+    .session-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .session-title {
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .session-meta {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .session-meta-badge {
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .session-meta-badge.complete {
+      background: rgba(52, 211, 153, 0.12);
+      color: var(--accent-emerald);
+    }
+
+    .session-meta-badge.progress {
+      background: rgba(251, 146, 60, 0.12);
+      color: var(--accent-warm);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: var(--radius-full);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition-base);
+      border: 1px solid var(--border-medium);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+    }
+
+    .btn-accent {
+      background: rgba(52, 211, 153, 0.08);
+      color: var(--accent-emerald);
+      border-color: rgba(52, 211, 153, 0.2);
+    }
+
+    .btn-accent:hover {
+      background: rgba(52, 211, 153, 0.15);
+      border-color: rgba(52, 211, 153, 0.4);
+      box-shadow: 0 0 20px rgba(52, 211, 153, 0.15);
+    }
+
+    /* ═══ Tab Bar ═══ */
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 32px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 4px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: var(--radius-md);
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .tab-btn.active {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Gallery Carousel */
+    .gallery-nav-btn {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      font-size: 2.5rem;
+      cursor: pointer;
+      padding: 0;
+      border-radius: 50%;
+      width: 70px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 10;
+      backdrop-filter: blur(5px);
+    }
+
+    .gallery-nav-btn:hover {
+      background: rgba(124, 131, 255, 0.2);
+      border-color: var(--accent-primary);
+      transform: scale(1.1);
+      box-shadow: 0 0 20px rgba(124, 131, 255, 0.3);
+    }
+
+    .gallery-nav-btn:active {
+      transform: scale(0.95);
+    }
+
+    .gallery-nav-btn.prev {
+      left: -90px;
+    }
+
+    .gallery-nav-btn.next {
+      right: -90px;
+    }
+
+    .tab-icon {
+      font-size: 1rem;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeScale {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* ═══ Aggregate Insights ═══ */
+    .agg-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .agg-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: var(--transition-base);
+    }
+
+    .agg-card:hover {
+      border-color: var(--border-medium);
+      box-shadow: var(--shadow-md);
+    }
+
+    .agg-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+
+    .agg-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+
+    .agg-icon-purple {
+      background: rgba(124, 131, 255, 0.1);
+    }
+
+    .agg-icon-green {
+      background: rgba(52, 211, 153, 0.1);
+    }
+
+    .agg-icon-blue {
+      background: rgba(56, 189, 248, 0.1);
+    }
+
+    .agg-icon-orange {
+      background: rgba(251, 146, 60, 0.1);
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 0.88rem;
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .stat-value {
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--accent-primary);
+      font-size: 0.85rem;
+      text-align: right;
+      word-wrap: break-word;
+    }
+
+    .chart-container {
+      width: 100%;
+      min-height: 180px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: visible;
+      padding: 10px 0;
+    }
+
+    /* ═══ Metrics Table ═══ */
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+    }
+
+    .table-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .table-toolbar-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .layout-toggle {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 3px;
+    }
 
     .layout-btn {
       padding: 6px 14px;
@@ -1046,168 +1391,175 @@
       <p class="page-subtitle">All your ChatGPT-powered channel analyses in one place. Click a session to explore deep
         metrics.</p>
     </div>
-  <header>
-    <div class="nav-inner">
-      <a href="./dashboard.html" class="brand">
-        <div class="brand-logo">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    <div id="loading-indicator" style="text-align:center; padding: 40px; color: var(--text-muted);">
+      <div
+        style="width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px;">
+      </div>
+      Loading your sessions...
+    </div>
+    <div id="sessions-grid" class="grid"></div>
+    <div id="empty-state" class="empty-state" style="display:none;">
+      <p style="font-size:2.5rem;margin-bottom:16px;opacity:0.3">&#x1F50D;</p>
+      <h3>No analysis sessions yet</h3>
+      <p>Use the browser extension to analyze a YouTube channel with ChatGPT.</p>
+    </div>
+  </div>
+
+  <!-- ═══ Session Detail ═══ -->
+  <div id="session-view" class="container">
+    <div class="session-header animate-in">
+      <div style="display:flex; align-items:center; gap: 16px;">
+        <button id="btn-back" class="btn btn-ghost"
+          style="padding: 0; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--border-medium);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div>
+          <h1 id="session-title" class="session-title"></h1>
+          <div class="session-meta">
+            <span id="session-meta-text"></span>
+            <span id="session-meta-badge" class="session-meta-badge"></span>
+          </div>
         </div>
-        <span>ChannelLens</span>
-      </a>
-      <nav class="main-nav">
-        <a href="#" class="nav-btn active">Dashboard</a>
-        <a href="#" class="nav-btn">Research Guide</a>
-        <a href="#" class="nav-btn">API Docs</a>
-      </nav>
-      <div style="display: flex; gap: 12px; align-items: center;">
-        <div id="status-debug" style="font-size: 0.65rem; color: var(--gray-600); font-family: var(--font-mono);">SYNCED</div>
-        <button id="theme-toggle" class="btn btn-secondary" style="padding: 6px; width: 32px; height: 32px; justify-content: center;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </div>
+      <div class="header-actions">
+        <button id="btn-scene-analyzer" class="btn"
+          style="background: rgba(167, 139, 250, 0.1); color: #a78bfa; border-color: rgba(167, 139, 250, 0.3);">
+          👁️ Analyze Scene
+        </button>
+        <button id="btn-niche-bend" class="btn"
+          style="background: rgba(251,146,60,0.1); color: var(--accent-warm); border-color: rgba(251,146,60,0.3);">
+          🔥 Niche Bender
+        </button>
+        <button id="btn-export-csv" class="btn btn-accent">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Export CSV
         </button>
       </div>
     </div>
-  </header>
 
-  <main class="app-container">
-    <!-- View 1: Dashboard Grid -->
-    <div id="sessions-grid-view">
-      <div class="section-header">
-        <div class="title-stack">
-          <h1>Research Workspace</h1>
-          <p>Analyze performance patterns across your channel ecosystem.</p>
-        </div>
-        <div id="loading-indicator" style="display:none;" class="shimmer">Refreshing session data...</div>
-      </div>
-
-      <div id="empty-state" class="empty-well" style="display:none;">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-        <div style="text-align: center;">
-          <h3 style="color: white; margin-bottom: 4px;">No activities yet</h3>
-          <p>Run your first analysis using the Chrome Extension.</p>
-        </div>
-      </div>
-
-      <div id="sessions-grid" class="grid-container"></div>
+    <div class="tab-bar animate-in delay-1">
+      <button class="tab-btn active" data-tab="metrics"><span class="tab-icon">&#x1F4CB;</span> Full Metrics</button>
+      <button class="tab-btn" data-tab="synthesis"><span class="tab-icon">&#x1F4DD;</span> Master Synthesis</button>
     </div>
 
-    <!-- View 2: Session Detail -->
-    <div id="session-view">
-      <div class="detail-header">
-        <div class="title-stack">
-          <button id="btn-back" class="btn btn-secondary" style="margin-bottom: 16px; padding: 6px 14px; font-size: 0.75rem;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-            Back to Workspace
-          </button>
-          <h1 id="session-title">Channel Name</h1>
-          <div class="badge-row">
-            <span id="session-meta-badge" class="status-pill complete">Complete</span>
-            <span id="session-meta-text" class="badge">0 videos analyzed</span>
+    <!-- Tab: Full Metrics -->
+    <div id="tab-metrics" class="tab-content active">
+      <div class="table-card">
+        <div class="table-toolbar">
+          <span class="table-toolbar-label" id="metrics-count"></span>
+          <div class="layout-toggle">
+            <button class="layout-btn active" data-layout="table">Spreadsheet</button>
+            <button class="layout-btn" data-layout="cards">Cards</button>
           </div>
         </div>
-        <div class="header-actions">
-          <button id="btn-export-csv" class="btn btn-secondary">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-            Export results
-          </button>
-          <button id="btn-scene-analyzer" class="btn btn-primary">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-            Analyze Production
-          </button>
-        </div>
-      </div>
-
-      <div class="tab-nav">
-        <button class="tab-trigger active" data-tab="metrics">Breakdown Table</button>
-        <button class="tab-trigger" data-tab="synthesis">Master Synthesis</button>
-        <button class="tab-trigger" data-tab="niche-bend">Niche Concepts</button>
-      </div>
-
-      <!-- Tab Content: Metrics -->
-      <div id="tab-metrics" class="tab-content active">
-        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-          <div style="font-size: 0.8rem; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em;" id="metrics-count">
-            12 videos registered
-          </div>
-          <div class="tab-nav" style="margin-bottom: 0; padding: 2px; border-radius: 8px;">
-            <button class="tab-trigger active layout-btn" data-layout="table" style="padding: 5px 12px; font-size: 0.75rem;">List</button>
-            <button class="tab-trigger layout-btn" data-layout="cards" style="padding: 5px 12px; font-size: 0.75rem;">Cards</button>
-          </div>
-        </div>
-
-        <div id="metrics-table-view" class="table-container">
+        <div id="metrics-table-view" class="table-scroll">
           <table>
             <thead>
               <tr>
-                <th style="width: 40px;">#</th>
-                <th style="min-width: 300px;">Content Title & Visual</th>
+                <th>#</th>
+                <th style="min-width:240px">Title</th>
                 <th>Hook Type</th>
-                <th style="min-width: 240px;">Tactical Hook</th>
-                <th>Framework</th>
-                <th style="min-width: 240px;">Opening Logic</th>
-                <th style="min-width: 240px;">Storytelling</th>
-                <th style="min-width: 240px;">Takeaways</th>
+                <th style="min-width:200px">Hook Text</th>
+                <th>Hook Framework</th>
+                <th style="min-width:200px">Opening Structure</th>
+                <th style="min-width:260px">Script Structure</th>
+                <th>Storytelling</th>
+                <th style="min-width:200px">Rehooks Used</th>
+                <th style="min-width:200px">Retention Pattern</th>
+                <th style="min-width:150px">CTA Placement</th>
+                <th style="min-width:200px">Key Takeaways</th>
+                <th style="min-width:200px">Thumbnail Desc</th>
               </tr>
             </thead>
             <tbody id="metrics-tbody"></tbody>
           </table>
         </div>
-        <div id="metrics-cards-view" class="grid-container" style="display:none; padding: 12px 0;"></div>
+        <div id="metrics-cards-view" class="video-cards" style="display:none; padding:24px;"></div>
       </div>
+    </div>
 
-      <!-- Tab Content: Synthesis -->
-      <div id="tab-synthesis" class="tab-content">
-        <div class="synthesis-layout">
-          <div id="synthesis-content" class="sop-sheet">
-            <!-- Rendered via JS -->
+    <!-- Tab: Synthesis -->
+    <div id="tab-synthesis" class="tab-content">
+      <div class="synthesis-card">
+        <div class="synthesis-header">
+          <div class="synthesis-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14">
+              <path d="M12 2a7 7 0 0 1 7 7c0 3-2 5.5-4 7.5L12 22l-3-5.5C7 14.5 5 12 5 9a7 7 0 0 1 7-7z" />
+              <circle cx="12" cy="9" r="2" />
+            </svg>
+            AI Strategic Report
           </div>
-          <div class="sticky-sidebar">
-            <div id="scene-analysis-content" class="sop-sheet" style="padding: 24px; font-size: 0.9rem;">
-              <!-- Vision Insights Rendered via JS -->
-            </div>
-            <div style="margin-top: 20px;">
-              <button id="btn-niche-bend" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                Generate Niche Concepts
-              </button>
-            </div>
+          <div class="synthesis-title">Master Channel Synthesis</div>
+        </div>
+        <div id="synthesis-content" class="synthesis-body">
+          <div class="synthesis-empty">
+            <div class="synthesis-empty-icon">&#x1F4DD;</div>
+            <p>No synthesis generated yet.<br>Complete all video analyses to generate the master SOP.</p>
           </div>
         </div>
       </div>
-
-      <!-- Tab Content: Niche Bend -->
-      <div id="tab-niche-bend" class="tab-content">
-        <div id="niche-bends-card" class="sop-sheet">
-           <div id="niche-bends-content" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
-              <!-- Bends Rendered via JS -->
-           </div>
+      <div class="synthesis-card" style="margin-top: 24px;" id="niche-bends-card">
+        <div class="synthesis-header">
+          <div class="synthesis-badge"
+            style="background: rgba(251,146,60,0.1); border-color: rgba(251,146,60,0.2); color: var(--accent-warm);">
+            🔥 Strategy
+          </div>
+          <div class="synthesis-title">15 Detailed Niche Bends</div>
+        </div>
+        <div id="niche-bends-content" class="synthesis-body">
+          <div class="synthesis-empty">
+            <p>No niche bends generated yet.<br>Click "🔥 Niche Bender" (top right) to extract the strategic frameworks.
+            </p>
+          </div>
+        </div>
+      </div>
+      <!-- ═══ Scene Analysis Output ═══ -->
+      <div id="scene-analysis-card" class="synthesis-card" style="margin-top: 32px">
+        <div class="synthesis-header">
+          <div class="synthesis-badge"
+            style="color: #a78bfa; border-color: rgba(167, 139, 250, 0.3); background: rgba(167, 139, 250, 0.1);">VISION
+            AI</div>
+          <div class="synthesis-title">Scene Structural Analysis</div>
+        </div>
+        <div id="scene-analysis-content" class="synthesis-body">
+          <div class="synthesis-empty">
+            <p>No scene analysis available yet.<br>Click "👁️ Analyze Scene" to extract styles from the top video.</p>
+          </div>
         </div>
       </div>
     </div>
-  </main>
-
-  <footer style="margin-top: 80px; padding: 40px; text-align: center; border-top: 1px solid var(--border-dash); color: var(--gray-600); font-size: 0.8rem;">
-    ChannelLens Workstation v2.1.0 &bull; Restricted Enterprise Build
-  </footer>
-
-  <!-- Gallery Modal -->
-  <div id="gallery-modal">
-    <button id="btn-close-gallery" style="position: absolute; top: 30px; right: 40px; background: none; border: none; color: white; font-size: 2.5rem; cursor: pointer;">&times;</button>
-    <div class="gallery-stage">
-      <button onclick="changeGalleryImage(-1)" class="gallery-nav-btn prev">&#8249;</button>
-      <div id="gallery-container"></div>
-      <button onclick="changeGalleryImage(1)" class="gallery-nav-btn next">&#8250;</button>
-    </div>
-    <div id="gallery-counter" style="margin-top: 24px; color: var(--gray-500); font-family: var(--font-mono); letter-spacing: 2px;"></div>
   </div>
 
-  <div id="modal-overlay" class="modal-overlay">
-    <div class="modal-sheet">
-       <h2 id="modal-title" style="margin-bottom: 12px; font-weight: 800; letter-spacing: -0.02em;">Confirm Action</h2>
-       <p id="modal-desc" style="color: var(--gray-400); font-size: 0.95rem; margin-bottom: 24px;">Are you sure you want to proceed?</p>
-       <div id="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end;">
-          <button id="modal-cancel" class="btn btn-secondary">Cancel</button>
-          <button id="modal-confirm" class="btn btn-primary">Proceed</button>
-       </div>
+  <!-- ═══ Frame Gallery Modal ═══ -->
+  <div id="gallery-modal"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+    <button id="btn-close-gallery"
+      style="position:absolute; top:20px; right:30px; background:transparent; border:none; color:white; font-size:2rem; cursor:pointer;">&times;</button>
+
+    <div style="position:relative; display:flex; align-items:center; justify-content:center; width:80%; height:80vh;">
+      <button class="gallery-nav-btn prev" onclick="changeGalleryImage(-1)">&#8249;</button>
+      <div id="gallery-container"
+        style="display:flex; align-items:center; justify-content:center; width:100%; height:100%;"></div>
+      <button class="gallery-nav-btn next" onclick="changeGalleryImage(1)">&#8250;</button>
     </div>
+
+    <div id="gallery-counter"
+      style="margin-top:20px; color:rgba(255,255,255,0.6); font-family:monospace; font-size:1.1rem; letter-spacing:2px;">
+    </div>
+  </div>
+
+  <div id="status-debug"
+    style="position:fixed; bottom:10px; right:10px; font-size:10px; color:rgba(255,255,255,0.2); z-index:9999;">JS
+    LOADED</div>
+  <div class="footer"
+    style="text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.75rem; border-top: 1px solid var(--border-subtle); margin-top: 60px;">
+    YouTube Agent Dashboard v1.4.5 • Restored Build
   </div>
 
   <script>
@@ -1215,9 +1567,9 @@
     let pollInterval = null;
     let galleryImages = [];
     let galleryIndex = 0;
-    
+
     // Global Gallery Opener
-    window.openGallery = function(frames, startIdx = 0) {
+    window.openGallery = function (frames, startIdx = 0) {
       if (!frames || !frames.length) return;
       galleryImages = frames;
       galleryIndex = startIdx;
@@ -1225,7 +1577,7 @@
       document.getElementById('gallery-modal').style.display = 'flex';
     };
 
-    window.changeGalleryImage = function(dir) {
+    window.changeGalleryImage = function (dir) {
       galleryIndex += dir;
       if (galleryIndex < 0) galleryIndex = galleryImages.length - 1;
       if (galleryIndex >= galleryImages.length) galleryIndex = 0;
@@ -1236,7 +1588,7 @@
       const container = document.getElementById('gallery-container');
       const counter = document.getElementById('gallery-counter');
       const src = galleryImages[galleryIndex];
-      
+
       container.innerHTML = `<img src="${src}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.8); animation: fadeScale 0.3s ease-out;">`;
       counter.innerText = `FRAME ${galleryIndex + 1} / ${galleryImages.length}`;
     }
@@ -1287,25 +1639,24 @@
 
         grid.innerHTML = sessions.map(s => {
           try {
-            const progress = (s.analyzedVideos / s.totalVideos) * 100;
             return `
-              <div class="session-card" onclick="openSession('${s.id}')">
+              <div class="card" onclick="openSession('${s.id}')" style="position:relative;">
                 <button class="btn-delete-session" onclick="event.stopPropagation(); confirmDelete('${s.id}', '${esc(s.channel)}')">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
                 </button>
-                <div class="card-visual" onclick="event.stopPropagation(); openGallery(['${s.finalScreenshot}'])" style="cursor:zoom-in;">
-                  ${s.finalScreenshot ? `<img src="${s.finalScreenshot}" alt="" loading="lazy">` : '<div style="height:100%; display:flex; align-items:center; justify-content:center; color:var(--gray-700); font-size:0.8rem;">NO CAPTURE</div>'}
-                  <div class="card-overlay"></div>
-                  <span class="status-pill ${s.status === 'complete' ? 'complete' : 'processing'}">${s.status === 'complete' ? 'READY' : 'ANALYZING'}</span>
-                </div>
-                <div class="card-content">
-                  <div class="card-title">${esc(s.channel)}</div>
-                  <div class="progress-track">
-                    <div class="progress-fill" style="width: ${progress}%"></div>
+                <div class="card-thumb">
+                  ${s.finalScreenshot ? `<img src="${s.finalScreenshot}" alt="" loading="lazy">` : '<div class="card-thumb-empty">No screenshot</div>'}
+                  <div class="card-badges">
+                    <span class="badge badge-count">${s.analyzedVideos}/${s.totalVideos} videos</span>
+                    <span class="badge ${s.status === 'complete' ? 'badge-complete' : 'badge-progress'}">${s.status === 'complete' ? 'Complete' : 'Processing'}</span>
                   </div>
-                  <div class="card-footer">
-                    <span>${new Date(s.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                    <span style="letter-spacing:1px">${s.analyzedVideos}/${s.totalVideos} VIDEOS</span>
+                </div>
+                <div class="card-body">
+                  <div class="card-title">${esc(s.channel)}</div>
+                  <div class="card-meta">
+                    <span>${new Date(s.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <span class="card-meta-dot"></span>
+                    <span>${s.hasSynthesis ? 'Has synthesis' : 'No synthesis'}</span>
                   </div>
                 </div>
               </div>
@@ -1326,42 +1677,30 @@
       }
     }
 
-    // ═══ Custom Modal Logic ═══
-    function showModal(title, desc, onConfirm) {
-      document.getElementById('modal-title').textContent = title;
-      document.getElementById('modal-desc').textContent = desc;
-      const overlay = document.getElementById('modal-overlay');
-      overlay.style.display = 'flex';
-      
-      const confirmBtn = document.getElementById('modal-confirm');
-      const cancelBtn = document.getElementById('modal-cancel');
-      
-      const doConfirm = () => { overlay.style.display='none'; onConfirm(); cleanup(); };
-      const doCancel = () => { overlay.style.display='none'; cleanup(); };
-      
-      const cleanup = () => {
-        confirmBtn.removeEventListener('click', doConfirm);
-        cancelBtn.removeEventListener('click', doCancel);
-      };
-      
-      confirmBtn.addEventListener('click', doConfirm);
-      cancelBtn.addEventListener('click', doCancel);
-    }
-
     async function confirmDelete(id, name) {
-      showModal(
-        "Delete Session",
-        `Are you sure you want to permanently delete "${name}"? This action cannot be undone.`,
-        async () => {
-          try {
-            const res = await fetch(`/api/session/${id}`, { method: 'DELETE' });
-            const data = await res.json();
-            if (data.success) {
-              loadSessions();
-            }
-          } catch (err) { console.error('Delete failed:', err); }
+      if (!confirm(`Are you sure you want to PERMANENTLY delete the analysis session for "${name}"?\n\nThis will also delete ALL associated screenshots and data.`)) return;
+
+      try {
+        const res = await fetch(`/api/session/${id}`, { method: 'DELETE' });
+
+        // Handle non-JSON responses (like 404/500 HTML pages)
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+          const data = await res.json();
+          if (data.success) {
+            if (localStorage.getItem(`analysis_${name}`)) localStorage.removeItem(`analysis_${name}`);
+            loadSessions();
+          } else {
+            alert('Failed to delete: ' + (data.error || 'Unknown error'));
+          }
+        } else {
+          const text = await res.text();
+          console.error('Non-JSON response:', text);
+          alert(`Server Error (${res.status}): The server didn't return a valid JSON response. Please restart the server and try again.`);
         }
-      );
+      } catch (err) {
+        alert('Error communicating with server: ' + err.message);
+      }
     }
 
     // ═══ Open Session ═══
@@ -1381,12 +1720,12 @@
 
         document.getElementById('session-title').textContent = currentSession.channel;
         document.getElementById('session-meta-text').textContent =
-          `${currentSession.videos.length} Strategic Data Points`;
+          `${currentSession.videos.length} videos \u2022 ${new Date(currentSession.startedAt).toLocaleString()}`;
         const badge = document.getElementById('session-meta-badge');
-        badge.textContent = currentSession.status === 'complete' ? 'READY' : 'ANALYZING';
-        badge.className = `status-pill ${currentSession.status === 'complete' ? 'complete' : 'processing'}`;
+        badge.textContent = currentSession.status === 'complete' ? 'Complete' : 'In Progress';
+        badge.className = `session-meta-badge ${currentSession.status === 'complete' ? 'complete' : 'progress'}`;
 
-        document.getElementById('metrics-count').textContent = `${currentSession.videos.length} VIDEOS RECORDED`;
+        document.getElementById('metrics-count').textContent = `${currentSession.videos.length} videos analyzed`;
 
         renderMetricsTable(currentSession.videos);
         renderMetricsCards(currentSession.videos);
@@ -1408,12 +1747,12 @@
     }
 
     // ═══ Tabs ═══
-    document.querySelectorAll('.tab-trigger[data-tab]').forEach(btn => {
+    document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
     function switchTab(tab) {
-      document.querySelectorAll('.tab-trigger[data-tab]').forEach(b => b.classList.remove('active'));
-      document.querySelector(`.tab-trigger[data-tab="${tab}"]`)?.classList.add('active');
+      document.querySelectorAll('.tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
+      document.querySelector(`.tab-btn[data-tab="${tab}"]`)?.classList.add('active');
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       document.getElementById(`tab-${tab}`)?.classList.add('active');
     }
@@ -1442,24 +1781,24 @@
 
     document.getElementById('btn-niche-bend').addEventListener('click', () => {
       if (currentSession) {
-        showModal(
-          "Generate Niche Bend",
-          "This will open ChatGPT to generate concepts. Proceed?",
-          () => window.open(`https://chatgpt.com/?niche_bend=true&sessionId=${currentSession.id}`, '_blank')
-        );
+        if (currentSession.nicheBends) {
+          if (!confirm("Niche bend is already generated. Do you want to generate new?")) return;
+        } else {
+          if (!confirm("Do you want to generate the niche bend?")) return;
+        }
+        window.open(`https://chatgpt.com/?niche_bend=true&sessionId=${currentSession.id}`, '_blank');
       }
     });
 
     document.getElementById('btn-scene-analyzer').addEventListener('click', () => {
       if (currentSession && currentSession.videos.length > 0) {
-        showModal(
-          "Production Analysis",
-          "Start the Scene Analyzer? This will capture cinematic frames from the top video.",
-          () => {
-            const targetVideoId = currentSession.videos[0].id || currentSession.videos[0].videoId;
-            window.open(`https://www.youtube.com/watch?v=${targetVideoId}&analyze_scene=true&sessionId=${currentSession.id}`, '_blank');
-          }
-        );
+        if (currentSession.sceneAnalysis) {
+          if (!confirm("Scene analysis is already generated. Do you want to generate new?")) return;
+        } else {
+          if (!confirm("Do you want to generate the scene analysis?")) return;
+        }
+        const targetVideoId = currentSession.videos[0].id || currentSession.videos[0].videoId;
+        window.open(`https://www.youtube.com/watch?v=${targetVideoId}&analyze_scene=true&sessionId=${currentSession.id}`, '_blank');
       }
     });
 
@@ -1473,19 +1812,24 @@
     function renderMetricsTable(videos) {
       document.getElementById('metrics-tbody').innerHTML = videos.map((v, i) => `
         <tr>
-          <td style="font-weight:700; color:var(--gray-600); font-family:var(--font-mono); font-size:0.75rem;">${String(v.stepNumber || i + 1).padStart(2, '0')}</td>
+          <td style="font-weight:700;color:var(--accent-primary);font-family:var(--font-mono)">${v.stepNumber || v.videoNumber || i + 1}</td>
           <td>
-            <div style="display:flex; align-items:center; gap:16px;">
-              ${v.screenshot ? `<img src="${v.screenshot}" onclick="openGallery(['${v.screenshot}'])" style="width:100px; height:56px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:1px solid var(--border-dash); flex-shrink:0;">` : ''}
-              <div style="font-weight:600; color:white; font-size:0.85rem; line-height:1.4;">${esc(v.title)}</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              ${v.screenshot ? `<img src="${v.screenshot}" onclick="openGallery(['${v.screenshot}'])" style="width:80px; height:45px; object-fit:cover; border-radius:4px; cursor:zoom-in; border:1px solid var(--border); flex-shrink:0;">` : ''}
+              <div style="font-weight:600;color:var(--text-primary)">${esc(v.title)}</div>
             </div>
           </td>
-          <td><span class="tag">${esc(v.hookType)}</span></td>
-          <td><div class="clamped-text" onclick="this.classList.toggle('expanded')">${esc(v.hookText)}</div></td>
-          <td><span class="tag" style="background:rgba(255,255,255,0.05); color:var(--gray-400);">${esc(v.hookFramework)}</span></td>
-          <td><div class="clamped-text" onclick="this.classList.toggle('expanded')">${esc(v.openingStructure)}</div></td>
-          <td><div class="clamped-text" onclick="this.classList.toggle('expanded')">${esc(v.storytellingFramework)}</div></td>
-          <td><div class="clamped-text" onclick="this.classList.toggle('expanded')">${esc(v.keyTakeaways)}</div></td>
+          <td><span class="hook-badge">${esc(v.hookType)}</span></td>
+          <td><div class="cell-expand" onclick="this.classList.toggle('expanded')">${esc(v.hookText)}</div></td>
+          <td>${esc(v.hookFramework)}</td>
+          <td><div class="cell-expand" onclick="this.classList.toggle('expanded')">${esc(v.openingStructure)}</div></td>
+          <td><div class="cell-expand" onclick="this.classList.toggle('expanded')" style="font-family:var(--font-mono);font-size:0.75rem">${esc(v.scriptStructure)}</div></td>
+          <td>${esc(v.storytellingFramework)}</td>
+          <td><div class="cell-expand" onclick="this.classList.toggle('expanded')">${esc(v.rehooksUsed)}</div></td>
+          <td><div class="cell-expand" onclick="this.classList.toggle('expanded')">${esc(v.retentionPattern)}</div></td>
+          <td>${esc(v.ctaPlacement)}</td>
+          <td><div class="cell-expand" onclick="this.classList.toggle('expanded')">${esc(v.keyTakeaways)}</div></td>
+          <td><div class="cell-expand" onclick="this.classList.toggle('expanded')">${esc(v.thumbnailDescription)}</div></td>
         </tr>
       `).join('');
     }
@@ -1494,97 +1838,155 @@
     function renderMetricsCards(videos) {
       document.getElementById('metrics-cards-view').innerHTML = videos.map((v, i) => {
         const fields = [
-          ['Hook Text', v.hookText], ['Framework', v.hookFramework], ['Opening', v.openingStructure],
-          ['Scripting', v.scriptStructure], ['Story', v.storytellingFramework],
-          ['Pattern', v.retentionPattern], ['Takeaways', v.keyTakeaways]
+          ['Hook Text', v.hookText], ['Hook Framework', v.hookFramework], ['Opening Structure', v.openingStructure],
+          ['Script Structure', v.scriptStructure], ['Storytelling', v.storytellingFramework], ['Rehooks', v.rehooksUsed],
+          ['Retention Pattern', v.retentionPattern], ['CTA Placement', v.ctaPlacement],
+          ['Key Takeaways', v.keyTakeaways], ['Thumbnail', v.thumbnailDescription]
         ];
-        return `
-          <div class="session-card" style="cursor:default;">
-            <div class="card-visual" onclick="openGallery(['${v.screenshot}'])" style="height:140px;">
-              ${v.screenshot ? `<img src="${v.screenshot}" alt="">` : ''}
-              <div class="card-overlay"></div>
-              <span class="status-pill complete">VIDEO #${v.stepNumber || i + 1}</span>
-            </div>
-            <div class="card-content" style="padding:16px;">
-              <div class="card-title" style="font-size:0.95rem; margin-bottom:16px;">${esc(v.title)}</div>
-              ${fields.map(([label, val]) => val ? `
-                <div style="margin-bottom:12px;">
-                  <div style="font-size:0.65rem; color:var(--gray-600); font-weight:800; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">${label}</div>
-                  <div style="font-size:0.8rem; color:var(--gray-300); line-height:1.5;">${esc(val)}</div>
-                </div>
-              ` : '').join('')}
-            </div>
-          </div>
-        `;
+        return `<div class="v-card">
+          ${v.screenshot ? `<div onclick="openGallery(['${v.screenshot}'])" style="cursor:zoom-in; margin-bottom:16px; border-radius:10px; overflow:hidden; border:1px solid var(--border); box-shadow:var(--shadow-sm);"><img src="${v.screenshot}" style="width:100%; display:block; transition:transform 0.3s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';"></div>` : ''}
+          <div class="v-card-top"><span class="v-card-num">#${v.stepNumber || v.videoNumber || i + 1}</span><span class="hook-badge">${esc(v.hookType)}</span></div>
+          <div class="v-card-title">${esc(v.title)}</div>
+          ${fields.map(([label, val]) => val ? `<div class="v-card-section"><div class="v-card-label">${label}</div><div class="v-card-value">${esc(val)}</div></div>` : '').join('')}
+          ${v.rawResponse ? `<div class="v-card-divider"></div><details class="v-card-raw"><summary>Raw ChatGPT Response</summary><div class="v-card-raw-content">${esc(v.rawResponse)}</div></details>` : ''}
+        </div>`;
       }).join('');
     }
 
     // ═══ Synthesis ═══
     function renderSynthesis(text, bendsText, sceneAnalysis, sceneFrames) {
       const el = document.getElementById('synthesis-content');
-      
-      const formatDashboardMD = (md) => {
-         if (!md) return '<div class="empty-well">No synthesis available.</div>';
-         return md
-           .replace(/^# (.*$)/gim, '<h1 class="sop-h2">$1</h1>')
-           .replace(/^## (.*$)/gim, '<h2 class="sop-h2">$1</h2>')
-           .replace(/^### (.*$)/gim, '<h3 style="font-size:1.1rem; font-weight:700; margin:20px 0 10px;">$1</h3>')
-           .replace(/^\* (.*$)/gim, '<li class="sop-li">$1</li>')
-           .replace(/^- (.*$)/gim, '<li class="sop-li">$1</li>')
-           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-           .split('\n').map(line => line.trim().startsWith('<l') ? line : line.trim().startsWith('<h') ? line : `<p class="sop-p">${line}</p>`).join('');
+      const bendsEl = document.getElementById('niche-bends-content');
+      const bendsCard = document.getElementById('niche-bends-card');
+
+      const formatMarkdown = (md) => {
+        let lines = md.split('\n');
+        let html = '';
+        let inList = false;
+
+        lines.forEach(line => {
+          let trimmed = line.trim();
+
+          let formattedLine = trimmed
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/_(.*?)_/g, '<em>$1</em>')
+            .replace(/`(.*?)`/g, '<code>$1</code>');
+
+          if (/^#\s+(.*)/.test(trimmed)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += `<div class="sop-section-title"><span class="sop-icon">📦</span>${formattedLine.replace(/^#\s+/, '')}</div>`;
+          }
+          else if (/^##\s+(.*)/.test(trimmed)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += `<div class="sop-subsection-title">${formattedLine.replace(/^##\s+/, '')}</div>`;
+          }
+          else if (/^###\s+(.*)/.test(trimmed)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += `<h3 class="sop-h3">${formattedLine.replace(/^###\s+/, '')}</h3>`;
+          }
+          else if (/^(?:-|\*|•|\+)\s+(.*)/.test(trimmed)) {
+            if (!inList) { html += '<ul class="sop-ul">'; inList = true; }
+            html += `<li><span class="sop-bullet"></span>${formattedLine.replace(/^(?:-|\*|•|\+)\s+/, '')}</li>`;
+          }
+          else if (/^\d+\.\s+(.*)/.test(trimmed)) {
+            if (!inList) { html += '<ul class="sop-ul">'; inList = true; }
+            html += `<li><strong>${trimmed.match(/^\d+\./)[0]}</strong> ${formattedLine.replace(/^\d+\.\s+/, '')}</li>`;
+          }
+          else if (/^>/.test(trimmed)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += `<blockquote class="sop-quote">${formattedLine.replace(/^>\s*/, '')}</blockquote>`;
+          }
+          else if (trimmed === '') {
+            if (inList) { html += '</ul>'; inList = false; }
+          }
+          else if (/^---/.test(trimmed) || /^___/.test(trimmed)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<div class="sop-divider"></div>';
+          }
+          else {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += `<p class="sop-p">${formattedLine}</p>`;
+          }
+        });
+        if (inList) html += '</ul>';
+        return html;
       };
 
-      el.innerHTML = formatDashboardMD(text);
+      if (!text) {
+        el.innerHTML = '<div class="synthesis-empty"><div class="synthesis-empty-icon">&#x1F4DD;</div><p>No synthesis generated yet.<br>Complete all video analyses to generate the master SOP.</p></div>';
+      } else {
+        el.innerHTML = formatMarkdown(text);
+      }
+
+      if (!bendsText) {
+        bendsEl.innerHTML = '<div class="synthesis-empty"><p>No niche bends generated yet.<br>Click "🔥 Niche Bender" (top right) to extract the strategic frameworks.</p></div>';
+      } else {
+        const lines = bendsText.split('\n');
+        const bendsList = [];
+        let currentBend = null;
+
+        lines.forEach(line => {
+          const trimmed = line.trim();
+          if (!trimmed) return;
+
+          if (/^(?:\*\*?)?\d+\.\s+/.test(trimmed)) {
+            if (currentBend && currentBend.items.length > 0) bendsList.push(currentBend);
+            let title = trimmed.replace(/^(?:\*\*?)?\d+\.\s+/, '').replace(/:?\*?\*?$/, '').trim();
+            title = title.replace(/^\[/, '').replace(/\]$/, '');
+            currentBend = { title, items: [] };
+          }
+          else if (currentBend && /^(?:→|\-|\*|•)\s+/.test(trimmed)) {
+            currentBend.items.push(trimmed.replace(/^(?:→|\-|\*|•)\s+/, '').trim());
+          }
+        });
+        if (currentBend && currentBend.items.length > 0) bendsList.push(currentBend);
+
+        if (bendsList.length > 0) {
+          let gridHtml = '<div class="niche-grid">';
+          bendsList.forEach((b, i) => {
+            gridHtml += `
+              <div class="niche-card">
+                <div class="niche-card-number">Concept ${i + 1}</div>
+                <div class="niche-card-title">${esc(b.title)}</div>
+                <ul class="niche-card-list">
+                  ${b.items.map(item => `<li>${esc(item)}</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          });
+          gridHtml += '</div>';
+          bendsEl.innerHTML = gridHtml;
+        } else {
+          // Fallback if parsing fails to find the structure
+          bendsEl.innerHTML = '<p>' + formatMarkdown(bendsText) + '</p>';
+        }
+      }
 
       const sceneEl = document.getElementById('scene-analysis-content');
+
       if (sceneAnalysis || (sceneFrames && sceneFrames.length > 0)) {
-        let framesHtml = '';
+        let framesPreview = '';
         if (sceneFrames && sceneFrames.length > 0) {
-          framesHtml = `
-            <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-bottom:24px;">
-              ${sceneFrames.map((src, idx) => `<img src="${src}" onclick="openGallery(${JSON.stringify(sceneFrames)}, ${idx})" style="width:100%; border-radius:8px; cursor:zoom-in;">`).join('')}
+          // Cinematic Channel Art Strip (Anti-Escape version)
+          framesPreview = `
+            <div style="display:flex; width:100%; height:180px; border-radius:12px; overflow:hidden; margin-bottom:16px; cursor:pointer; box-shadow:0 10px 30px rgba(0,0,0,0.4);" class="scene-frames-preview">
+              ${sceneFrames.map((src, idx) => `<img src="${src}" onclick="openGallery(${JSON.stringify(sceneFrames)}, ${idx})" style="flex:1; object-fit:cover; min-width:0; transition: transform 0.3s ease, filter 0.3s ease;" onmouseover="this.style.transform='scale(1.08)'; this.style.filter='brightness(1.2)';" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)';">`).join('')}
+            </div>
+            <div style="margin-bottom: 24px;">
+              <button class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 14px;" onclick='openGallery(${JSON.stringify(sceneFrames)})'>📁 See Channel Art</button>
             </div>
           `;
         }
-        sceneEl.innerHTML = `
-          <div style="font-size:0.7rem; font-weight:800; color:var(--brand-primary); letter-spacing:0.1em; margin-bottom:16px;">VISION INSIGHTS</div>
-          ${framesHtml}
-          <div style="font-size:0.85rem; line-height:1.6; color:var(--gray-400);">${formatDashboardMD(sceneAnalysis)}</div>
-           <div style="margin-top: 24px; text-align: right; border-top: 1px solid var(--border-dash); padding-top: 16px;">
-            <button class="btn btn-secondary" style="font-size:0.75rem;" onclick="navigator.clipboard.writeText(\`${(sceneAnalysis || '').replace(/`/g, '\\`')}\`); this.innerHTML='&#10003; Copied!'; setTimeout(()=>this.innerHTML='📋 Copy Vision Prompt', 2000);">📋 Copy Vision Prompt</button>
+
+        sceneEl.innerHTML = framesPreview + formatMarkdown(sceneAnalysis || "No text analysis provided.");
+        sceneEl.innerHTML += `
+          <div style="margin-top: 24px; text-align: right; border-top: 1px solid var(--border); padding-top: 16px;">
+            <button class="btn btn-primary" style="display:inline-flex; align-items:center; gap:8px;" onclick="navigator.clipboard.writeText(\`${(sceneAnalysis || '').replace(/`/g, '\\`')}\`); this.innerHTML='&#10003; Copied!'; setTimeout(()=>this.innerHTML='📋 Copy Vision Prompt', 2000);">📋 Copy Vision Prompt</button>
           </div>
         `;
       } else {
-        sceneEl.innerHTML = '<div class="empty-well" style="height:100px;">No Vision Analysis</div>';
-      }
-
-      // Render Bends
-      const bendsEl = document.getElementById('niche-bends-content');
-      if (bendsText) {
-        const bends = [];
-        let current = null;
-        bendsText.split('\n').map(l => l.trim()).forEach(l => {
-          if (l.match(/^\d+\./)) {
-            if (current) bends.push(current);
-            current = { title: l.replace(/^\d+\.\s+/, ''), items: [] };
-          } else if (current && (l.startsWith('*') || l.startsWith('-') || l.startsWith('→') || l.startsWith('•'))) {
-            current.items.push(l.replace(/^[*\-→•]\s+/, ''));
-          }
-        });
-        if (current) bends.push(current);
-
-        bendsEl.innerHTML = bends.map(b => `
-          <div class="session-card" style="padding:24px; cursor:default;">
-            <div style="font-size:0.7rem; color:var(--brand-secondary); font-weight:800; margin-bottom:8px;">CONCEPT</div>
-            <div class="card-title" style="margin-bottom:16px;">${esc(b.title)}</div>
-            <ul style="padding-left:16px; font-size:0.85rem; color:var(--gray-400);">
-              ${b.items.map(item => `<li style="margin-bottom:6px;">${esc(item)}</li>`).join('')}
-            </ul>
-          </div>
-        `).join('');
-      } else {
-        bendsEl.innerHTML = '<div class="empty-well" style="width:100%;">Generate concepts to see them here.</div>';
+        sceneEl.innerHTML = '<div class="synthesis-empty"><p>No scene analysis available yet.<br>Click "👁️ Analyze Scene" to extract styles from the top video.</p></div>';
       }
     }
 
