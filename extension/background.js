@@ -15,9 +15,25 @@ let state = {
 };
 
 const SERVER = 'http://127.0.0.1:3005';
+const ANALYTICS_ENDPOINT = `${SERVER}/api/analytics/event`;
 
 // Helper for delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+function trackEvent(eventName, properties = {}) {
+  fetch(ANALYTICS_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      eventName,
+      source: 'extension_background',
+      properties,
+      timestamp: new Date().toISOString()
+    })
+  }).catch(() => {
+    // No-op: telemetry cannot block orchestration.
+  });
+}
 
 // ─── State Persistence (MV3 survival) ──────────────────────
 async function saveState() {
@@ -124,6 +140,11 @@ function routeMessage(request, sender, sendResponse) {
 // --- Logic Handlers ---
 
 async function handleStartSequential(request, sender) {
+  trackEvent('analysis_started', {
+    channelName: request.channelName,
+    queueLength: request.queue?.length || 0
+  });
+
   // Create a server-side session first
   let sessionId = null;
   try {
@@ -153,6 +174,11 @@ async function handleStartSequential(request, sender) {
     basePrompt: request.prompt || '',
     sessionId: sessionId
   };
+
+  trackEvent('session_created', {
+    sessionId,
+    queueLength: state.queue.length
+  });
   
   await chrome.storage.local.set({ 
     isSequential: true, 
@@ -172,6 +198,10 @@ async function handleResumeSequential(request, sender, sendResponse) {
     return;
   }
   console.log(`YT-to-AI: Resuming sequence from step ${state.currentIndex + 1}/${state.queue.length}`);
+  trackEvent('analysis_resumed', {
+    sessionId: state.sessionId,
+    currentIndex: state.currentIndex
+  });
   
   // Create a fresh YouTube tab to kickstart the monitor
   chrome.tabs.create({ url: `https://www.youtube.com/watch?v=${state.queue[state.currentIndex]}` }, (tab) => {
@@ -238,6 +268,12 @@ async function handleVideoReady(request, sender) {
 
     // Write payload to storage BEFORE opening/triggering ChatGPT tab
     await chrome.storage.local.set(payload);
+    trackEvent('video_payload_ready', {
+      sessionId: state.sessionId,
+      step: state.currentIndex + 1,
+      totalSteps: state.queue.length,
+      videoId
+    });
 
     if (!state.chatTabId) {
       const tab = await chrome.tabs.create({ url: 'https://chatgpt.com/' });
@@ -262,6 +298,11 @@ async function handleVideoReady(request, sender) {
     }
   } catch (err) {
     console.error('YT-to-AI: Video Ready flow failed', err);
+    trackEvent('analysis_failed', {
+      sessionId: state.sessionId,
+      step: state.currentIndex + 1,
+      reason: 'video_ready_flow_failed'
+    });
     // CRITICAL: Don't let the flow die silently — skip to next video
     chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'fail' });
   }
@@ -269,6 +310,11 @@ async function handleVideoReady(request, sender) {
 
 async function handleStepResult(request) {
   if (request.status === 'success') {
+    trackEvent('analysis_step_completed', {
+      sessionId: state.sessionId,
+      step: state.currentIndex + 1,
+      totalSteps: state.queue.length
+    });
     state.retryCount = 0;
     state.currentIndex++;
     
@@ -288,6 +334,10 @@ async function handleStepResult(request) {
         await saveState();
       }
     } else {
+      trackEvent('analysis_completed', {
+        sessionId: state.sessionId,
+        totalSteps: state.queue.length
+      });
       // All videos done — trigger final synthesis
       state.isSequential = false;
       await chrome.storage.local.remove(['isSequential', 'currentIndex']);
@@ -311,6 +361,11 @@ async function handleStepResult(request) {
       });
     }
   } else {
+    trackEvent('analysis_step_failed', {
+      sessionId: state.sessionId,
+      step: state.currentIndex + 1,
+      retryCount: state.retryCount
+    });
     // Retry logic
     if (state.retryCount < 3) {
       state.retryCount++;

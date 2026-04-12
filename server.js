@@ -8,6 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ─── Persistent Error Logging ──────────────────────────────
 const ERROR_LOG = join(__dirname, 'data', 'error.log');
+const ANALYTICS_LOG = join(__dirname, 'data', 'analytics-events.ndjson');
 
 const logError = (err, context = 'Server') => {
   const timestamp = new Date().toISOString();
@@ -66,6 +67,51 @@ app.get('/api/prompts', (req, res) => {
     });
     res.json(prompts);
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.post('/api/analytics/event', (req, res) => {
+  try {
+    const { eventName, source = 'unknown', properties = {}, timestamp } = req.body || {};
+    if (!eventName || typeof eventName !== 'string') {
+      return res.status(400).json({ success: false, error: 'eventName is required' });
+    }
+
+    const payload = {
+      eventName,
+      source,
+      properties: typeof properties === 'object' && properties !== null ? properties : {},
+      timestamp: timestamp || new Date().toISOString(),
+      receivedAt: new Date().toISOString()
+    };
+
+    const dataDir = join(__dirname, 'data');
+    if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
+    appendFileSync(ANALYTICS_LOG, `${JSON.stringify(payload)}\n`);
+    res.json({ success: true });
+  } catch (err) {
+    logError(err, 'Analytics Event');
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/analytics/events', (req, res) => {
+  try {
+    if (!existsSync(ANALYTICS_LOG)) {
+      return res.json({ success: true, events: [] });
+    }
+    const rows = readFileSync(ANALYTICS_LOG, 'utf-8')
+      .split('\n')
+      .filter(Boolean)
+      .slice(-500)
+      .map(line => {
+        try { return JSON.parse(line); } catch { return null; }
+      })
+      .filter(Boolean);
+    res.json({ success: true, events: rows });
+  } catch (err) {
+    logError(err, 'Analytics Read');
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 app.post('/api/get-transcripts', async (req, res) => {

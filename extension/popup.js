@@ -1,4 +1,20 @@
 const promptSelect = document.getElementById('prompt-select');
+const ANALYTICS_ENDPOINT = 'http://127.0.0.1:3005/api/analytics/event';
+
+function trackEvent(eventName, properties = {}) {
+  fetch(ANALYTICS_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      eventName,
+      source: 'extension_popup',
+      properties,
+      timestamp: new Date().toISOString()
+    })
+  }).catch(() => {
+    // Analytics must never break popup UX.
+  });
+}
 
 async function loadPrompts() {
   try {
@@ -33,6 +49,7 @@ async function loadPrompts() {
     }
     
     promptSelect.innerHTML = optionsHtml;
+    trackEvent('prompt_selector_loaded', { promptCount: prompts.length });
     
     // Load last used and SYNC with latest server content
     const saved = await chrome.storage.local.get('selectedPromptId');
@@ -57,6 +74,7 @@ async function loadPrompts() {
       statusEl.style.fontWeight = 'bold';
       statusEl.innerText = 'OFFLINE (Wake server)';
     }
+    trackEvent('prompt_selector_failed', { reason: 'server_unreachable' });
   }
 }
 
@@ -71,16 +89,19 @@ promptSelect.onchange = async () => {
       selectedPromptId: promptSelect.value,
       activePrompt: content
     });
+    trackEvent('preset_selected', { presetId: promptSelect.value });
   } catch (err) {
     console.error('Popup: Failed to save selected prompt:', err);
   }
 };
 
 document.getElementById('open-yt').onclick = () => {
+  trackEvent('open_youtube_clicked');
   chrome.tabs.create({ url: 'https://youtube.com' });
 };
 
 document.getElementById('view-db').onclick = () => {
+  trackEvent('view_dashboard_clicked');
   chrome.tabs.create({ url: 'http://127.0.0.1:3005/dashboard.html' });
 };
 
@@ -105,6 +126,7 @@ async function checkSOP() {
     if (resumeBtn) {
       resumeBtn.style.display = 'flex';
       resumeBtn.onclick = () => {
+        trackEvent('resume_session_clicked');
         chrome.runtime.sendMessage({ action: 'RESUME_SEQUENTIAL' }, (response) => {
           if(response && response.success) {
             window.close(); // Close popup
@@ -115,5 +137,6 @@ async function checkSOP() {
   }
 }
 
+trackEvent('popup_opened');
 loadPrompts();
 checkSOP();
