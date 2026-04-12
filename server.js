@@ -49,6 +49,11 @@ app.use(express.static(join(__dirname, 'public')));
 app.use('/data', express.static(join(__dirname, 'data'))); 
 app.use(express.json({ limit: '50mb' })); 
 
+// Root redirect
+app.get('/', (req, res) => {
+  res.redirect('/dashboard.html');
+});
+
 const PORT = process.env.PORT || 3005;
 
 // ═══════════════════════════════════════════════════════════════
