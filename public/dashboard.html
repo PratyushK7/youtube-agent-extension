@@ -856,13 +856,41 @@
       background: var(--bg-elevated);
       color: var(--text-muted);
       font-weight: 600;
-      font-size: 0.7rem;
+      font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      padding: 12px 14px;
+      padding: 0 16px;
+      height: 48px;
+      line-height: 48px;
       text-align: left;
       white-space: nowrap;
-      border-bottom: 1px solid var(--border-medium);
+      border-bottom: 2px solid var(--border-medium);
+      position: relative;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .th-content {
+      display: flex;
+      align-items: center;
+      height: 100%;
+      width: 100%;
+    }
+
+    .resizer {
+      position: absolute;
+      right: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background: transparent;
+      cursor: col-resize;
+      z-index: 10;
+    }
+
+    .resizer:hover, .resizer.resizing {
+      background: var(--accent-primary);
+      box-shadow: 0 0 10px var(--accent-primary);
     }
 
     td {
@@ -886,11 +914,15 @@
     }
 
     .cell-expand {
-      max-height: 60px;
-      overflow: hidden;
-      cursor: pointer;
+      max-height: 180px;
+      overflow-y: auto;
+      cursor: default;
       position: relative;
-      transition: max-height 0.3s;
+      padding-right: 4px;
+    }
+
+    .cell-expand::-webkit-scrollbar {
+      width: 4px;
     }
 
     .cell-expand::after {
@@ -937,52 +969,106 @@
       border-radius: var(--radius-lg);
       padding: 24px;
       transition: var(--transition-base);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
     }
 
     .v-card:hover {
-      border-color: var(--border-medium);
-      transform: translateY(-3px);
+      border-color: var(--accent-primary);
+      transform: translateY(-2px);
       box-shadow: var(--shadow-md);
+    }
+
+    .v-card.collapsed .v-card-sections, 
+    .v-card.collapsed .v-card-divider,
+    .v-card.collapsed .v-card-raw {
+      display: none;
+    }
+
+    .v-card::after {
+      content: 'Click to expand details';
+      position: absolute;
+      bottom: 8px;
+      right: 16px;
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .v-card.collapsed:hover::after {
+      opacity: 1;
+    }
+    
+    .v-card:not(.collapsed)::after {
+      content: 'Click to collapse';
+      opacity: 0.4;
     }
 
     .v-card-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 14px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
     }
 
     .v-card-num {
       font-weight: 800;
       font-family: var(--font-mono);
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       color: var(--accent-primary);
+      background: rgba(124, 131, 255, 0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
     }
 
     .v-card-title {
-      font-weight: 700;
-      font-size: 1rem;
+      font-weight: 800;
+      font-size: 1.1rem;
       line-height: 1.4;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .v-card-sections {
+      display: grid;
+      gap: 16px;
     }
 
     .v-card-section {
-      margin-bottom: 14px;
+      background: var(--bg-secondary);
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      transition: border-color 0.2s;
+    }
+
+    .v-card-section:hover {
+      border-color: var(--accent-primary);
     }
 
     .v-card-label {
-      font-size: 0.7rem;
-      font-weight: 600;
+      font-size: 0.65rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-      margin-bottom: 4px;
+      letter-spacing: 0.08em;
+      color: var(--accent-indigo);
+      margin-bottom: 6px;
     }
 
     .v-card-value {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       line-height: 1.6;
-      color: var(--text-secondary);
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .v-card-value .markdown-content p {
+       margin-bottom: 0px; /* Tighten up card view */
     }
 
     .v-card-divider {
@@ -1016,6 +1102,68 @@
       padding: 12px;
       background: var(--bg-secondary);
       border-radius: var(--radius-sm);
+    }
+
+    /* ═══ Dual Pane List View ═══ */
+    .metrics-list-view {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      height: 700px;
+      overflow: hidden;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .video-list-sidebar {
+      border-right: 1px solid var(--border-subtle);
+      overflow-y: auto;
+      background: var(--bg-secondary);
+    }
+
+    .video-list-item {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: var(--transition-base);
+    }
+
+    .video-list-item:hover {
+      background: var(--bg-elevated);
+    }
+
+    .video-list-item.active {
+      background: rgba(124, 131, 255, 0.1);
+      border-left: 4px solid var(--accent-primary);
+    }
+
+    .video-list-item-num {
+      font-size: 0.65rem;
+      font-family: var(--font-mono);
+      color: var(--accent-primary);
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+
+    .video-list-item-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--text-primary);
+    }
+
+    .video-list-content {
+      overflow-y: auto;
+      padding: 32px;
+      background: var(--bg-card);
+    }
+
+    .video-list-placeholder {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      text-align: center;
     }
 
     /* ═══ Synthesis ═══ */
@@ -1258,20 +1406,28 @@
 
     /* ═══ Markdown Styles (Professional) ═══ */
     .markdown-content {
-      line-height: 1.8;
+      line-height: 1.6;
       color: var(--text-primary);
     }
     .markdown-content h1, .markdown-content h2, .markdown-content h3 {
-      margin: 1.5em 0 0.8em;
+      margin: 1.2em 0 0.6em;
       color: var(--text-primary);
-      letter-spacing: -0.02em;
+      letter-spacing: -0.01em;
     }
-    .markdown-content h1 { font-size: 1.8rem; border-bottom: 1px solid var(--border-medium); padding-bottom: 0.3em; }
-    .markdown-content h2 { font-size: 1.4rem; color: var(--accent-primary); }
-    .markdown-content h3 { font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+    .markdown-content h1 { font-size: 1.4rem; border-bottom: 1px solid var(--border-medium); padding-bottom: 0.2em; }
+    .markdown-content h2 { font-size: 1.1rem; color: var(--accent-primary); border-bottom: none; }
+    .markdown-content h3 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+    
+    /* Compact mode for table cells */
+    td .markdown-content h1 { font-size: 1.1rem; margin-top: 0.5em; }
+    td .markdown-content h2 { font-size: 0.95rem; margin-top: 0.5em; color: var(--text-primary); font-weight: 800; }
+    td .markdown-content h3 { font-size: 0.8rem; margin-top: 0.4em; }
+    td .markdown-content p { margin-bottom: 0.8em; font-size: 0.85rem; }
+    td .markdown-content ul, td .markdown-content ol { margin-bottom: 1em; padding-left: 1.2em; font-size: 0.85rem; }
+
     .markdown-content p { margin-bottom: 1.2em; color: var(--text-secondary); }
     .markdown-content ul, .markdown-content ol { margin-bottom: 1.5em; padding-left: 1.5em; }
-    .markdown-content li { margin-bottom: 0.6em; color: var(--text-secondary); }
+    .markdown-content li { margin-bottom: 0.4em; color: var(--text-secondary); }
     .markdown-content li strong { color: var(--text-primary); }
     .markdown-content blockquote {
       border-left: 4px solid var(--accent-primary);
@@ -1567,27 +1723,37 @@
         <div class="table-toolbar">
           <span class="table-toolbar-label" id="metrics-count"></span>
           <div class="layout-toggle">
-            <button class="layout-btn active" data-layout="table">Spreadsheet</button>
+            <button class="layout-btn active" data-layout="list">List</button>
             <button class="layout-btn" data-layout="cards">Cards</button>
+            <button class="layout-btn" data-layout="table">Spreadsheet</button>
           </div>
         </div>
-        <div id="metrics-table-view" class="table-scroll">
+        <div id="metrics-list-view" class="metrics-list-view">
+          <div id="video-list-sidebar" class="video-list-sidebar"></div>
+          <div id="video-list-content" class="video-list-content">
+            <div class="video-list-placeholder">
+              <div style="font-size: 3rem; margin-bottom: 16px; opacity: 0.3;">📋</div>
+              <p>Select a video from the list to view strategic analysis</p>
+            </div>
+          </div>
+        </div>
+        <div id="metrics-table-view" class="table-scroll" style="display:none;">
           <table>
             <thead>
-              <tr>
-                <th>#</th>
-                <th style="min-width:240px">Title</th>
-                <th>Hook Type</th>
-                <th style="min-width:200px">Hook Text</th>
-                <th>Hook Framework</th>
-                <th style="min-width:200px">Opening Structure</th>
-                <th style="min-width:260px">Script Structure</th>
-                <th>Storytelling</th>
-                <th style="min-width:200px">Rehooks Used</th>
-                <th style="min-width:200px">Retention Pattern</th>
-                <th style="min-width:150px">CTA Placement</th>
-                <th style="min-width:200px">Key Takeaways</th>
-                <th style="min-width:200px">Thumbnail Desc</th>
+              <tr id="metrics-thead-row">
+                <th style="width:50px"><div class="th-content">#</div><div class="resizer"></div></th>
+                <th style="width:300px"><div class="th-content">Title</div><div class="resizer"></div></th>
+                <th style="width:160px"><div class="th-content">Hook Type</div><div class="resizer"></div></th>
+                <th style="width:250px"><div class="th-content">Hook Text</div><div class="resizer"></div></th>
+                <th style="width:200px"><div class="th-content">Hook Framework</div><div class="resizer"></div></th>
+                <th style="width:250px"><div class="th-content">Opening Structure</div><div class="resizer"></div></th>
+                <th style="width:350px"><div class="th-content">Script Structure</div><div class="resizer"></div></th>
+                <th style="width:180px"><div class="th-content">Storytelling</div><div class="resizer"></div></th>
+                <th style="width:250px"><div class="th-content">Rehooks Used</div><div class="resizer"></div></th>
+                <th style="width:250px"><div class="th-content">Retention Pattern</div><div class="resizer"></div></th>
+                <th style="width:180px"><div class="th-content">CTA Placement</div><div class="resizer"></div></th>
+                <th style="width:300px"><div class="th-content">Key Takeaways</div><div class="resizer"></div></th>
+                <th style="width:280px"><div class="th-content">Thumbnail Strategy</div><div class="resizer"></div></th>
               </tr>
             </thead>
             <tbody id="metrics-tbody"></tbody>
@@ -1787,6 +1953,7 @@
         empty.style.display = 'none';
         grid.style.display = 'grid';
 
+        const lastActiveSessionId = currentSession ? currentSession.id : null;
         grid.innerHTML = sessions.map(s => {
           try {
             return `
@@ -1855,17 +2022,60 @@
 
     // ═══ Open Session ═══
     async function openSession(id, isSilent = false) {
+      const tableContainer = document.querySelector('.table-scroll');
+      const savedScroll = {
+        windowY: window.scrollY,
+        tableX: tableContainer ? tableContainer.scrollLeft : 0,
+        tableY: tableContainer ? tableContainer.scrollTop : 0,
+        // Track which cards were expanded so we don't collapse them on refresh
+        expandedCardIndexes: Array.from(document.querySelectorAll('.v-card:not(.collapsed)')).map(c => {
+           const num = c.querySelector('.v-card-num')?.textContent;
+           return num;
+        })
+      };
+
       try {
         const res = await fetch(`/api/session/${id}`);
         const data = await res.json();
         if (!data.success) return;
 
+        const oldDataStr = JSON.stringify({
+          status: currentSession?.status,
+          videoCount: currentSession?.videos?.length,
+          hasSynth: !!currentSession?.synthesis
+        });
+        
         currentSession = data.session;
+        
+        const newDataStr = JSON.stringify({
+          status: currentSession.status,
+          videoCount: currentSession.videos.length,
+          hasSynth: !!currentSession.synthesis
+        });
+
+        // 🚀 DIFFERENTIAL RENDER: If nothing essential changed, skip the heavy DOM wipe
+        if (isSilent && oldDataStr === newDataStr) {
+           return; 
+        }
 
         if (!isSilent) {
           document.getElementById('sessions-grid-view').style.display = 'none';
           document.getElementById('session-view').style.display = 'block';
           window.scrollTo({ top: 0, behavior: 'smooth' });
+          
+          // Sync URL State (Session & Tab) - Use replaceState if we're already there
+          const url = new URL(window.location);
+          const needsPush = url.searchParams.get('sessionId') !== id;
+          
+          url.searchParams.set('sessionId', id);
+          const currentTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'metrics';
+          url.searchParams.set('tab', currentTab);
+          
+          const currentLayout = document.querySelector('.layout-btn.active')?.dataset.layout || 'cards';
+          url.searchParams.set('layout', currentLayout);
+          
+          if (needsPush) window.history.pushState({}, '', url);
+          else window.history.replaceState({}, '', url);
         }
 
         document.getElementById('session-title').textContent = currentSession.channel;
@@ -1879,17 +2089,51 @@
 
         renderMetricsTable(currentSession.videos);
         renderMetricsCards(currentSession.videos);
+        renderMetricsList(currentSession.videos);
         renderSynthesis(currentSession.synthesis, currentSession.nicheBends, currentSession.sceneAnalysis, currentSession.sceneFrames);
 
-        if (!isSilent) switchTab('metrics');
+        if (!isSilent) {
+          const urlParams = new URLSearchParams(window.location.search);
+          const targetTab = urlParams.get('tab') || 'metrics';
+          const targetLayout = urlParams.get('layout') || 'list';
+          
+          switchTab(targetTab);
+          switchLayout(targetLayout);
+        }
+        
+        // Targeted scroll and UI state restore
+        if (isSilent) {
+          // 1. Restore Expanded Cards
+          if (savedScroll.expandedCardIndexes.length > 0) {
+            document.querySelectorAll('.v-card').forEach(c => {
+               const num = c.querySelector('.v-card-num')?.textContent;
+               if (savedScroll.expandedCardIndexes.includes(num)) {
+                 c.classList.remove('collapsed');
+               }
+            });
+          }
+          
+          // 2. Snap Scroll Positions
+          requestAnimationFrame(() => {
+            window.scrollTo(0, savedScroll.windowY);
+            const tc = document.querySelector('.table-scroll');
+            if (tc) {
+              tc.scrollLeft = savedScroll.tableX;
+              tc.scrollTop = savedScroll.tableY;
+            }
+          });
+        }
 
         // Robust Live Dashboard Polling (Anti-Escape Sync)
         if (!pollInterval) {
           pollInterval = setInterval(() => {
             if (currentSession && document.visibilityState === 'visible') {
-              openSession(currentSession.id, true);
+              // Only trigger a silent refresh if the session is still processing
+              if (currentSession.status !== 'complete') {
+                openSession(currentSession.id, true);
+              }
             }
-          }, 2000);
+          }, 4000); // 4s for a smoother background experience
         }
 
       } catch (err) { console.error('Failed to open session:', err); }
@@ -1921,22 +2165,48 @@
       document.querySelector(`.tab-btn[data-tab="${tab}"]`)?.classList.add('active');
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       document.getElementById(`tab-${tab}`)?.classList.add('active');
+      
+      // Update URL Tab Parameter
+      if (currentSession) {
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tab);
+        window.history.replaceState({}, '', url);
+      }
     }
 
     // Layout toggle
     document.querySelectorAll('.layout-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.layout-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('metrics-table-view').style.display = btn.dataset.layout === 'table' ? 'block' : 'none';
-        document.getElementById('metrics-cards-view').style.display = btn.dataset.layout === 'cards' ? 'grid' : 'none';
-      });
+      btn.addEventListener('click', () => switchLayout(btn.dataset.layout));
     });
+
+    function switchLayout(layout) {
+      document.querySelectorAll('.layout-btn').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.querySelector(`.layout-btn[data-layout="${layout}"]`);
+      if (activeBtn) activeBtn.classList.add('active');
+      
+      document.getElementById('metrics-list-view').style.display = layout === 'list' ? 'grid' : 'none';
+      document.getElementById('metrics-table-view').style.display = layout === 'table' ? 'block' : 'none';
+      document.getElementById('metrics-cards-view').style.display = layout === 'cards' ? 'grid' : 'none';
+      
+      if (currentSession) {
+        const url = new URL(window.location);
+        url.searchParams.set('layout', layout);
+        window.history.replaceState({}, '', url);
+      }
+    }
 
     document.getElementById('btn-back').addEventListener('click', () => {
       document.getElementById('session-view').style.display = 'none';
       document.getElementById('sessions-grid-view').style.display = 'block';
       if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+      
+      // Clear URL State
+      const url = new URL(window.location);
+      url.searchParams.delete('sessionId');
+      url.searchParams.delete('tab');
+      url.searchParams.delete('layout');
+      window.history.pushState({}, '', url);
+      
       loadSessions(); // Reload data grid upon returning
       currentSession = null;
     });
@@ -2002,6 +2272,65 @@
       `).join('');
     }
 
+    // ═══ Metrics List View (Side-by-Side) ═══
+    function renderMetricsList(videos) {
+      if (!videos) return;
+      const sidebar = document.getElementById('video-list-sidebar');
+      // Preserve active selection if possible
+      const activeNum = sidebar.querySelector('.video-list-item.active')?.dataset.num;
+      
+      sidebar.innerHTML = videos.map((v, i) => {
+          const num = v.stepNumber || v.videoNumber || i + 1;
+          const isActive = activeNum == num;
+          return `
+            <div class="video-list-item ${isActive ? 'active' : ''}" data-num="${num}" onclick="selectVideoInList(${i}, this)">
+              <div class="video-list-item-num">VIDEO #${num}</div>
+              <div class="video-list-item-title">${esc(v.title)}</div>
+            </div>
+          `;
+      }).join('');
+      
+      // Auto-select first video if nothing is selected
+      if (!activeNum && videos.length > 0) {
+          const firstItem = sidebar.querySelector('.video-list-item');
+          if (firstItem) selectVideoInList(0, firstItem);
+      }
+    }
+
+    function selectVideoInList(index, el) {
+      const v = currentSession.videos[index];
+      if (!v) return;
+
+      document.querySelectorAll('.video-list-item').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
+
+      const fields = [
+        ['Hook Text', v.hookText], ['Hook Framework', v.hookFramework], ['Opening Structure', v.openingStructure],
+        ['Script Structure', v.scriptStructure], ['Storytelling', v.storytellingFramework], ['Rehooks', v.rehooksUsed],
+        ['Retention Pattern', v.retentionPattern], ['CTA Placement', v.ctaPlacement],
+        ['Key Takeaways', v.keyTakeaways], ['Thumbnail', v.thumbnailDescription]
+      ];
+
+      const content = document.getElementById('video-list-content');
+      content.innerHTML = `
+        <div style="max-width: 800px; margin: 0 auto;">
+           ${v.screenshot ? `<div onclick="openGallery(['${v.screenshot}'])" style="cursor:zoom-in; margin-bottom:24px; border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:var(--shadow-lg);"><img src="${v.screenshot}" style="width:100%; display:block;"></div>` : ''}
+           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px;">
+              <div>
+                 <div class="v-card-num">#${v.stepNumber || v.videoNumber || index + 1}</div>
+                 <h2 style="font-size: 1.5rem; font-weight: 800; margin-top: 12px; line-height:1.2;">${esc(v.title)}</h2>
+              </div>
+              <span class="hook-badge" style="padding: 6px 14px; font-size: 0.8rem;">${esc(v.hookType)}</span>
+           </div>
+           <div class="v-card-sections">
+              ${fields.map(([label, val]) => val ? `<div class="v-card-section"><div class="v-card-label">${label}</div><div class="v-card-value">${formatMarkdown(val)}</div></div>` : '').join('')}
+           </div>
+           ${v.rawResponse ? `<div class="v-card-divider"></div><details class="v-card-raw"><summary>Raw ChatGPT Response</summary><div class="v-card-raw-content">${esc(v.rawResponse)}</div></details>` : ''}
+        </div>
+      `;
+      content.scrollTop = 0;
+    }
+
     // ═══ Metrics Cards ═══
     function renderMetricsCards(videos) {
       if (!videos) return;
@@ -2013,12 +2342,14 @@
             ['Retention Pattern', v.retentionPattern], ['CTA Placement', v.ctaPlacement],
             ['Key Takeaways', v.keyTakeaways], ['Thumbnail', v.thumbnailDescription]
           ];
-          return `<div class="v-card">
-            ${v.screenshot ? `<div onclick="openGallery(['${v.screenshot}'])" style="cursor:zoom-in; margin-bottom:16px; border-radius:10px; overflow:hidden; border:1px solid var(--border); box-shadow:var(--shadow-sm);"><img src="${v.screenshot}" style="width:100%; display:block; transition:transform 0.3s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';"></div>` : ''}
+          return `<div class="v-card collapsed" onclick="this.classList.toggle('collapsed')">
+            ${v.screenshot ? `<div onclick="event.stopPropagation(); window.openGallery(['${v.screenshot}'])" style="cursor:zoom-in; margin-bottom:16px; border-radius:10px; overflow:hidden; border:1px solid var(--border); box-shadow:var(--shadow-sm);"><img src="${v.screenshot}" style="width:100%; display:block; transition:transform 0.3s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';"></div>` : ''}
             <div class="v-card-top"><span class="v-card-num">#${v.stepNumber || v.videoNumber || i + 1}</span><span class="hook-badge">${esc(v.hookType)}</span></div>
             <div class="v-card-title">${esc(v.title)}</div>
-            ${fields.map(([label, val]) => val ? `<div class="v-card-section"><div class="v-card-label">${label}</div><div class="v-card-value">${formatMarkdown(val)}</div></div>` : '').join('')}
-            ${v.rawResponse ? `<div class="v-card-divider"></div><details class="v-card-raw"><summary>Raw ChatGPT Response</summary><div class="v-card-raw-content">${esc(v.rawResponse)}</div></details>` : ''}
+            <div class="v-card-sections">
+              ${fields.map(([label, val]) => val ? `<div class="v-card-section"><div class="v-card-label">${label}</div><div class="v-card-value">${formatMarkdown(val)}</div></div>` : '').join('')}
+            </div>
+            ${v.rawResponse ? `<div class="v-card-divider"></div><details class="v-card-raw" onclick="event.stopPropagation()"><summary>Raw ChatGPT Response</summary><div class="v-card-raw-content">${esc(v.rawResponse)}</div></details>` : ''}
           </div>`;
         }).join('');
       } catch (err) {
@@ -2150,11 +2481,86 @@
       };
     };
 
-    window.closeSOPModal = function() {
+     window.closeSOPModal = function() {
       document.getElementById('sop-modal').style.display = 'none';
     };
 
-    loadSessions();
+    loadSessions().then(() => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sid = urlParams.get('sessionId');
+      const tab = urlParams.get('tab');
+      const layout = urlParams.get('layout');
+      
+      if (sid) {
+        console.log('Restoring Session from URL:', sid, tab, layout);
+        openSession(sid).then(() => {
+            if (tab) switchTab(tab);
+            if (layout) switchLayout(layout);
+        });
+      }
+    });
+
+    window.addEventListener('popstate', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sid = urlParams.get('sessionId');
+      if (sid) {
+        openSession(sid);
+      } else {
+        document.getElementById('session-view').style.display = 'none';
+        document.getElementById('sessions-grid-view').style.display = 'block';
+        currentSession = null;
+      }
+    });
+
+    // Global Modal Escape Handle
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const sopModal = document.getElementById('sop-modal');
+        const galleryModal = document.getElementById('gallery-modal');
+        
+        if (sopModal && sopModal.style.display === 'flex') closeSOPModal();
+        if (galleryModal && galleryModal.style.display === 'flex') {
+            document.getElementById('gallery-modal').style.display = 'none';
+        }
+      }
+    });
+
+    // ═══ Resizable Columns Logic ═══
+    function initResizableTable() {
+      const ths = document.querySelectorAll('th');
+      ths.forEach(th => {
+        const resizer = th.querySelector('.resizer');
+        if (!resizer) return;
+
+        resizer.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          const startX = e.pageX;
+          const startWidth = th.offsetWidth;
+          
+          resizer.classList.add('resizing');
+          
+          const onMouseMove = (e) => {
+            const width = startWidth + (e.pageX - startX);
+            if (width > 50) {
+                th.style.width = width + 'px';
+                th.style.minWidth = width + 'px';
+            }
+          };
+          
+          const onMouseUp = () => {
+            resizer.classList.remove('resizing');
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+          };
+          
+          document.addEventListener('mousemove', onMouseMove);
+          document.addEventListener('mouseup', onMouseUp);
+        });
+      });
+    }
+    
+    // Call after initial load and whenever tab switches to metrics
+    setTimeout(initResizableTable, 1000);
   </script>
 </body>
 

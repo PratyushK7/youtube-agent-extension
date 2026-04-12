@@ -348,27 +348,14 @@ async function handleStepResult(request) {
         await saveState();
       }
     } else {
-      // All videos done — trigger final synthesis
+      // All videos done — Finish sequential flow without auto-synthesis
+      console.log('YT-to-AI: Sequential analysis complete. Returning to Dashboard.');
       state.isSequential = false;
-      await chrome.storage.local.remove(['isSequential', 'currentIndex']);
+      await chrome.storage.local.remove(['isSequential', 'currentIndex', 'totalSteps']);
       await saveState();
       
-      try {
-        await chrome.tabs.get(state.chatTabId);
-        await chrome.tabs.update(state.chatTabId, { active: true });
-      } catch (e) {
-        const tab = await chrome.tabs.create({ url: 'https://chatgpt.com/' });
-        state.chatTabId = tab.id;
-        await saveState();
-      }
-      
-      await delay(1200);
-      chrome.tabs.sendMessage(state.chatTabId, { 
-        action: 'FINAL_SYNTHESIS',
-        channelName: state.channelName,
-        sessionId: state.sessionId,
-        totalSteps: state.queue.length
-      });
+      // Move focus to the Dashboard instead of auto-running synthesis
+      focusDashboardTab();
     }
   } else {
     // Retry logic
@@ -398,24 +385,12 @@ async function handleStepResult(request) {
            await saveState();
          }
       } else {
-        // Even if last video failed, still do synthesis with what we have
+        // Queue finished (path with failures) — Return to Dashboard
+        console.log('YT-to-AI: Sequential analysis concluded with some skips. Returning to Dashboard.');
         state.isSequential = false;
         await chrome.storage.local.remove(['isSequential', 'currentIndex', 'totalSteps']);
         await saveState();
-        try {
-          await chrome.tabs.get(state.chatTabId);
-          chrome.tabs.update(state.chatTabId, { active: true });
-        } catch (e) {
-          const tab = await chrome.tabs.create({ url: 'https://chatgpt.com/' });
-          state.chatTabId = tab.id;
-          await saveState();
-        }
-        await delay(500);
-        chrome.tabs.sendMessage(state.chatTabId, { 
-          action: 'FINAL_SYNTHESIS',
-          channelName: state.channelName,
-          sessionId: state.sessionId
-        });
+        focusDashboardTab();
       }
     }
   }

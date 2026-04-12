@@ -98,12 +98,7 @@ Each object must contain:
 After providing the JSON array for individual videos, you will be asked for a **Master Strategic SOP**. 
 
 **Requirement for Master SOP (Synthesis):**
-- Use **detailed Markdown** for the entire response.
-- Use H1, H2, and H3 headers for categorization.
-- Use bold text for emphasis.
-- Use tables or bulleted lists for metrics and comparisons.
-- Ensure the output is visually professional and easy to navigate.
-
+- create a .md file with proper structuring and ease of reading
 ---
 
 ## STRICT RULES:
