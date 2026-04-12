@@ -1,8 +1,4 @@
-Analyze the style of this image, including color palette, lighting, composition, texture, and mood. 
-
-**STRICT REQUIREMENT:** Use Markdown headings (H1 for Title, H2 for Categories) and bullet points for categorization. 
-
-Then generate a short, reusable image generation prompt (under 30 words) that captures that style, so I can apply it to new images.
+Analyze the style of this image, including color palette, lighting, composition, texture, and mood. Then generate a short, reusable image generation prompt (under 30 words) that captures that style, so I can apply it to new images.
 
 Attach:
 
