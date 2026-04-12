@@ -125,13 +125,11 @@ if (urlParams.get('analyze_scene') === 'true') {
     showPlayerStatus('👁️ Scene Analyzer: Harvesting Cinematic Frames...');
     
     // Ensure metadata is loaded for duration
-    if (isNaN(video.duration) || video.duration === 0) {
-      await new Promise(r => {
-        video.addEventListener('loadedmetadata', r, { once: true });
-        // Force load if stuck
-        if (video.duration > 0) r();
-      });
+    for(let w=0; w<20; w++) {
+      if(!isNaN(video.duration) && video.duration > 0) break;
+      await new Promise(r => setTimeout(r, 500));
     }
+
 
     const duration = video.duration;
     const timestamps = [duration * 0.2, duration * 0.4, duration * 0.6, duration * 0.8, duration * 0.95];

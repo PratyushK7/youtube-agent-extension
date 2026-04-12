@@ -59,9 +59,10 @@ app.get('/api/prompts', (req, res) => {
   try {
     const promptsDir = join(__dirname, 'prompts');
     const files = readdirSync(promptsDir).filter(f => f.endsWith('.txt'));
-    const prompts = {};
-    files.forEach(f => {
-      prompts[f.replace('.txt', '').replace(/-/g, '_')] = readFileSync(join(promptsDir, f), 'utf-8');
+    const prompts = files.map(f => {
+      const content = readFileSync(join(promptsDir, f), 'utf-8');
+      const name = f.replace('.txt', '').replace(/-/g, ' ').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      return { id: f, name, content };
     });
     res.json(prompts);
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
