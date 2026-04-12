@@ -78,9 +78,9 @@ async function handleNanoBananaSequence(sessionId) {
 
     // Fetch Prompt
     const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
-    const prompts = await promptsRes.json();
-    const scenePrompt = prompts.find(p => p.id === 'scene-analyzer.txt');
-    const promptText = scenePrompt ? scenePrompt.content : "Analyze these images and provide a high-end style analysis and image prompt.";
+    const promptsData = await promptsRes.json();
+    const scenePrompt = promptsData.find(p => p.id === 'scene-analyzer.txt')?.content;
+    const promptText = scenePrompt || "Analyze these images and provide a high-end style analysis and image prompt.";
 
     el.focus();
     document.execCommand('insertText', false, promptText);

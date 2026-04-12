@@ -1,3 +1,5 @@
+[PHASE: VIDEO ANALYSIS → STRATEGIC DECONSTRUCTION]
+
 Analyze the provided YouTube videos by **opening and examining each individual video link directly** (do NOT rely on thumbnails or assumptions).
 
 You must perform **video-level analysis**, not surface-level inference.
@@ -5,8 +7,7 @@ You must perform **video-level analysis**, not surface-level inference.
 ---
 
 ## INPUT:
-
-A list of popular youtube videos deep analysis
+A list of YouTube video links
 
 ---
 
@@ -14,43 +15,54 @@ A list of popular youtube videos deep analysis
 
 For EACH video:
 
-1. **Watch the first 30–60 seconds carefully**
-
-   * Extract the EXACT hook (verbatim or near-verbatim)
-   * Identify hook type and psychological trigger
-
-2. **Scan the full video strategically**
-
-   * Jump to ~25%, 50%, 75%, and near end
-   * Identify:
-
-     * Rehooks (pattern interrupts, curiosity resets)
-     * Visual/style changes
-     * Pacing shifts
-
-3. **Analyze structure deeply**
-
-   * Break into content beats (not generic)
-   * Identify transitions and escalation points
-
-4. **Evaluate retention engineering**
-
-   * Why would viewers continue watching?
-   * Where are curiosity loops introduced/resolved?
-
-5. **Study thumbnail + title alignment**
-
-   * How the promise is made vs delivered
-
-6. **Optional but valuable**
-
-   * Scan comments for audience response patterns
+### 1. Watch the first 30–60 seconds carefully
+- Extract the EXACT hook (verbatim or near-verbatim)
+- Identify hook type
+- Identify psychological trigger
 
 ---
 
-## OUTPUT FORMAT:
+### 2. Scan the full video strategically
+Jump to:
+- ~25%
+- ~50%
+- ~75%
+- Near end
 
-Return a **single structured .md file** containing one section per video.
+Identify:
+- Rehooks (pattern interrupts, curiosity resets)
+- Visual/style changes
+- Pacing shifts
+
+---
+
+### 3. Analyze structure deeply
+- Break into **actual content beats** (not generic sections)
+- Identify transitions and escalation points
+
+---
+
+### 4. Evaluate retention engineering
+- Why does the viewer keep watching?
+- Where are curiosity loops introduced and resolved?
+
+---
+
+### 5. Study thumbnail + title alignment
+- What promise is made?
+- How is it fulfilled?
+
+---
+
+### 6. Optional (high value)
+- Scan comments
+- Identify audience response patterns
+
+---
+
+## OUTPUT FORMAT (STRICT — NON-NEGOTIABLE)
+
+Return a single structured .md file containing one section per video.
 
 Each video section must contain:
 
@@ -61,28 +73,28 @@ Each video section must contain:
 "views": String,
 "durationSec": Number,
 
-"thumbnailDescription": "Detailed Markdown description of visual elements, colors, text, composition",
+"thumbnailDescription": "Detailed Markdown description of visual elements, colors, composition",
 
-"fullTranscript": "Summarized key spoken content as a Markdown list (NOT N/A)",
+"fullTranscript": "Summarized key spoken content as a Markdown list",
 
 "hookType": "Direct Question | Bold Statement | Story Opening | Problem Agitation | Shock/Surprising Fact | Tutorial Opening",
 "hookText": "ACTUAL first 5–10 seconds (accurate, not guessed)",
-"hookFramework": "Psychological breakdown in Markdown (e.g. Curiosity Gap + Specific Outcome)",
+"hookFramework": "Psychological breakdown",
 
-"openingStructure": "Exact sequence as a Markdown list (Hook → Proof → Context → Stakes etc.)",
+"openingStructure": "Exact sequence as Markdown list",
 
-"scriptStructure": "Detailed beat-by-beat breakdown in Markdown (no generic fluff)",
+"scriptStructure": "Detailed beat-by-beat breakdown (no fluff)",
 
-"storytellingFramework": "Markdown description (e.g. Transformation Arc, Open Loop Looping, Listicle Stack)",
+"storytellingFramework": "Framework explanation",
 
-"rehooksUsed": "Markdown list of REAL phrases, edits, or moments used to retain attention",
+"rehooksUsed": "Markdown list of REAL phrases or moments",
 
-"retentionPattern": "Markdown description of how attention is maintained across timeline",
+"retentionPattern": "Detailed explanation of attention mechanics",
 
 "ctaPlacement": "Exact timing + type",
 
-"titleStrategy": "Markdown explanation of why this title works",
-"thumbnailStrategy": "Markdown explanation of why this thumbnail works",
+"titleStrategy": "Why the title works",
+"thumbnailStrategy": "Why the thumbnail works",
 
 "keyTakeaways": [
 "Specific actionable insight 1",
@@ -95,40 +107,64 @@ Each video section must contain:
 
 ## FINAL STEP: MASTER SYNTHESIS
 
-After providing all video analyses, include a **Master Strategic SOP at the end of the SAME .md file**. 
+After all video analyses, include a section:
 
-**Requirement for Master SOP (Synthesis):**
-- create a .md file with proper structuring and ease of reading
-- include:
-  1. Channel Identity & Positioning
-  2. Content Strategy Patterns
-  3. Hook Engineering Summary (most common types, best performers)
-  4. Retention Strategy Overview
-  5. Storytelling Framework Analysis
-  6. CTA Strategy
-  7. Actionable Recommendations
+# 🧠 MASTER STRATEGIC SOP
 
----
+Must include:
 
-## STRICT RULES:
-
-* DO NOT guess — base everything on actual video observation
-* DO NOT write generic YouTube advice
-* DO NOT skip timestamps — you must simulate real viewing behavior
-* Prioritize **precision over speed**
-* Think like a **top 0.1% YouTube strategist**
-* DO NOT output JSON separately
-* DO NOT split output into multiple responses
-* EVERYTHING must be inside **ONE SINGLE .md FILE OUTPUT**
+1. Channel Identity & Positioning  
+2. Content Strategy Patterns  
+3. Hook Engineering Summary  
+4. Retention Strategy Overview  
+5. Storytelling Framework Analysis  
+6. CTA Strategy  
+7. Actionable Recommendations  
 
 ---
 
-## GOAL:
+## STRICT RULES
+
+- DO NOT guess — base everything on actual observation
+- DO NOT write generic YouTube advice
+- DO NOT skip structural breakdown
+- Prioritize precision over speed
+- Think like a top 0.1% YouTube strategist
+- DO NOT output JSON separately
+- DO NOT split output into multiple responses
+
+---
+
+## HARD OUTPUT CONSTRAINTS (CRITICAL)
+
+- You MUST return the ENTIRE response inside ONE SINGLE markdown code block
+- The code block must start with: ```md
+- The code block must end with: ```
+- DO NOT write anything before or after the code block
+- DO NOT split into multiple code blocks
+- DO NOT use normal text outside the code block
+- EVERYTHING (including Master SOP) must be inside the SAME code block
+
+---
+
+## RENDERING LOGIC (UPDATED)
+
+- Logic: Switched to an absolute "MARKDOWN-ONLY" model.  
+- Enforcement: The protocol now surgically blocks any JSON output, mandating a high-fidelity narrative document using professional H1/H2 header structures optimized for your dashboard.
+
+---
+
+Before sending, internally validate:
+- Only ONE ```md block exists
+- No text exists outside it
+
+---
+
+## GOAL
 
 Reverse-engineer:
-
-* What makes these videos work
-* How retention is engineered
-* What patterns can be replicated for growth
+- What makes these videos work
+- How retention is engineered
+- What patterns can be replicated for growth
 
 The output should be detailed enough to directly inform content creation strategy.

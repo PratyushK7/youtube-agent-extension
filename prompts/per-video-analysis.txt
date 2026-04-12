@@ -123,3 +123,10 @@ Reverse-engineer:
 - Thumbnail-title alignment
 
 So the output can directly inform high-performing content creation.
+
+---
+
+## RENDERING LOGIC (UPDATED)
+
+- Logic: Switched to an absolute "JSON-ONLY" model.  
+- Enforcement: The AI is now strictly forbidden from including any Markdown narrative, conversational filler, or introductory text. It must return exactly one ```json block containing the research payload.

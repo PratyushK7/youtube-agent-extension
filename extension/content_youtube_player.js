@@ -107,13 +107,34 @@ async function harvestVideoInfo() {
   // Small delay to let the UI settle
   await new Promise(r => setTimeout(r, 1000));
   
+  // Extract Views
+  let viewCount = 'Pending';
+  try {
+    viewCount = document.querySelector('ytd-watch-metadata #description-inner #info span:first-child')?.innerText 
+              || document.querySelector('.view-count')?.innerText 
+              || 'Pending';
+  } catch(e) {}
+
+  // Extract Duration
+  let duration = 'Pending';
+  try {
+    const vid = document.querySelector('video');
+    if (vid && vid.duration) {
+      const mins = Math.floor(vid.duration / 60);
+      const secs = Math.floor(vid.duration % 60);
+      duration = `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+  } catch(e) {}
+
   showPlayerStatus('✅ Data Ready. Sending to AI Brain...');
   
   // Signal Orchestrator
   chrome.runtime.sendMessage({
     action: 'VIDEO_READY',
     videoTitle: videoTitle,
-    transcript: transcript
+    transcript: transcript,
+    views: viewCount,
+    duration: duration
   });
 
   // Restore UI after a delay

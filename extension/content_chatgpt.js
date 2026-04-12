@@ -119,17 +119,21 @@ function extractVideoJSON(text) {
 // ─── Save to Session via Background ────────────────────────
 
 async function saveVideoToSession(reportText) {
-  const storageData = await chrome.storage.local.get(['sessionId', 'imageData', 'videoTitle', 'step', 'videoId']);
+  const storageData = await chrome.storage.local.get(['sessionId', 'imageData', 'videoTitle', 'step', 'videoId', 'views', 'duration']);
   const sessionId = storageData.sessionId;
   
   const extraction = extractVideoJSON(reportText);
   
   const videoData = extraction.success ? {
     ...extraction.data,
+    views: storageData.views || extraction.data.views || 'TBD',
+    duration: storageData.duration || extraction.data.duration || 'TBD',
     title: extraction.data.title || storageData.videoTitle || '',
     videoNumber: storageData.step || 1,
     videoId: storageData.videoId || ''
   } : {
+    views: storageData.views || 'TBD',
+    duration: storageData.duration || 'TBD',
     title: storageData.videoTitle || 'Unknown',
     videoNumber: storageData.step || 1,
     videoId: storageData.videoId || '',
@@ -309,40 +313,43 @@ async function automateChatGPT(retryAttempt = 0) {
   }
   promptInput.focus();
 
-  // Pulse-Paste Image (Req 2.2)
+  // 📦 Multi-Modal Package: Attach Thumbnail and Transcript
+  const dt = new DataTransfer();
+  
+  // 1. Attach Video Metadata & Transcript (Clean context)
+  const metaText = `VIDEO TITLE: ${data.videoTitle || 'Unknown'}\n\nTRANSCRIPT:\n${data.prompt || ''}`;
+  const metaFile = new File([new Blob([metaText], { type: 'text/plain' })], 'video_transcript.txt', { type: 'text/plain' });
+  dt.items.add(metaFile);
+
+  // 2. Attach Thumbnail
   if (data.imageData && data.imageData.length > 100) {
     try {
       const resp = await fetch(data.imageData);
       const blob = await resp.blob();
       if (blob.size > 2500) {
-        const dt = new DataTransfer();
-        dt.items.add(new File([blob], 'snapshot.png', { type: blob.type }));
-        promptInput.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, clipboardData: dt }));
+        dt.items.add(new File([blob], 'video_frame.png', { type: blob.type }));
       }
-    } catch (e) {
-      console.warn('YT-to-AI: Image paste failed, continuing with text-only.', e);
-    }
+    } catch (e) { console.warn('YT-to-AI: Thumbnail attachment failed.', e); }
   }
 
-  // Inject Text
-  const promptText = data.prompt || `[Step ${step}/${totalSteps}] Analyze this video.`;
+  showToast(`Injecting Video Assets (${data.videoTitle || 'Step ' + step})...`);
+  promptInput.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, clipboardData: dt }));
+  await new Promise(r => setTimeout(r, 2200));
+
+  // Inject Pure Instruction (Zero-Noise)
+  const instructionPrompt = `[Step ${step}/${totalSteps}] Analyze this video completely. Return ONLY a single pure JSON object using the prescribed schema. No conversational filler. Just the JSON.`;
+  document.execCommand('insertText', false, instructionPrompt);
+
   setTimeout(() => {
-    document.execCommand('insertText', false, promptText);
-    setTimeout(() => {
-      const sendBtn = document.querySelector('button[data-testid="send-button"]') || 
-                      document.querySelector('button[aria-label="Send prompt"]') ||
-                      document.querySelector('form button[type="submit"]') ||
-                      document.querySelector('button.bg-black');
-      if (sendBtn && !sendBtn.disabled) {
-        sendBtn.click();
-        monitorResponse();
-      } else {
-        const enter = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true });
-        promptInput.dispatchEvent(enter);
-        monitorResponse();
-      }
-    }, 2000);
-  }, 2500); 
+    const sendBtn = document.querySelector('button[data-testid="send-button"]') || 
+                    document.querySelector('button[aria-label="Send prompt"]') ||
+                    document.querySelector('form button[type="submit"]') ||
+                    document.querySelector('button.bg-black');
+    if (sendBtn && !sendBtn.disabled) {
+      sendBtn.click();
+      monitorResponse();
+    }
+  }, 1500);
 }
 
 async function generateMasterDossier(channelName, passedTotalSteps, passedSessionId) {
@@ -372,32 +379,64 @@ async function generateMasterDossier(channelName, passedTotalSteps, passedSessio
   }
   
   // Fetch Dynamic Prompt from Server
-  let finalPrompt = "";
+  let dossierPrompt = "";
   try {
     const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
     const promptsData = await promptsRes.json();
-    const dossierPrompt = promptsData.find(p => p.id === 'master_analysis.txt')?.content;
-    
-    if (dossierPrompt) {
-        finalPrompt = `[PHASE: FINAL CHANNEL SYNTHESIS]\n\n` +
-                      `Based on all ${total} videos analyzed above, execute the following protocol:\n\n` +
-                      `${dossierPrompt}`;
-    } else {
-        throw new Error('master_analysis.txt not found on sub-server');
-    }
+    dossierPrompt = promptsData.find(p => p.id === 'master_analysis.txt')?.content;
+    if (!dossierPrompt) throw new Error('master_analysis.txt not found');
   } catch (err) {
-    console.warn('YT-to-AI: Falling back to internal synthesis prompt.', err);
-    finalPrompt = `[PHASE: FINAL CHANNEL SYNTHESIS]\n\nBased on all ${total} videos analyzed above, provide a comprehensive Master Strategic SOP (Markdown).`;
+    console.warn('YT-to-AI: Synthesis prompt fetch failed.', err);
+    dossierPrompt = "Provide a comprehensive Master Strategic SOP (Markdown) based on the provided video data.";
   }
+
+  // 📦 Multi-Modal Package: Attach JSON and Screenshots
+  const dt = new DataTransfer();
+  try {
+    const sessionRes = await fetch(`http://127.0.0.1:3005/api/session/${sid}`);
+    const sessionData = await sessionRes.json();
+    if (sessionData.success) {
+      // 1. Attach Raw JSON
+      const metricsBlob = new Blob([JSON.stringify(sessionData.session.videos, null, 2)], { type: 'application/json' });
+      dt.items.add(new File([metricsBlob], 'video_metrics.json', { type: 'application/json' }));
+      
+      // 2. Attach Screenshots
+      for (let i = 0; i < sessionData.session.videos.length; i++) {
+        const v = sessionData.session.videos[i];
+        if (v.screenshot) {
+          const res = await fetch(`http://127.0.0.1:3005${v.screenshot}`);
+          const blob = await res.blob();
+          dt.items.add(new File([blob], `evidence_${i+1}.png`, { type: 'image/png' }));
+        }
+      }
+    }
+  } catch (e) { console.warn('Failed to harvest evidence for dossier:', e); }
+
   promptInput.focus();
-  document.execCommand('insertText', false, finalPrompt);
-  setTimeout(() => {
-    const sendBtn = document.querySelector('button[data-testid="send-button"]') ||
-                    document.querySelector('button[aria-label="Send prompt"]') ||
-                    document.querySelector('form button[type="submit"]') ||
-                    document.querySelector('button.bg-black');
-    if (sendBtn) { sendBtn.click(); monitorResponse(true, channelName, sid); }
-  }, 1200);
+  
+  if (dt.items.length > 0) {
+    showToast(`Uploading Strategic Dossier (${dt.items.length} assets)...`);
+    promptInput.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true }));
+    await new Promise(r => setTimeout(r, 2000));
+  }
+
+  document.execCommand('insertText', false, dossierPrompt);
+    setTimeout(() => {
+      const sendBtn = document.querySelector('button[data-testid="send-button"]') ||
+                      document.querySelector('button[aria-label="Send prompt"]') ||
+                      document.querySelector('form button[type="submit"]') ||
+                      document.querySelector('button.bg-black');
+      
+      if (sendBtn && !sendBtn.disabled) {
+        sendBtn.click();
+        monitorResponse(true, channelName, sid);
+      } else {
+        // Fallback to Enter key if button is disabled or missing
+        const enter = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true });
+        promptInput.dispatchEvent(enter);
+        monitorResponse(true, channelName, sid);
+      }
+    }, 2000); // 2s delay gives more time for large dossiers to be ready
 }
 
 // Init
@@ -416,19 +455,6 @@ async function handleNicheBendTrigger(sessionId) {
     
     if (!benderPrompt) throw new Error('niche-bending.txt not found');
     
-    const metricsStr = JSON.stringify(sessionData.session.videos, null, 2);
-    const synthesisStr = sessionData.session.synthesis || '[No Master Synthesis Available - Proceeding with Video Metrics]';
-    
-    const finalInjection = `[MEGA-PROMPT INJECTION: YT RESEARCH DOSSIER -> NICHE BENDER]\n\n` +
-      `Here is the verified Strategic Dossier for: ${sessionData.session.channel}\n\n` +
-      `### MASTER REVERSE ENGINEERING REPORT:\n` +
-      `${synthesisStr}\n\n` +
-      `### RAW VIDEO METRICS:\n` +
-      `\`\`\`json\n${metricsStr}\n\`\`\`\n\n` +
-      `---\n\n` +
-      `EXECUTE THE FOLLOWING SYSTEM PROTOCOL USING THE DATA ABOVE AS THE 'PROVEN FORMAT':\n\n` +
-      `${benderPrompt}`;
-      
     const waitForInput = () => new Promise((resolve, reject) => {
       let elapsed = 0;
       const int = setInterval(() => {
@@ -441,7 +467,33 @@ async function handleNicheBendTrigger(sessionId) {
     
     const promptInput = await waitForInput();
     promptInput.focus();
-    document.execCommand('insertText', false, finalInjection);
+
+    // 📦 Multi-Modal Package: Attach JSON and Screenshots
+    const dt = new DataTransfer();
+    
+    // 1. Attach Raw JSON
+    const metricsBlob = new Blob([JSON.stringify(sessionData.session.videos, null, 2)], { type: 'application/json' });
+    dt.items.add(new File([metricsBlob], 'video_metrics.json', { type: 'application/json' }));
+    
+    // 2. Attach Screenshots
+    for (let i = 0; i < sessionData.session.videos.length; i++) {
+        const v = sessionData.session.videos[i];
+        if (v.screenshot) {
+          try {
+            const res = await fetch(`http://127.0.0.1:3005${v.screenshot}`);
+            const blob = await res.blob();
+            dt.items.add(new File([blob], `evidence_${i+1}.png`, { type: 'image/png' }));
+          } catch (e) {}
+        }
+    }
+
+    if (dt.items.length > 0) {
+      showToast(`Injecting Strategic Evidence (${dt.items.length} assets)...`);
+      promptInput.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true }));
+      await new Promise(r => setTimeout(r, 2200)); // Wait for upload
+    }
+
+    document.execCommand('insertText', false, benderPrompt);
     
     setTimeout(() => {
       const sendBtn = document.querySelector('button[data-testid="send-button"]') || 

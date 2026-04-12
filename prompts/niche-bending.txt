@@ -24,7 +24,13 @@ Each bend must:
 • Create real curiosity
 • Contain built-in tension, decisions, tradeoffs, or consequences
 
-STRICT OUTPUT FORMAT (MANDATORY MARKDOWN)
+## OUTPUT RULES (STRICT CRITICAL)
+- Output ONLY Markdown.
+- Do NOT include JSON.
+- Never mix JSON and Markdown in the same response.
+- Follow the numbering system below.
+- No conversational filler.
+
 15 Niche Bends:
 
 Use Markdown headers (e.g., # Concept Name) and lists to make this visually striking.
@@ -112,3 +118,10 @@ Internally check:
 • Are the bends meaningfully different?
 
 If weak → rewrite.
+
+---
+
+## RENDERING LOGIC (UPDATED)
+
+- Logic: Switched to an absolute "MARKDOWN-ONLY" model.  
+- Enforcement: Explicit rules have been added to prevent JSON pollution and "Guru-talk," ensuring the 15 niche bends are delivered as a clean, strategic blueprint.
