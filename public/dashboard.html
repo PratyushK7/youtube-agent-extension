@@ -1338,257 +1338,6 @@
     .delay-3 {
       animation-delay: 0.3s;
     }
-
-    /* ═══ 2026 SaaS Redesign Overrides ═══ */
-    :root {
-      --surface-0: #080b12;
-      --surface-1: #0d1220;
-      --surface-2: #11182a;
-      --surface-3: #161f35;
-      --border-soft: rgba(148, 163, 184, 0.14);
-      --border-strong: rgba(124, 131, 255, 0.45);
-    }
-
-    body {
-      background:
-        radial-gradient(circle at 85% -10%, rgba(124, 131, 255, 0.18), transparent 45%),
-        radial-gradient(circle at 15% 120%, rgba(56, 189, 248, 0.12), transparent 45%),
-        var(--surface-0);
-    }
-
-    .container {
-      max-width: 1440px;
-      padding: 56px 32px 96px;
-    }
-
-    .page-header {
-      margin-bottom: 30px;
-    }
-
-    .page-title {
-      font-size: clamp(2.2rem, 4vw, 3.2rem);
-      line-height: 1.08;
-      margin-bottom: 12px;
-    }
-
-    .page-subtitle {
-      max-width: 760px;
-      font-size: 1.02rem;
-      line-height: 1.7;
-    }
-
-    .grid {
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-      gap: 20px;
-    }
-
-    .card {
-      grid-column: span 4;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 45%), var(--surface-1);
-      border: 1px solid var(--border-soft);
-      border-radius: 18px;
-    }
-
-    .card:hover {
-      border-color: var(--border-strong);
-      box-shadow: 0 12px 26px rgba(4, 8, 20, 0.5), 0 0 0 1px rgba(124, 131, 255, 0.25);
-      transform: translateY(-4px);
-    }
-
-    .card-thumb {
-      height: 172px;
-    }
-
-    .card-body {
-      padding: 16px 18px 18px;
-    }
-
-    .card-title {
-      font-size: 1.02rem;
-      margin-bottom: 10px;
-    }
-
-    .session-progress {
-      margin-top: 14px;
-    }
-
-    .progress-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-size: 0.76rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      font-weight: 600;
-    }
-
-    .progress-track {
-      width: 100%;
-      height: 6px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.07);
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, #7c83ff 0%, #38bdf8 100%);
-      transition: width var(--transition-base);
-    }
-
-    .session-header {
-      background: linear-gradient(180deg, rgba(124, 131, 255, 0.05), transparent 72%);
-      border: 1px solid var(--border-soft);
-      border-radius: 20px;
-      padding: 24px;
-      margin-bottom: 24px;
-    }
-
-    .tab-bar,
-    .table-card,
-    .synthesis-card {
-      border-radius: 18px;
-      border-color: var(--border-soft);
-      background: var(--surface-1);
-    }
-
-    .table-toolbar {
-      padding: 14px 18px;
-      background: rgba(8, 11, 18, 0.45);
-    }
-
-    table {
-      min-width: 1750px;
-      font-size: 0.79rem;
-    }
-
-    th {
-      top: 0;
-      background: #0f1627;
-      color: #93a0bb;
-      border-bottom-color: rgba(148, 163, 184, 0.2);
-    }
-
-    td {
-      padding: 14px;
-      border-bottom-color: rgba(148, 163, 184, 0.1);
-    }
-
-    tbody tr:hover {
-      background: rgba(124, 131, 255, 0.07);
-    }
-
-    .hook-badge,
-    .framework-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 0.69rem;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-      border: 1px solid transparent;
-    }
-
-    .framework-badge {
-      background: rgba(56, 189, 248, 0.12);
-      color: #67d6ff;
-      border-color: rgba(56, 189, 248, 0.35);
-    }
-
-    .btn {
-      border-radius: 10px;
-      padding: 10px 14px;
-      transition: all var(--transition-fast);
-    }
-
-    .btn-primary {
-      color: white;
-      border-color: rgba(124, 131, 255, 0.5);
-      background: linear-gradient(135deg, #6f79ff, #5466ff);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 8px 24px rgba(63, 79, 255, 0.35);
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--text-secondary);
-      border-color: var(--border-soft);
-    }
-
-    .btn-secondary:hover {
-      color: var(--text-primary);
-      border-color: rgba(124, 131, 255, 0.4);
-      background: rgba(124, 131, 255, 0.09);
-    }
-
-    .empty-state,
-    .synthesis-empty {
-      background: rgba(15, 23, 42, 0.45);
-      border-radius: 16px;
-      border: 1px dashed var(--border-soft);
-    }
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 11000;
-      background: rgba(4, 7, 14, 0.72);
-      backdrop-filter: blur(6px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      animation: fadeIn 160ms ease-out;
-    }
-
-    .modal-panel {
-      width: min(460px, 100%);
-      border-radius: 18px;
-      border: 1px solid var(--border-soft);
-      background: linear-gradient(180deg, rgba(124, 131, 255, 0.08), transparent 35%), var(--surface-1);
-      padding: 22px;
-      animation: fadeScale 180ms ease-out;
-    }
-
-    .modal-eyebrow {
-      font-size: 0.72rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .modal-title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .modal-description {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      line-height: 1.65;
-    }
-
-    .modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    @media (max-width: 1200px) {
-      .card {
-        grid-column: span 6;
-      }
-    }
   </style>
 </head>
 
@@ -1675,13 +1424,15 @@
         </div>
       </div>
       <div class="header-actions">
-        <button id="btn-scene-analyzer" class="btn btn-secondary">
+        <button id="btn-scene-analyzer" class="btn"
+          style="background: rgba(167, 139, 250, 0.1); color: #a78bfa; border-color: rgba(167, 139, 250, 0.3);">
           👁️ Analyze Scene
         </button>
-        <button id="btn-niche-bend" class="btn btn-secondary">
+        <button id="btn-niche-bend" class="btn"
+          style="background: rgba(251,146,60,0.1); color: var(--accent-warm); border-color: rgba(251,146,60,0.3);">
           🔥 Niche Bender
         </button>
-        <button id="btn-export-csv" class="btn btn-primary">
+        <button id="btn-export-csv" class="btn btn-accent">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="7 10 12 15 17 10" />
@@ -1806,19 +1557,6 @@
   <div id="status-debug"
     style="position:fixed; bottom:10px; right:10px; font-size:10px; color:rgba(255,255,255,0.2); z-index:9999;">JS
     LOADED</div>
-  <div id="app-modal" class="modal-backdrop" style="display:none;">
-    <div class="modal-panel">
-      <div class="modal-head">
-        <p id="modal-eyebrow" class="modal-eyebrow">Confirm action</p>
-        <h3 id="modal-title" class="modal-title">Title</h3>
-        <p id="modal-description" class="modal-description">Description</p>
-      </div>
-      <div class="modal-actions">
-        <button id="modal-cancel" class="btn btn-ghost">Cancel</button>
-        <button id="modal-confirm" class="btn btn-primary">Confirm</button>
-      </div>
-    </div>
-  </div>
   <div class="footer"
     style="text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.75rem; border-top: 1px solid var(--border-subtle); margin-top: 60px;">
     YouTube Agent Dashboard v1.4.5 • Restored Build
@@ -1873,52 +1611,6 @@
       return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     };
 
-    function showModal({ eyebrow = 'Confirm action', title = 'Continue?', description = '', confirmLabel = 'Confirm', cancelLabel = 'Cancel', confirmClass = 'btn-primary' }) {
-      return new Promise((resolve) => {
-        const modal = document.getElementById('app-modal');
-        const modalEyebrow = document.getElementById('modal-eyebrow');
-        const modalTitle = document.getElementById('modal-title');
-        const modalDescription = document.getElementById('modal-description');
-        const cancelBtn = document.getElementById('modal-cancel');
-        const confirmBtn = document.getElementById('modal-confirm');
-
-        modalEyebrow.textContent = eyebrow;
-        modalTitle.textContent = title;
-        modalDescription.textContent = description;
-        cancelBtn.textContent = cancelLabel;
-        confirmBtn.textContent = confirmLabel;
-        confirmBtn.className = `btn ${confirmClass}`;
-        modal.style.display = 'flex';
-
-        const cleanup = (value) => {
-          modal.style.display = 'none';
-          modal.removeEventListener('click', clickAwayHandler);
-          cancelBtn.removeEventListener('click', cancelHandler);
-          confirmBtn.removeEventListener('click', confirmHandler);
-          resolve(value);
-        };
-        const clickAwayHandler = (event) => {
-          if (event.target === modal) cleanup(false);
-        };
-        const cancelHandler = () => cleanup(false);
-        const confirmHandler = () => cleanup(true);
-        modal.addEventListener('click', clickAwayHandler);
-        cancelBtn.addEventListener('click', cancelHandler);
-        confirmBtn.addEventListener('click', confirmHandler);
-      });
-    }
-
-    function alertModal({ title = 'Notice', description = 'Done.', buttonLabel = 'Got it' }) {
-      return showModal({
-        eyebrow: 'Status update',
-        title,
-        description,
-        confirmLabel: buttonLabel,
-        cancelLabel: 'Close',
-        confirmClass: 'btn-secondary'
-      });
-    }
-
     // ═══ Load Sessions ═══
     async function loadSessions() {
       const debug = document.getElementById('status-debug');
@@ -1947,7 +1639,6 @@
 
         grid.innerHTML = sessions.map(s => {
           try {
-            const completion = s.totalVideos ? Math.min(100, Math.round((s.analyzedVideos / s.totalVideos) * 100)) : 0;
             return `
               <div class="card" onclick="openSession('${s.id}')" style="position:relative;">
                 <button class="btn-delete-session" onclick="event.stopPropagation(); confirmDelete('${s.id}', '${esc(s.channel)}')">
@@ -1966,15 +1657,6 @@
                     <span>${new Date(s.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                     <span class="card-meta-dot"></span>
                     <span>${s.hasSynthesis ? 'Has synthesis' : 'No synthesis'}</span>
-                  </div>
-                  <div class="session-progress">
-                    <div class="progress-row">
-                      <span>Session progress</span>
-                      <span>${completion}%</span>
-                    </div>
-                    <div class="progress-track">
-                      <div class="progress-fill" style="width:${completion}%;"></div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -1996,15 +1678,7 @@
     }
 
     async function confirmDelete(id, name) {
-      const approved = await showModal({
-        eyebrow: 'Danger zone',
-        title: 'Delete analysis session?',
-        description: `This permanently removes "${name}" including screenshots and generated reports.`,
-        confirmLabel: 'Delete session',
-        cancelLabel: 'Keep it',
-        confirmClass: 'btn-primary'
-      });
-      if (!approved) return;
+      if (!confirm(`Are you sure you want to PERMANENTLY delete the analysis session for "${name}"?\n\nThis will also delete ALL associated screenshots and data.`)) return;
 
       try {
         const res = await fetch(`/api/session/${id}`, { method: 'DELETE' });
@@ -2017,18 +1691,15 @@
             if (localStorage.getItem(`analysis_${name}`)) localStorage.removeItem(`analysis_${name}`);
             loadSessions();
           } else {
-            await alertModal({ title: 'Delete failed', description: (data.error || 'Unknown error') });
+            alert('Failed to delete: ' + (data.error || 'Unknown error'));
           }
         } else {
           const text = await res.text();
           console.error('Non-JSON response:', text);
-          await alertModal({
-            title: `Server Error (${res.status})`,
-            description: `The server didn't return a valid JSON response. Please restart the server and try again.`
-          });
+          alert(`Server Error (${res.status}): The server didn't return a valid JSON response. Please restart the server and try again.`);
         }
       } catch (err) {
-        await alertModal({ title: 'Network error', description: err.message });
+        alert('Error communicating with server: ' + err.message);
       }
     }
 
@@ -2108,56 +1779,24 @@
       if (currentSession) window.open(`/api/session/${currentSession.id}/csv`, '_blank');
     });
 
-    document.getElementById('btn-niche-bend').addEventListener('click', async () => {
+    document.getElementById('btn-niche-bend').addEventListener('click', () => {
       if (currentSession) {
-        let confirmed = false;
         if (currentSession.nicheBends) {
-          confirmed = await showModal({
-            eyebrow: 'Regenerate output',
-            title: 'Regenerate niche bends?',
-            description: 'A strategy set already exists for this session. Regenerating will overwrite previous ideas.',
-            confirmLabel: 'Regenerate',
-            cancelLabel: 'Cancel',
-            confirmClass: 'btn-primary'
-          });
+          if (!confirm("Niche bend is already generated. Do you want to generate new?")) return;
         } else {
-          confirmed = await showModal({
-            eyebrow: 'Launch workflow',
-            title: 'Generate niche bends?',
-            description: 'This opens ChatGPT with the current session context to produce strategic niche expansions.',
-            confirmLabel: 'Generate',
-            cancelLabel: 'Not now',
-            confirmClass: 'btn-primary'
-          });
+          if (!confirm("Do you want to generate the niche bend?")) return;
         }
-        if (!confirmed) return;
         window.open(`https://chatgpt.com/?niche_bend=true&sessionId=${currentSession.id}`, '_blank');
       }
     });
 
-    document.getElementById('btn-scene-analyzer').addEventListener('click', async () => {
+    document.getElementById('btn-scene-analyzer').addEventListener('click', () => {
       if (currentSession && currentSession.videos.length > 0) {
-        let confirmed = false;
         if (currentSession.sceneAnalysis) {
-          confirmed = await showModal({
-            eyebrow: 'Regenerate output',
-            title: 'Regenerate scene analysis?',
-            description: 'A scene report already exists. Regenerating will replace the existing analysis.',
-            confirmLabel: 'Regenerate',
-            cancelLabel: 'Cancel',
-            confirmClass: 'btn-primary'
-          });
+          if (!confirm("Scene analysis is already generated. Do you want to generate new?")) return;
         } else {
-          confirmed = await showModal({
-            eyebrow: 'Launch workflow',
-            title: 'Analyze scene style?',
-            description: 'This opens YouTube on the top video and starts the scene analyzer workflow.',
-            confirmLabel: 'Analyze scene',
-            cancelLabel: 'Not now',
-            confirmClass: 'btn-primary'
-          });
+          if (!confirm("Do you want to generate the scene analysis?")) return;
         }
-        if (!confirmed) return;
         const targetVideoId = currentSession.videos[0].id || currentSession.videos[0].videoId;
         window.open(`https://www.youtube.com/watch?v=${targetVideoId}&analyze_scene=true&sessionId=${currentSession.id}`, '_blank');
       }
@@ -2182,7 +1821,7 @@
           </td>
           <td><span class="hook-badge">${esc(v.hookType)}</span></td>
           <td><div class="cell-expand" onclick="this.classList.toggle('expanded')">${esc(v.hookText)}</div></td>
-          <td><span class="framework-badge">${esc(v.hookFramework || 'N/A')}</span></td>
+          <td>${esc(v.hookFramework)}</td>
           <td><div class="cell-expand" onclick="this.classList.toggle('expanded')">${esc(v.openingStructure)}</div></td>
           <td><div class="cell-expand" onclick="this.classList.toggle('expanded')" style="font-family:var(--font-mono);font-size:0.75rem">${esc(v.scriptStructure)}</div></td>
           <td>${esc(v.storytellingFramework)}</td>
