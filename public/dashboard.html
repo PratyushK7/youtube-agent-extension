@@ -223,6 +223,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     .nav-link {
@@ -248,6 +249,144 @@
       color: var(--accent-primary);
       background: rgba(124, 131, 255, 0.08);
       border-color: rgba(124, 131, 255, 0.2);
+    }
+
+    .header-search-btn {
+      margin-left: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 999px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: var(--transition-fast);
+    }
+
+    .header-search-btn:hover {
+      color: var(--text-primary);
+      border-color: var(--border-medium);
+    }
+
+    .top-context {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 14px 24px 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .secondary-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .secondary-tabs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .secondary-tab {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      border-radius: var(--radius-full);
+      padding: 7px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .secondary-tab.active {
+      color: var(--text-primary);
+      border-color: rgba(124, 131, 255, 0.35);
+      background: rgba(124, 131, 255, 0.12);
+    }
+
+    .action-rail {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .section-note {
+      color: var(--text-secondary);
+      font-size: 0.86rem;
+      margin-bottom: 18px;
+    }
+
+    .command-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 7, 12, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 2000;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 10vh;
+    }
+
+    .command-modal {
+      width: min(720px, 92vw);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    .command-input {
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid var(--border-subtle);
+      background: transparent;
+      color: var(--text-primary);
+      padding: 16px 18px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .command-list {
+      max-height: 380px;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .command-item {
+      width: 100%;
+      text-align: left;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text-primary);
+      padding: 11px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      margin-bottom: 4px;
+    }
+
+    .command-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--border-subtle);
+    }
+
+    .command-hint {
+      font-size: 0.73rem;
+      color: var(--text-muted);
+      margin-top: -2px;
     }
 
     /* ═══ Container ═══ */
@@ -1263,6 +1402,21 @@
 
     /* ═══ Responsive ═══ */
     @media (max-width: 768px) {
+      .header-search-btn {
+        width: 100%;
+        justify-content: center;
+        margin-left: 0;
+      }
+
+      .secondary-nav {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .action-rail .btn {
+        flex: initial;
+      }
+
       .grid {
         grid-template-columns: 1fr;
       }
@@ -1361,15 +1515,11 @@
         <span class="logo-text">Channel<span class="logo-accent">Lens</span></span>
       </a>
       <nav class="header-nav">
-        <a href="dashboard.html" class="nav-link active">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-          </svg>
-          Dashboard
-        </a>
+        <button class="nav-link active" data-section="home" style="background:transparent;cursor:pointer;">Home</button>
+        <button class="nav-link" data-section="setup" style="background:transparent;cursor:pointer;">Setup</button>
+        <button class="nav-link" data-section="runs" style="background:transparent;cursor:pointer;">Runs</button>
+        <button class="nav-link" data-section="optimize" style="background:transparent;cursor:pointer;">Optimize</button>
+        <button class="nav-link" data-section="exports" style="background:transparent;cursor:pointer;">Exports</button>
         <button id="theme-toggle" class="nav-link" style="background:transparent;cursor:pointer;border:none;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="5" />
@@ -1377,9 +1527,28 @@
               d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
           </svg>
         </button>
+        <button id="open-command" class="header-search-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          Search / Command
+        </button>
       </nav>
     </div>
   </header>
+
+  <div class="top-context">
+    <div class="secondary-nav">
+      <div id="secondary-tabs" class="secondary-tabs"></div>
+      <div class="action-rail">
+        <button id="context-secondary-1" class="btn btn-ghost">Secondary Action</button>
+        <button id="context-secondary-2" class="btn btn-ghost">Secondary Action</button>
+        <button id="context-primary" class="btn btn-accent">Primary CTA</button>
+      </div>
+    </div>
+    <div id="section-note" class="section-note"></div>
+  </div>
 
   <!-- ═══ Sessions Grid ═══ -->
   <div id="sessions-grid-view" class="container">
@@ -1562,11 +1731,69 @@
     YouTube Agent Dashboard v1.4.5 • Restored Build
   </div>
 
+  <div id="command-overlay" class="command-overlay">
+    <div class="command-modal">
+      <input id="command-input" class="command-input" type="text" placeholder="Search channels, runs, reports, or run a command..." />
+      <div id="command-list" class="command-list"></div>
+    </div>
+  </div>
+
   <script>
     let currentSession = null;
     let pollInterval = null;
     let galleryImages = [];
     let galleryIndex = 0;
+    let allSessionsCache = [];
+    let activeSection = 'home';
+    let activeSecondaryTab = '';
+
+    const sectionConfig = {
+      home: {
+        note: 'Overview of recent channel analyses and quick launch actions.',
+        tabs: ['Overview', 'Quick Start', 'Recent Activity'],
+        primary: { label: 'Start New Analysis', action: () => window.open('https://youtube.com', '_blank') },
+        secondary: [
+          { label: 'Open YouTube', action: () => window.open('https://youtube.com', '_blank') },
+          { label: 'Refresh Sessions', action: () => loadSessions() }
+        ]
+      },
+      setup: {
+        note: 'Validate local server, prompt sync, and automation defaults before launching runs.',
+        tabs: ['Connection Check', 'Workspace Defaults', 'Automation Rules'],
+        primary: { label: 'Run Connection Check', action: () => runConnectionCheck() },
+        secondary: [
+          { label: 'Open Prompt Library', action: () => window.open('/api/prompts', '_blank') },
+          { label: 'Open YouTube', action: () => window.open('https://youtube.com', '_blank') }
+        ]
+      },
+      runs: {
+        note: 'Monitor active runs, inspect failed steps, and jump into completed analyses.',
+        tabs: ['Active', 'Queue', 'Completed', 'Failures'],
+        primary: { label: 'Open Active Run', action: () => openMostRecentSession() },
+        secondary: [
+          { label: 'Refresh Status', action: () => loadSessions() },
+          { label: 'Back to Home', action: () => setSection('home') }
+        ]
+      },
+      optimize: {
+        note: 'Tune prompts and review synthesis output quality for repeatable performance gains.',
+        tabs: ['Prompt Strategy', 'Quality Insights', 'Performance Tuning'],
+        primary: { label: 'Open Synthesis', action: () => openLatestSynthesis() },
+        secondary: [
+          { label: 'Analyze Scene', action: () => document.getElementById('btn-scene-analyzer')?.click() },
+          { label: 'Niche Bender', action: () => document.getElementById('btn-niche-bend')?.click() }
+        ]
+      },
+      exports: {
+        note: 'Export latest outputs with one click and share strategic reports in your preferred format.',
+        tabs: ['One-Click Share', 'Formats', 'Destinations'],
+        primary: { label: 'Export Latest Report', action: () => exportLatestReport() },
+        secondary: [
+          { label: 'Open Latest Session', action: () => openMostRecentSession() },
+          { label: 'View Synthesis', action: () => openLatestSynthesis() }
+        ]
+      }
+    };
 
     // Global Gallery Opener
     window.openGallery = function (frames, startIdx = 0) {
@@ -1605,11 +1832,170 @@
       }
     }
 
+    document.querySelectorAll('[data-section]').forEach(btn => {
+      btn.addEventListener('click', () => setSection(btn.dataset.section));
+    });
+
+    const commandOverlay = document.getElementById('command-overlay');
+    const commandInput = document.getElementById('command-input');
+    const commandList = document.getElementById('command-list');
+
+    function buildCommands() {
+      const sessionCommands = allSessionsCache.slice(0, 8).map(s => ({
+        label: `Open session: ${s.channel}`,
+        hint: `${s.analyzedVideos || 0}/${s.totalVideos || 0} videos`,
+        run: () => openSession(s.id)
+      }));
+      return [
+        { label: 'Start analysis: Open YouTube', hint: 'Quick start', run: () => window.open('https://youtube.com', '_blank') },
+        { label: 'Open active run', hint: 'Runs', run: () => openMostRecentSession() },
+        { label: 'Retry connection check', hint: 'Setup', run: () => runConnectionCheck() },
+        { label: 'Export latest dossier as CSV', hint: 'Exports', run: () => exportLatestReport() },
+        { label: 'Go to Optimization > Prompt Strategy', hint: 'Optimize', run: () => setSection('optimize') },
+        ...sessionCommands
+      ];
+    }
+
+    function renderCommandList() {
+      const query = (commandInput.value || '').trim().toLowerCase();
+      const commands = buildCommands().filter(cmd => cmd.label.toLowerCase().includes(query) || cmd.hint.toLowerCase().includes(query));
+      commandList.innerHTML = commands.map((cmd, idx) => `
+        <button class="command-item" data-command-index="${idx}">
+          <span>${esc(cmd.label)}<div class="command-hint">${esc(cmd.hint)}</div></span>
+          <span style="font-size:0.72rem;color:var(--text-muted)">↵</span>
+        </button>
+      `).join('') || '<div style="padding:14px;color:var(--text-muted)">No matching commands.</div>';
+      commandList.querySelectorAll('.command-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const index = Number(item.dataset.commandIndex);
+          const resultSet = buildCommands().filter(cmd => cmd.label.toLowerCase().includes(query) || cmd.hint.toLowerCase().includes(query));
+          resultSet[index]?.run();
+          closeCommandPalette();
+        });
+      });
+    }
+
+    function openCommandPalette() {
+      commandOverlay.style.display = 'flex';
+      commandInput.value = '';
+      renderCommandList();
+      setTimeout(() => commandInput.focus(), 20);
+    }
+
+    function closeCommandPalette() {
+      commandOverlay.style.display = 'none';
+    }
+
+    document.getElementById('open-command').addEventListener('click', openCommandPalette);
+    commandInput.addEventListener('input', renderCommandList);
+    commandInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        commandList.querySelector('.command-item')?.click();
+      } else if (event.key === 'Escape') {
+        closeCommandPalette();
+      }
+    });
+    commandOverlay.addEventListener('click', (event) => {
+      if (event.target === commandOverlay) closeCommandPalette();
+    });
+    document.addEventListener('keydown', (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        openCommandPalette();
+      }
+      if (event.key === 'Escape' && commandOverlay.style.display === 'flex') closeCommandPalette();
+    });
+
     const esc = (s) => {
       if (!s) return '';
       const str = typeof s === 'string' ? s : Array.isArray(s) ? s.join('; ') : String(s);
       return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     };
+
+    function setSection(section) {
+      if (!sectionConfig[section]) return;
+      activeSection = section;
+      document.querySelectorAll('[data-section]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.section === section);
+      });
+      renderSecondaryTabs();
+      renderActionRail();
+      document.getElementById('section-note').textContent = sectionConfig[section].note;
+      if (section === 'runs' && !currentSession) openMostRecentSession(false);
+      if (section !== 'runs' && currentSession && document.getElementById('session-view').style.display === 'block') {
+        document.getElementById('session-view').style.display = 'none';
+        document.getElementById('sessions-grid-view').style.display = 'block';
+      }
+    }
+
+    function renderSecondaryTabs() {
+      const tabsWrap = document.getElementById('secondary-tabs');
+      const tabs = sectionConfig[activeSection].tabs;
+      if (!activeSecondaryTab || !tabs.includes(activeSecondaryTab)) activeSecondaryTab = tabs[0];
+      tabsWrap.innerHTML = tabs.map(tab => `<button class="secondary-tab ${tab === activeSecondaryTab ? 'active' : ''}" data-secondary-tab="${tab}">${tab}</button>`).join('');
+      tabsWrap.querySelectorAll('.secondary-tab').forEach(tabBtn => {
+        tabBtn.addEventListener('click', () => {
+          activeSecondaryTab = tabBtn.dataset.secondaryTab;
+          renderSecondaryTabs();
+        });
+      });
+    }
+
+    function renderActionRail() {
+      const cfg = sectionConfig[activeSection];
+      const primaryBtn = document.getElementById('context-primary');
+      const second1 = document.getElementById('context-secondary-1');
+      const second2 = document.getElementById('context-secondary-2');
+      primaryBtn.textContent = cfg.primary.label;
+      primaryBtn.onclick = cfg.primary.action;
+      second1.textContent = cfg.secondary[0].label;
+      second1.onclick = cfg.secondary[0].action;
+      second2.textContent = cfg.secondary[1].label;
+      second2.onclick = cfg.secondary[1].action;
+    }
+
+    async function runConnectionCheck() {
+      const status = document.getElementById('section-note');
+      status.textContent = 'Running checks...';
+      try {
+        const sessionsRes = await fetch('/api/sessions');
+        const promptsRes = await fetch('/api/prompts');
+        status.textContent = sessionsRes.ok && promptsRes.ok
+          ? '✅ Connection check passed: local server and prompts are available.'
+          : '⚠️ Connection check partially failed. Verify local server on 127.0.0.1:3005.';
+      } catch (error) {
+        status.textContent = '❌ Connection check failed. Ensure local server is running on 127.0.0.1:3005.';
+      }
+    }
+
+    function openMostRecentSession(ensureSection = true) {
+      const latest = allSessionsCache[0];
+      if (!latest) {
+        alert('No sessions available yet.');
+        return;
+      }
+      if (ensureSection) activeSection = 'runs';
+      openSession(latest.id);
+    }
+
+    function openLatestSynthesis() {
+      const withSynthesis = allSessionsCache.find(s => s.hasSynthesis);
+      if (!withSynthesis) {
+        alert('No synthesis report found yet.');
+        return;
+      }
+      openSession(withSynthesis.id);
+      switchTab('synthesis');
+    }
+
+    function exportLatestReport() {
+      const latest = allSessionsCache[0];
+      if (!latest) {
+        alert('No completed report available to export.');
+        return;
+      }
+      window.open(`/api/session/${latest.id}/csv`, '_blank');
+    }
 
     // ═══ Load Sessions ═══
     async function loadSessions() {
@@ -1619,8 +2005,9 @@
         const res = await fetch('/api/sessions');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const sessions = await res.json();
+        allSessionsCache = [...sessions].sort((a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0));
 
-        if (debug) debug.textContent = `RECVD ${sessions.length}`;
+        if (debug) debug.textContent = `RECVD ${allSessionsCache.length}`;
 
         const grid = document.getElementById('sessions-grid');
         const empty = document.getElementById('empty-state');
@@ -1628,16 +2015,17 @@
 
         if (loader) loader.style.display = 'none';
 
-        if (!sessions.length) {
+        if (!allSessionsCache.length) {
           empty.style.display = 'block';
           grid.style.display = 'none';
+          renderCommandList();
           return;
         }
 
         empty.style.display = 'none';
         grid.style.display = 'grid';
 
-        grid.innerHTML = sessions.map(s => {
+        grid.innerHTML = allSessionsCache.map(s => {
           try {
             return `
               <div class="card" onclick="openSession('${s.id}')" style="position:relative;">
@@ -1666,6 +2054,7 @@
             return '';
           }
         }).join('');
+        renderCommandList();
         if (debug) debug.textContent = 'DONE';
       } catch (err) {
         console.error('Failed to load sessions:', err);
@@ -1990,6 +2379,7 @@
       }
     }
 
+    setSection('home');
     loadSessions();
   </script>
 </body>
