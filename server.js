@@ -1,5 +1,5 @@
 import express from 'express';
-import { readFileSync, writeFileSync, readdirSync, existsSync, appendFileSync, mkdirSync, unlinkSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, appendFileSync, mkdirSync, unlinkSync, rmSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { YoutubeTranscript } from 'youtube-transcript/dist/youtube-transcript.esm.js';
@@ -148,13 +148,14 @@ app.put('/api/session/:id/video', (req, res) => {
     // Save screenshot if provided
     let screenshotPath = '';
     if (screenshot && screenshot.length > 100) {
-      const screenshotsDir = join(__dirname, 'data', 'screenshots');
+      const sessionAssetsDir = join(__dirname, 'data', 'channel_assets', id);
+      const screenshotsDir = join(sessionAssetsDir, 'thumbnails');
       if (!existsSync(screenshotsDir)) mkdirSync(screenshotsDir, { recursive: true });
       const imgId = `${id}_v${session.videos.length + 1}`;
       const imagePath = join(screenshotsDir, `${imgId}.png`);
       const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, '');
       writeFileSync(imagePath, base64Data, 'base64');
-      screenshotPath = `/data/screenshots/${imgId}.png`;
+      screenshotPath = `/data/channel_assets/${id}/thumbnails/${imgId}.png`;
     }
 
     const entry = {
@@ -226,7 +227,8 @@ app.post('/api/session/:id/scene-frames', express.json({limit: '200mb'}), (req, 
     const session = sessions.find(s => s.id === id);
     if (!session) return res.status(404).json({ error: 'Session not found' });
 
-    const scenesDir = join(__dirname, 'data', 'scenes');
+    const sessionAssetsDir = join(__dirname, 'data', 'channel_assets', id);
+    const scenesDir = join(sessionAssetsDir, 'scenes');
     if (!existsSync(scenesDir)) mkdirSync(scenesDir, { recursive: true });
 
     const savedPaths = [];
@@ -235,7 +237,7 @@ app.post('/api/session/:id/scene-frames', express.json({limit: '200mb'}), (req, 
       const imagePath = join(scenesDir, `${imgId}.png`);
       const base64Data = b64.replace(/^data:image\/\w+;base64,/, '');
       writeFileSync(imagePath, base64Data, 'base64');
-      savedPaths.push(`/data/scenes/${imgId}.png`);
+      savedPaths.push(`/data/channel_assets/${id}/scenes/${imgId}.png`);
     });
 
     session.sceneFrames = savedPaths;
@@ -268,37 +270,21 @@ app.delete('/api/session/:id', (req, res) => {
     const sessionIndex = sessions.findIndex(s => s.id === id);
     if (sessionIndex === -1) return res.status(404).json({ error: 'Session not found' });
 
-    const session = sessions[sessionIndex];
-
-    // 1. Delete associated screenshots
-    const screenshotsDir = join(__dirname, 'data', 'screenshots');
-    if (session.videos) {
-      session.videos.forEach(v => {
-        if (v.screenshot) {
-          const filePath = join(__dirname, v.screenshot.startsWith('/') ? v.screenshot.substring(1) : v.screenshot);
-          if (existsSync(filePath)) try { unlinkSync(filePath); } catch (e) { console.error(`Failed to delete ${filePath}`, e); }
-        }
-      });
+    // Delete associated assets folder
+    const assetsDir = join(__dirname, 'data', 'channel_assets', id);
+    if (existsSync(assetsDir)) {
+      try {
+        rmSync(assetsDir, { recursive: true, force: true });
+      } catch (e) {
+        console.error(`Failed to delete assets folder: ${assetsDir}`, e);
+      }
     }
 
-    if (session.finalScreenshot) {
-      const finalPath = join(__dirname, session.finalScreenshot.startsWith('/') ? session.finalScreenshot.substring(1) : session.finalScreenshot);
-      if (existsSync(finalPath)) try { unlinkSync(finalPath); } catch (e) { console.error(`Failed to delete ${finalPath}`, e); }
-    }
-
-    // 2. Delete scene frames
-    if (session.sceneFrames && Array.isArray(session.sceneFrames)) {
-      session.sceneFrames.forEach(framePath => {
-        const fullPath = join(__dirname, framePath.startsWith('/') ? framePath.substring(1) : framePath);
-        if (existsSync(fullPath)) try { unlinkSync(fullPath); } catch (e) { console.error(`Failed to delete ${fullPath}`, e); }
-      });
-    }
-
-    // 3. Remove from sessions.json
+    // Remove from sessions.json
     sessions.splice(sessionIndex, 1);
     writeSessions(sessions);
 
-    res.json({ success: true, message: 'Session deleted successfully' });
+    res.json({ success: true, message: 'Session and all assets deleted successfully' });
   } catch (err) {
     console.error('Delete error:', err);
     res.status(500).json({ error: err.message });
@@ -367,6 +353,27 @@ app.get('/api/session/:id/csv', (req, res) => {
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="${session.channel || 'session'}_analysis.csv"`);
     res.send(csv);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+// Delete a session
+app.delete('/api/session/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const sessions = readSessions();
+    const sessionIndex = sessions.findIndex(s => s.id === id);
+    if (sessionIndex === -1) return res.status(404).json({ error: 'Session not found' });
+
+    // Delete associated assets folder
+    const assetsDir = join(__dirname, 'data', 'channel_assets', id);
+    if (existsSync(assetsDir)) {
+      rmSync(assetsDir, { recursive: true, force: true });
+    }
+
+    // Remove from sessions list
+    sessions.splice(sessionIndex, 1);
+    writeSessions(sessions);
+
+    res.json({ success: true, message: 'Session and all assets deleted' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
