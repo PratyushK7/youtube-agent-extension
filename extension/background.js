@@ -10,7 +10,6 @@ let state = {
   chatTabId: null,
   channelName: '',
   isSequential: false,
-  basePrompt: '',
   sessionId: null
 };
 
@@ -47,6 +46,12 @@ function clearStepWatchdog() {
   }
 }
 
+// Set one-time harvest flag before navigating to a video
+async function setHarvestFlag(videoId) {
+  await chrome.storage.local.set({ harvestNow: true, harvestVideoId: videoId });
+  log(`Harvest flag set for: ${videoId}`);
+}
+
 // ─── State Persistence (MV3 survival) ──────────────────────
 async function saveState() {
   await chrome.storage.local.set({
@@ -58,7 +63,6 @@ async function saveState() {
       chatTabId: state.chatTabId,
       channelName: state.channelName,
       isSequential: state.isSequential,
-      basePrompt: state.basePrompt,
       sessionId: state.sessionId
     }
   });
@@ -85,6 +89,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   if (tabId === state.ytTabId) {
     console.error('YT-to-AI: YouTube tab was closed. Attempting recovery...');
     // Re-create the YouTube tab and continue
+    setHarvestFlag(state.queue[state.currentIndex]);
     chrome.tabs.create({ url: `https://www.youtube.com/watch?v=${state.queue[state.currentIndex]}` }, (tab) => {
       state.ytTabId = tab.id;
       saveState();
@@ -256,7 +261,6 @@ async function handleStartSequential(request, sender) {
     chatTabId: null,
     channelName: request.channelName,
     isSequential: true,
-    basePrompt: request.prompt || '',
     sessionId: sessionId
   };
   
@@ -269,6 +273,7 @@ async function handleStartSequential(request, sender) {
   });
   await saveState();
 
+  await setHarvestFlag(state.queue[0]);
   chrome.tabs.update(state.ytTabId, { url: `https://www.youtube.com/watch?v=${state.queue[0]}` });
 }
 
@@ -282,6 +287,7 @@ async function handleResumeSequential(request, sender, sendResponse) {
   // Create a fresh YouTube tab to kickstart the monitor
   chrome.tabs.create({ url: `https://www.youtube.com/watch?v=${state.queue[state.currentIndex]}` }, (tab) => {
     state.ytTabId = tab.id;
+    setHarvestFlag(state.queue[state.currentIndex]);
     saveState();
     sendResponse({ success: true });
   });
@@ -299,7 +305,6 @@ async function handleResetSession(sendResponse) {
     chatTabId: null,
     channelName: '',
     isSequential: false,
-    basePrompt: '',
     sessionId: null
   };
   
@@ -307,7 +312,7 @@ async function handleResetSession(sendResponse) {
     '_bgState', 'isSequential', 'currentIndex', 'totalSteps', 
     'channelName', 'sessionId', 'pendingAnalysis', 'imageData',
     'transcript', 'videoTitle', 'videoId', 'step', 'views', 
-    'duration', 'basePrompt'
+    'duration'
   ]);
   
   log('RESET_SESSION: State cleared successfully.');
@@ -379,8 +384,7 @@ async function handleVideoReady(request, sender) {
       duration: request.duration || 'TBD',
       imageData: finalImageData,
       sessionId: state.sessionId,
-      videoId: videoId,
-      basePrompt: state.basePrompt || ''
+      videoId: videoId
     };
 
     // Write payload to storage BEFORE opening/triggering ChatGPT tab
@@ -448,11 +452,13 @@ async function handleStepResult(request) {
       // Verify YT tab still exists
       try {
         await chrome.tabs.get(state.ytTabId);
+        await setHarvestFlag(state.queue[state.currentIndex]);
         chrome.tabs.update(state.ytTabId, { 
           url: `https://www.youtube.com/watch?v=${state.queue[state.currentIndex]}`,
           active: true
         });
       } catch (e) {
+        await setHarvestFlag(state.queue[state.currentIndex]);
         const tab = await chrome.tabs.create({ url: `https://www.youtube.com/watch?v=${state.queue[state.currentIndex]}` });
         state.ytTabId = tab.id;
         await saveState();
@@ -496,11 +502,13 @@ async function handleStepResult(request) {
          await chrome.storage.local.set({ currentIndex: state.currentIndex, totalSteps: state.queue.length });
          try {
            await chrome.tabs.get(state.ytTabId);
+           await setHarvestFlag(state.queue[state.currentIndex]);
            chrome.tabs.update(state.ytTabId, { 
              url: `https://www.youtube.com/watch?v=${state.queue[state.currentIndex]}`,
              active: true
            });
          } catch (e) {
+           await setHarvestFlag(state.queue[state.currentIndex]);
            const tab = await chrome.tabs.create({ url: `https://www.youtube.com/watch?v=${state.queue[state.currentIndex]}` });
            state.ytTabId = tab.id;
            await saveState();

@@ -38,6 +38,122 @@ function isAdPlaying() {
   return !!document.querySelector('.ad-showing, .ad-interrupting');
 }
 
+// Scrape transcript by programmatically clicking YouTube's "Show transcript" button
+async function scrapeTranscriptFromDOM() {
+  // Step 1: Expand the description if collapsed (transcript button is inside it)
+  const expandBtn = document.querySelector('tp-yt-paper-button#expand');
+  if (expandBtn) {
+    expandBtn.click();
+    await new Promise(r => setTimeout(r, 800));
+  }
+
+  // Step 2: Find and click the "Show transcript" button
+  // It lives inside ytd-video-description-transcript-section-renderer
+  let transcriptBtn = null;
+
+  // Primary selector: the button inside the transcript section of the description
+  const section = document.querySelector('ytd-video-description-transcript-section-renderer');
+  if (section) {
+    transcriptBtn = section.querySelector('button') 
+                 || section.querySelector('[aria-label="Show transcript"]');
+  }
+
+  // Fallback: search all buttons for one with "Show transcript" text
+  if (!transcriptBtn) {
+    const allButtons = document.querySelectorAll('button, ytd-button-renderer, tp-yt-paper-button');
+    for (const btn of allButtons) {
+      const text = (btn.textContent || '').trim().toLowerCase();
+      if (text.includes('show transcript')) {
+        transcriptBtn = btn;
+        break;
+      }
+    }
+  }
+
+  if (!transcriptBtn) {
+    console.warn('YT-to-AI: [Player] "Show transcript" button not found');
+    return '[TRANSCRIPT UNAVAILABLE]';
+  }
+
+  console.log('YT-to-AI: [Player] Clicking "Show transcript" button...');
+  transcriptBtn.click();
+
+  // Step 3: Wait for the transcript panel to render with segments
+  let panel = null;
+  let segments = [];
+  for (let attempt = 0; attempt < 20; attempt++) {
+    await new Promise(r => setTimeout(r, 500));
+    // The engagement panel that contains transcript segments
+    panel = document.querySelector('ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-searchable-transcript"]');
+    if (panel) {
+      segments = panel.querySelectorAll('ytd-transcript-segment-renderer');
+      if (segments.length > 0) break;
+    }
+  }
+
+  if (!segments || segments.length === 0) {
+    console.warn('YT-to-AI: [Player] Transcript panel opened but no segments found');
+    // Try to close the panel before returning
+    closeTranscriptPanel(panel);
+    return '[TRANSCRIPT UNAVAILABLE]';
+  }
+
+  console.log('YT-to-AI: [Player] Found', segments.length, 'transcript segments');
+
+  // Step 4: Scrape timestamp + text from each segment
+  const lines = [];
+  for (const seg of segments) {
+    const timestamp = (seg.querySelector('.segment-timestamp')?.textContent || '').trim();
+    const text = (seg.querySelector('.segment-text')?.textContent || '').trim();
+    if (text) {
+      // Normalize timestamp to [MM:SS] format
+      const formatted = formatTimestamp(timestamp);
+      lines.push(`${formatted} ${text}`);
+    }
+  }
+
+  // Step 5: Close the transcript panel
+  closeTranscriptPanel(panel);
+
+  if (lines.length === 0) {
+    return '[TRANSCRIPT UNAVAILABLE]';
+  }
+
+  return lines.join('\n');
+}
+
+function formatTimestamp(ts) {
+  // YouTube shows timestamps like "0:00", "1:23", "10:05", "1:00:05"
+  const parts = ts.split(':').map(p => parseInt(p, 10));
+  if (parts.length === 3) {
+    // H:MM:SS → [HH:MM:SS]
+    return `[${String(parts[0]).padStart(2,'0')}:${String(parts[1]).padStart(2,'0')}:${String(parts[2]).padStart(2,'0')}]`;
+  } else if (parts.length === 2) {
+    // M:SS → [MM:SS]
+    return `[${String(parts[0]).padStart(2,'0')}:${String(parts[1]).padStart(2,'0')}]`;
+  }
+  return `[${ts}]`;
+}
+
+function closeTranscriptPanel(panel) {
+  try {
+    if (!panel) {
+      panel = document.querySelector('ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-searchable-transcript"]');
+    }
+    if (panel) {
+      const closeBtn = panel.querySelector('#close-button button, [aria-label="Close transcript"]');
+      if (closeBtn) {
+        closeBtn.click();
+        return;
+      }
+    }
+    // Fallback: press Escape to close any open panel
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  } catch (e) {
+    console.warn('YT-to-AI: [Player] Could not close transcript panel:', e.message);
+  }
+}
+
 async function harvestVideoInfo() {
   const data = await chrome.storage.local.get(['currentIndex', 'totalSteps']);
   const stepNum = (data.currentIndex || 0) + 1;
@@ -76,27 +192,44 @@ async function harvestVideoInfo() {
     thumbnailUrl = document.querySelector('meta[property="og:image"]')?.content || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
   }
 
-  // Fetch Transcript via RELAY (Bypass Security)
+  // Fetch transcript by clicking YouTube's "Show transcript" button and scraping the panel
   showPlayerStatus('Fetching transcript...');
-  let transcript = '[TRANSCRIPT UNAVAILABLE: Analyze strategic direction based on Title and Screen Capture.]';
+  let transcript = '[TRANSCRIPT UNAVAILABLE]';
   
   try {
-    const response = await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => resolve({ success: false }), 15000);
-      chrome.runtime.sendMessage({ action: 'GET_TRANSCRIPT', videoId }, (res) => {
-        clearTimeout(timer);
-        resolve(res || { success: false });
-      });
-    });
-    if (response && response.success && response.transcript) {
-      transcript = response.transcript;
-    } else {
-      console.warn('YT-to-AI: Transcript unavailable for video', videoId);
-      showPlayerStatus('Transcript unavailable — continuing without');
+    transcript = await scrapeTranscriptFromDOM();
+    if (transcript && transcript !== '[TRANSCRIPT UNAVAILABLE]') {
+      console.log('YT-to-AI: [Player] DOM transcript:', transcript.split('\n').length, 'lines,', transcript.length, 'chars');
+      showPlayerStatus('Transcript fetched (' + transcript.split('\n').length + ' lines)');
     }
   } catch (e) {
-    console.error('Transcript relay failed:', e);
-    showPlayerStatus('Transcript error — continuing without');
+    console.warn('YT-to-AI: [Player] DOM transcript scrape failed:', e.message);
+  }
+
+  // Fallback: server relay via background.js
+  if (!transcript || transcript === '[TRANSCRIPT UNAVAILABLE]') {
+    try {
+      console.log('YT-to-AI: [Player] Trying server fallback...');
+      showPlayerStatus('Fetching transcript (server)...');
+      const response = await new Promise((resolve) => {
+        const timer = setTimeout(() => resolve({ success: false }), 15000);
+        chrome.runtime.sendMessage({ action: 'GET_TRANSCRIPT', videoId }, (res) => {
+          clearTimeout(timer);
+          resolve(res || { success: false });
+        });
+      });
+      if (response?.success && response.transcript && !response.transcript.includes('UNAVAILABLE')) {
+        transcript = response.transcript;
+        console.log('YT-to-AI: [Player] Server transcript:', transcript.length, 'chars');
+        showPlayerStatus('Transcript fetched (' + transcript.split('\n').length + ' lines)');
+      }
+    } catch (e2) {
+      console.error('YT-to-AI: [Player] Server transcript also failed:', e2.message);
+    }
+  }
+
+  if (!transcript || transcript === '[TRANSCRIPT UNAVAILABLE]') {
+    showPlayerStatus('No transcript available');
   }
 
   showPlayerStatus('Preparing snapshot...');
@@ -260,12 +393,14 @@ if (urlParams.get('analyze_scene') === 'true') {
     }
   })();
 } else {
-  // Only trigger if we are in a Sequential Analysis flow with a valid active queue
-  chrome.storage.local.get(['isSequential', '_bgState'], async (data) => {
-    const hasActiveQueue = data._bgState && data._bgState.queue && data._bgState.queue.length > 0 
-                           && data._bgState.currentIndex < data._bgState.queue.length;
-    if (data.isSequential && hasActiveQueue) {
-       console.log('YT-to-AI: [Player] Sequential Harvest Mode Active.');
+  // Only trigger harvest if background explicitly requested it (one-time flag)
+  chrome.storage.local.get(['harvestNow', 'harvestVideoId'], async (data) => {
+    const currentVideoId = new URLSearchParams(window.location.search).get('v');
+    
+    if (data.harvestNow && data.harvestVideoId === currentVideoId) {
+       // Clear the flag immediately so refresh won't re-trigger
+       await chrome.storage.local.remove(['harvestNow', 'harvestVideoId']);
+       console.log('YT-to-AI: [Player] Harvest triggered for:', currentVideoId);
        
        try {
        const video = await waitForVideo();

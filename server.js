@@ -108,21 +108,89 @@ app.post('/api/get-transcripts', async (req, res) => {
 
     const results = [];
     for (const id of videoIds) {
+      let formatted = '[TRANSCRIPT UNAVAILABLE]';
       try {
-        const transcript = await YoutubeTranscript.fetchTranscript(id).catch(() => null);
-        let formatted = '[TRANSCRIPT UNAVAILABLE]';
+        console.log(`Fetching transcript for: ${id}`);
+        let transcript = null;
+
+        // Method 1: Scrape YouTube page for caption tracks (most reliable)
+        try {
+          const pageRes = await fetch(`https://www.youtube.com/watch?v=${id}`, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'Accept-Language': 'en-US,en;q=0.9',
+              'Cookie': 'CONSENT=PENDING+999'
+            }
+          });
+          const html = await pageRes.text();
+          const markerIdx = html.indexOf('ytInitialPlayerResponse');
+          if (markerIdx > -1) {
+            // Find the JSON object start after the marker
+            const startIdx = html.indexOf('{', markerIdx);
+            let depth = 0, endIdx = startIdx;
+            for (let i = startIdx; i < html.length && i < startIdx + 500000; i++) {
+              if (html[i] === '{') depth++;
+              else if (html[i] === '}') { depth--; if (depth === 0) { endIdx = i + 1; break; } }
+            }
+            const playerData = JSON.parse(html.substring(startIdx, endIdx));
+            const tracks = playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+            if (tracks && tracks.length > 0) {
+              // Prefer English, then auto-generated, then first available
+              const track = tracks.find(t => t.languageCode === 'en' && t.kind !== 'asr')
+                         || tracks.find(t => t.languageCode === 'en')
+                         || tracks.find(t => t.kind === 'asr')
+                         || tracks[0];
+              if (track?.baseUrl) {
+                const captionRes = await fetch(track.baseUrl + '&fmt=json3');
+                const captionData = await captionRes.json();
+                if (captionData.events) {
+                  transcript = captionData.events
+                    .filter(e => e.segs)
+                    .map(e => ({
+                      offset: (e.tStartMs || 0),
+                      text: e.segs.map(s => s.utf8 || '').join('').trim()
+                    }))
+                    .filter(e => e.text);
+                  console.log(`Page scrape success for ${id}: ${transcript.length} segments`);
+                }
+              }
+            } else {
+              console.warn(`No caption tracks on page for ${id}`);
+            }
+          }
+        } catch (pageErr) {
+          console.warn(`Page scrape failed for ${id}:`, pageErr.message);
+        }
+
+        // Method 2: youtube-transcript library fallback
+        if (!transcript || transcript.length === 0) {
+          try {
+            const libResult = await YoutubeTranscript.fetchTranscript(id);
+            if (libResult && libResult.length > 0) {
+              transcript = libResult;
+              console.log(`Library fallback success for ${id}: ${transcript.length} segments`);
+            }
+          } catch (libErr) {
+            console.warn(`Library failed for ${id}: ${libErr.message}`);
+          }
+        }
+
         if (transcript && transcript.length > 0) {
           formatted = transcript.map(part => {
             const totalSec = Math.floor((part.offset || 0) / 1000);
             const m = Math.floor(totalSec / 60);
             const s = totalSec % 60;
             return `[${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}] ${part.text}`;
-          }).join(' ');
+          }).join('\n');
+          console.log(`Transcript for ${id}: ${formatted.length} chars`);
+        } else {
+          console.warn(`No transcript available for ${id}`);
         }
-        results.push({ id, transcript: formatted });
       } catch (e) {
-        results.push({ id, transcript: '[TRANSCRIPT ERROR]' });
+        console.error(`Transcript error for ${id}:`, e.message);
+        formatted = '[TRANSCRIPT ERROR]';
       }
+      results.push({ id, transcript: formatted });
     }
     res.json({ success: true, transcripts: results });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -145,13 +213,26 @@ function writeSessions(sessions) {
   renameSync(tmpFile, SESSIONS_FILE);
 }
 
-// Create a new analysis session
+// Create or replace analysis session (one session per channel)
 app.post('/api/session/create', (req, res) => {
   try {
     const { channel, totalVideos, promptUsed } = req.body;
     if (!channel) return res.status(400).json({ error: 'Channel name required' });
 
     const sessions = readSessions();
+    
+    // Find existing session for this channel and remove it (+ its assets)
+    const existingIdx = sessions.findIndex(s => s.channel === channel);
+    if (existingIdx !== -1) {
+      const oldSession = sessions[existingIdx];
+      const assetsDir = join(__dirname, 'data', 'channel_assets', oldSession.id);
+      if (existsSync(assetsDir)) {
+        try { rmSync(assetsDir, { recursive: true, force: true }); } catch (e) {}
+      }
+      sessions.splice(existingIdx, 1);
+      console.log(`Replaced existing session for "${channel}" (${oldSession.id})`);
+    }
+    
     const session = {
       id: `ses_${Date.now()}`,
       channel,

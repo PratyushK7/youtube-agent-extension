@@ -1,5 +1,12 @@
-Analyze the style of this image, including color palette, lighting, composition, texture, and mood. Then generate a short, reusable image generation prompt (under 30 words) that captures that style, so I can apply it to new images.
+You will receive 5 frame captures from a YouTube video taken at different timestamps (15%, 35%, 55%, 75%, 90% of the video).
 
-Attach:
+For each frame, analyze:
+- **Color palette** and dominant tones
+- **Lighting style** (natural, studio, mixed, dramatic)
+- **Composition technique** (rule of thirds, centered, etc.)
+- **Visual texture** (clean, gritty, polished, raw)
+- **Mood** conveyed
 
-Image Style Reference
+Then provide:
+1. A **summary** of the channel's consistent visual style across all 5 frames
+2. A **reusable image generation prompt** (under 40 words) that captures this exact style, formatted in `code block`

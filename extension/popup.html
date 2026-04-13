@@ -13,11 +13,6 @@
     .dot { width: 6px; height: 6px; border-radius: 50%; }
     .dot-green { background: #22c55e; }
     .dot-red { background: #ef4444; }
-    .body { padding: 10px 14px; }
-    .field-label { font-size: 9px; color: #475569; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-    .sel { width: 100%; background: #161822; border: 1px solid rgba(255,255,255,0.08); color: #e2e8f0; padding: 6px 8px; border-radius: 6px; font-size: 11px; font-family: inherit; outline: none; cursor: pointer; }
-    .sel:focus { border-color: rgba(99,102,241,0.4); }
-    .sel option { background: #161822; color: #e2e8f0; }
     .actions { padding: 8px 14px 12px; display: flex; flex-direction: column; gap: 5px; }
     .btn { width: 100%; padding: 8px; border: none; border-radius: 6px; font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.15s; }
     .btn-primary { background: #6366f1; color: white; }
@@ -35,10 +30,6 @@
     <div class="hdr-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
     <span class="hdr-name">ChannelLens</span>
     <span class="hdr-status"><span id="server-dot" class="dot dot-red"></span><span id="server-txt">Offline</span></span>
-  </div>
-  <div class="body">
-    <div class="field-label">Prompt</div>
-    <select id="prompt-select" class="sel"><option value="">Loading...</option></select>
   </div>
   <div class="actions">
     <button id="reset-session" class="btn btn-warn hidden">Reset Stuck Session</button>

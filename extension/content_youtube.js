@@ -100,7 +100,7 @@ function injectAnalyzerButton() {
       const channelLink = document.querySelector('ytd-video-owner-renderer a.yt-simple-endpoint');
       const url = channelLink ? channelLink.href : null;
       if (url) {
-        chrome.storage.local.set({ autoStartSeq: true, selectedDepth: depth }, () => {
+        chrome.storage.local.set({ autoStartSeq: true, autoStartSeqTime: Date.now(), selectedDepth: depth }, () => {
           window.location.href = url.endsWith('/videos') ? url : `${url}/videos`;
         });
         return;
@@ -123,19 +123,44 @@ function injectAnalyzerButton() {
          return;
        }
        const queue = queueData.map(v => v.id);
-       const data = await chrome.storage.local.get(['activePrompt']);
+       
+       // Get channel name — try page elements first, then clean document.title
+       const channelEl = document.querySelector(
+         '#channel-name #text, yt-formatted-string.ytd-channel-name, #channel-header-container #text, ytd-channel-name yt-formatted-string'
+       );
+       let channelName = channelEl?.textContent?.trim() || '';
+       if (!channelName) {
+         channelName = document.title.split('- YouTube')[0].trim();
+       }
+       // Always strip (1), (2) prefixes and - Videos/Home suffixes
+       channelName = channelName.replace(/^\(\d+\)\s*/, '').replace(/\s*-\s*(Videos|Home|Shorts|Live|Playlists|Community)\s*$/i, '').trim();
+       
+       // Check if channel was already analyzed
+       let shouldProceed = true;
+       try {
+         const checkRes = await fetch(`http://127.0.0.1:3005/api/sessions`);
+         const sessions = await checkRes.json();
+         const existing = sessions.find(s => s.channel === channelName);
+         if (existing && existing.analyzedVideos > 0) {
+           shouldProceed = confirm(`"${channelName}" already has ${existing.analyzedVideos} video(s) analyzed. Re-analyze?`);
+           if (!shouldProceed) {
+             btnAnalyze.disabled = false;
+             showStatusHUD('Cancelled.');
+             return;
+           }
+         }
+       } catch (e) { /* server offline, proceed anyway */ }
        
        chrome.runtime.sendMessage({
          action: 'START_SEQUENTIAL',
-         channelName: document.title.split('- YouTube')[0].trim(),
-         queue: queue,
-         prompt: data.activePrompt || ''
+         channelName: channelName,
+         queue: queue
        }, (res) => {
          if (res?.success) showStatusHUD(`Analyzing ${queue.length} videos...`);
        });
     } else {
        // Navigate to videos first
-       chrome.storage.local.set({ autoStartSeq: true, selectedDepth: depth }, () => {
+       chrome.storage.local.set({ autoStartSeq: true, autoStartSeqTime: Date.now(), selectedDepth: depth }, () => {
           const currentUrl = window.location.href.replace(/\/$/, '');
           window.location.href = currentUrl.includes('/videos') ? currentUrl : `${currentUrl}/videos`;
        });
@@ -146,12 +171,16 @@ function injectAnalyzerButton() {
   container.appendChild(btnAnalyze);
   document.body.appendChild(container);
 
-  // Auto-Start Hook
-  chrome.storage.local.get(['autoStartSeq', 'selectedDepth'], (data) => {
-    if (data.autoStartSeq && isChannel && window.location.pathname.includes('/videos')) {
-      chrome.storage.local.remove('autoStartSeq');
+  // Auto-Start Hook — only if flag was set recently (within 10 sec, not stale from refresh)
+  chrome.storage.local.get(['autoStartSeq', 'autoStartSeqTime', 'selectedDepth'], (data) => {
+    const isRecent = data.autoStartSeqTime && (Date.now() - data.autoStartSeqTime < 10000);
+    if (data.autoStartSeq && isRecent && isChannel && window.location.pathname.includes('/videos')) {
+      chrome.storage.local.remove(['autoStartSeq', 'autoStartSeqTime']);
       if (data.selectedDepth) document.getElementById('yt-depth-dropdown').value = data.selectedDepth;
       btnAnalyze.click();
+    } else if (data.autoStartSeq) {
+      // Stale flag — clear it
+      chrome.storage.local.remove(['autoStartSeq', 'autoStartSeqTime']);
     }
   });
 }

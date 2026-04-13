@@ -1,4 +1,3 @@
-const sel = document.getElementById('prompt-select');
 const dot = document.getElementById('server-dot');
 const txt = document.getElementById('server-txt');
 const resetBtn = document.getElementById('reset-session');
@@ -13,8 +12,6 @@ async function init() {
   dot.className = online ? 'dot dot-green' : 'dot dot-red';
   txt.textContent = online ? 'Online' : 'Offline';
   txt.style.color = online ? '#22c55e' : '#ef4444';
-  if (online) loadPrompts();
-  else sel.innerHTML = '<option>Server offline</option>';
 
   // Show reset if stuck
   const d = await chrome.storage.local.get(['isSequential', '_bgState']);
@@ -22,27 +19,6 @@ async function init() {
     resetBtn.classList.remove('hidden');
   }
 }
-
-// Prompts
-async function loadPrompts() {
-  try {
-    const r = await fetch('http://127.0.0.1:3005/api/prompts', { signal: AbortSignal.timeout(3000) });
-    const prompts = await r.json();
-    sel.innerHTML = prompts.map(p => `<option value="${p.id}" data-c="${encodeURIComponent(p.content).replace(/'/g,"&apos;")}">${p.name}</option>`).join('');
-    const saved = await chrome.storage.local.get('selectedPromptId');
-    if (saved.selectedPromptId) {
-      sel.value = saved.selectedPromptId;
-      const latest = prompts.find(p => p.id === saved.selectedPromptId);
-      if (latest) chrome.storage.local.set({ activePrompt: latest.content });
-    } else sel.dispatchEvent(new Event('change'));
-  } catch { sel.innerHTML = '<option>Error loading</option>'; }
-}
-
-sel.onchange = () => {
-  const o = sel.selectedOptions[0];
-  if (!o || !o.dataset.c) return;
-  chrome.storage.local.set({ selectedPromptId: sel.value, activePrompt: decodeURIComponent(o.dataset.c) });
-};
 
 // Buttons
 document.getElementById('open-yt').onclick = () => chrome.tabs.create({ url: 'https://youtube.com' });

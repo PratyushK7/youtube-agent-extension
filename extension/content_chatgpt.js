@@ -3,27 +3,27 @@
 const style = document.createElement('style');
 style.textContent = `
   #yt-ai-progress-container {
-    position: fixed; top: 0; left: 0; width: 100%; height: 44px;
-    background: rgba(15, 17, 23, 0.95); backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    position: fixed; top: 0; left: 0; width: 100%; height: 40px;
+    background: rgba(25, 25, 25, 0.97); backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255,255,255,0.055);
     z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    font-family: 'Inter', sans-serif; transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
   }
   .yt-ai-progress-bar {
-    width: 60%; height: 4px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden; margin-bottom: 5px;
+    width: 50%; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-bottom: 4px;
   }
   #yt-ai-progress-fill {
     width: 0%; height: 100%; background: #6366f1;
-    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 0.8s ease;
   }
-  #yt-ai-progress-text { color: #94a3b8; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
+  #yt-ai-progress-text { color: #9b9a97; font-size: 10px; letter-spacing: 0.3px; font-weight: 500; }
   .yt-ai-toast {
-    position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: #e2e8f0;
-    padding: 10px 20px; border-radius: 8px; font-weight: 500; font-size: 13px; z-index: 10001;
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4); animation: toastIn 0.3s ease-out;
+    position: fixed; bottom: 20px; right: 20px; background: #252525; color: #ebebeb;
+    padding: 8px 16px; border-radius: 4px; font-weight: 500; font-size: 12px; z-index: 10001;
+    border: 1px solid rgba(255,255,255,0.055);
+    animation: toastIn 0.2s ease-out;
   }
-  @keyframes toastIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes toastIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 `;
 document.head.appendChild(style);
 
@@ -32,7 +32,29 @@ const _log = (msg, ...a) => console.log(`YT-to-AI: [ChatGPT] ${msg}`, ...a);
 const _warn = (msg, ...a) => console.warn(`YT-to-AI: [ChatGPT] ${msg}`, ...a);
 const _err = (msg, ...a) => console.error(`YT-to-AI: [ChatGPT] ${msg}`, ...a);
 
-// Reliable paste helper — Chrome ignores clipboardData in synthetic ClipboardEvent constructor
+// Reliable file upload — uses ChatGPT's file input (paste doesn't work with React)
+async function uploadFilesToChatGPT(targetInput, files) {
+  if (!files || !files.length) return;
+  const fileInput = document.querySelector('input[type="file"]');
+  if (fileInput) {
+    const dt = new DataTransfer();
+    files.forEach(f => dt.items.add(f));
+    fileInput.files = dt.files;
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    _log(`Uploaded ${files.length} files via file input`);
+    await new Promise(r => setTimeout(r, 2500));
+    return;
+  }
+  _warn('No file input found, trying paste fallback...');
+  const dt = new DataTransfer();
+  files.forEach(f => dt.items.add(f));
+  const evt = new ClipboardEvent('paste', { bubbles: true, cancelable: true });
+  Object.defineProperty(evt, 'clipboardData', { value: dt });
+  targetInput.dispatchEvent(evt);
+  await new Promise(r => setTimeout(r, 2200));
+}
+
+// Legacy alias
 function dispatchPaste(element, dataTransfer) {
   const event = new ClipboardEvent('paste', { bubbles: true, cancelable: true });
   Object.defineProperty(event, 'clipboardData', { value: dataTransfer, writable: false });
@@ -40,12 +62,109 @@ function dispatchPaste(element, dataTransfer) {
 }
 
 // --- UI Helpers ---
+
+// Inject text into ChatGPT input and click send
+async function injectTextAndSend(el, text) {
+  // Step 0: Wait for any pending file uploads to finish processing
+  // ChatGPT shows upload progress indicators — wait until they're gone
+  await waitForUploadsToFinish();
+
+  el.focus();
+  await new Promise(r => setTimeout(r, 300));
+
+  // Clear existing content via execCommand (ProseMirror-compatible)
+  document.execCommand('selectAll');
+  document.execCommand('delete');
+  await new Promise(r => setTimeout(r, 200));
+
+  // Insert text via execCommand — this is the ONLY method ProseMirror reliably handles
+  document.execCommand('insertText', false, text);
+  _log(`Text inserted via execCommand (${text.length} chars)`);
+
+  // Wait for ChatGPT UI to process
+  await new Promise(r => setTimeout(r, 1500));
+
+  // Find and click send button — with longer patience for upload processing
+  for (let i = 0; i < 15; i++) {
+    const btn = document.querySelector('button[data-testid="send-button"]');
+    const altBtn = document.querySelector('button[aria-label="Send prompt"]')
+                || document.querySelector('button[aria-label="Send"]');
+    const target = btn || altBtn;
+    
+    if (target && !target.disabled) {
+      target.click();
+      _log(`Send clicked (attempt ${i}).`);
+      return;
+    }
+    
+    if (i === 0) {
+      _log(`Send button state: exists=${!!target}, disabled=${target?.disabled}`);
+    }
+    
+    // Every few attempts, re-focus and re-trigger input to nudge React
+    if (i % 3 === 2) {
+      el.focus();
+      document.execCommand('insertText', false, ' ');
+      document.execCommand('delete');
+    }
+    await new Promise(r => setTimeout(r, 800));
+  }
+
+  // Last resort: force-click even if disabled, then try Enter
+  const forcedBtn = document.querySelector('button[data-testid="send-button"]');
+  if (forcedBtn) {
+    _warn('Force-clicking disabled send button...');
+    forcedBtn.removeAttribute('disabled');
+    forcedBtn.click();
+    return;
+  }
+
+  _warn('No send button found. Pressing Enter...');
+  el.focus();
+  el.dispatchEvent(new KeyboardEvent('keydown', {
+    key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
+    bubbles: true, cancelable: true
+  }));
+}
+
+// Wait for ChatGPT file upload chips/progress indicators to finish
+async function waitForUploadsToFinish() {
+  // ChatGPT shows upload progress as spinning indicators or progress bars on file chips
+  // We wait until there are no more "uploading" indicators
+  for (let i = 0; i < 30; i++) { // max 30s wait
+    // Check for upload progress indicators
+    const uploading = document.querySelector('[data-testid="file-thumbnail-spinner"]')
+                   || document.querySelector('.animate-spin')
+                   || document.querySelector('[role="progressbar"]');
+    // Also check if the send button exists and is disabled (could mean upload in progress)
+    const sendBtn = document.querySelector('button[data-testid="send-button"]');
+    const fileChips = document.querySelectorAll('[data-testid^="file"]');
+    
+    if (!uploading && fileChips.length > 0 && sendBtn && !sendBtn.disabled) {
+      _log('Uploads finished, send button enabled.');
+      return;
+    }
+    
+    if (!uploading && fileChips.length === 0) {
+      // No files attached yet or no upload indicators — proceed
+      _log('No upload indicators found, proceeding.');
+      return;
+    }
+    
+    if (i === 0) {
+      _log(`Waiting for uploads: spinner=${!!uploading}, fileChips=${fileChips.length}, sendDisabled=${sendBtn?.disabled}`);
+    }
+    
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  _warn('Upload wait timeout (30s) — proceeding anyway');
+}
 function showToast(message) {
   const toast = document.createElement('div');
   toast.className = 'yt-ai-toast';
-  toast.innerHTML = `✅ ${message}`;
+  toast.textContent = message;
   document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 4000);
+  setTimeout(() => toast.remove(), 3000);
 }
 
 function updateProgressBar(current, total) {
@@ -63,7 +182,7 @@ function updateProgressBar(current, total) {
   }
   const pct = (current / total) * 100;
   document.getElementById('yt-ai-progress-fill').style.width = `${pct}%`;
-  document.getElementById('yt-ai-progress-text').innerText = `Strategic Research: Video ${current} of ${total}`;
+  document.getElementById('yt-ai-progress-text').innerText = `Analyzing video ${current} of ${total}`;
 }
 
 // --- Logic ---
@@ -80,53 +199,155 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // ─── Robust JSON Extraction ────────────────────────────────
 // Multi-stage extraction: never discard data silently
 
-function extractVideoJSON(text) {
-  // Ultra-Resilient Stage: Find any block that looks like { ... "hookType" ... }
-  try {
-    const blockMatch = text.match(/\{[\s\S]*?"hookType"[\s\S]*?\}/);
-    if (blockMatch) {
-       // Deep Clean: sometimes AI adds markdown code fences inside the match
-       let cleaned = blockMatch[0].replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-       try {
-         const parsed = JSON.parse(cleaned);
-         console.log('YT-to-AI: JSON extracted via ultra-resilient object match.');
-         return { success: true, data: parsed, raw: text };
-       } catch (jsonErr) {
-         // Fallback: try to fix common JSON errors like trailing commas
-         let fixed = cleaned.replace(/,\s*([\]}])/g, '$1');
-         try {
-           const parsedFixed = JSON.parse(fixed);
-           return { success: true, data: parsedFixed, raw: text };
-         } catch (e) {}
-       }
-    }
-  } catch (e) {}
+// Fix unescaped double quotes inside JSON string values (ChatGPT often outputs these)
+function fixUnescapedQuotes(jsonText) {
+  const lines = jsonText.split('\n');
+  const fixed = lines.map(line => {
+    const keyValMatch = line.match(/^(\s*"[^"]*"\s*:\s*")(.*)$/);
+    if (!keyValMatch) return line;
+    const prefix = keyValMatch[1];
+    const rest = keyValMatch[2];
+    const endMatch = rest.match(/^([\s\S]*)"(\s*[,\}\]]?\s*)$/);
+    if (!endMatch) return line;
+    const innerContent = endMatch[1];
+    const suffix = '"' + endMatch[2];
+    const fixedContent = innerContent.replace(/\\"/g, '\x00ESC\x00')
+                                     .replace(/"/g, '\\"')
+                                     .replace(/\x00ESC\x00/g, '\\"');
+    return prefix + fixedContent + suffix;
+  });
+  return fixed.join('\n');
+}
 
-  // Stage 1: Try to find a JSON array [{...}, ...]
+// Safely parse JSON with multiple fix strategies
+function safeJSONParse(text) {
+  // Attempt 1: direct parse
+  try { return JSON.parse(text); } catch (e) { _log('safeJSON attempt1 error:', e.message); }
+  // Attempt 2: fix unescaped quotes (most common ChatGPT issue)
   try {
-    const arrayMatch = text.match(/\[\s*\{[\s\S]*?\}\s*\]/);
-    if (arrayMatch) {
-      const parsed = JSON.parse(arrayMatch[0]);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        console.log('YT-to-AI: JSON extracted via array match.');
-        return { success: true, data: parsed[0], raw: text };
+    const fixed = fixUnescapedQuotes(text);
+    _log('After fixUnescapedQuotes, changed:', fixed !== text, 'length:', fixed.length);
+    // Show the area around the position that failed in attempt 1
+    const posMatch = arguments[1] || '';
+    return JSON.parse(fixed);
+  } catch (e) { _log('safeJSON attempt2 error:', e.message); }
+  // Attempt 3: fix trailing commas + unescaped quotes
+  try {
+    const fixed = fixUnescapedQuotes(text).replace(/,\s*([\]}])/g, '$1');
+    return JSON.parse(fixed);
+  } catch (e) { _log('safeJSON attempt3 error:', e.message); }
+  // Attempt 4: nuclear option — extract key-value pairs with regex
+  try {
+    _log('safeJSON attempt4: trying line-by-line manual construction');
+    // Remove outer braces, split by line, try to reconstruct
+    let inner = text.trim();
+    if (inner.startsWith('{')) inner = inner.substring(1);
+    if (inner.endsWith('}')) inner = inner.substring(0, inner.length - 1);
+    // Replace all unescaped quotes in values by converting to single quotes temporarily
+    // Actually, just try replacing problematic characters
+    inner = inner
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/\u2013/g, '-')
+      .replace(/\u2014/g, '-')
+      .replace(/\u2192/g, '->')
+      .replace(/\u2026/g, '...');
+    const reconstructed = '{' + inner + '}';
+    return JSON.parse(reconstructed);
+  } catch (e) { _log('safeJSON attempt4 error:', e.message); }
+  return null;
+}
+
+function extractVideoJSON(text) {
+  _log('=== extractVideoJSON input length:', text.length);
+  _log('=== First 500 chars:', JSON.stringify(text.substring(0, 500)));
+  _log('=== Last 200 chars:', JSON.stringify(text.substring(text.length - 200)));
+
+  // Pre-clean: remove common ChatGPT UI artifacts from innerText
+  text = text
+    .replace(/^Copy code\s*/gm, '')     // "Copy code" button text
+    .replace(/^\s*json\s*\n/i, '')       // Loose "json" language label
+    .replace(/\u00A0/g, ' ')             // Non-breaking spaces
+    .replace(/[\u201C\u201D]/g, '"')     // Smart double quotes
+    .replace(/[\u2018\u2019]/g, "'")     // Smart single quotes
+    .replace(/\r\n/g, '\n')             // Normalize line endings
+    .trim();
+
+  // Stage 0: Extract from markdown code fences first (most common ChatGPT format)
+  try {
+    const codeFenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)```/);
+    if (codeFenceMatch) {
+      const inside = codeFenceMatch[1].trim();
+      _log('Stage 0: Code fence found, inside length:', inside.length);
+      const parsed = safeJSONParse(inside);
+      if (parsed) {
+        _log('JSON extracted from code fence.');
+        return { success: true, data: Array.isArray(parsed) ? parsed[0] : parsed, raw: text };
+      }
+      _log('Stage 0: All parse attempts failed for code fence content');
+    } else {
+      _log('Stage 0: No code fence match found');
+    }
+  } catch (e) { _log('Stage 0 error:', e.message); }
+
+  // Stage 1: Brace-balanced extraction — find the outermost { ... } block
+  try {
+    const firstBrace = text.indexOf('{');
+    _log('Stage 1: firstBrace at index:', firstBrace);
+    if (firstBrace !== -1) {
+      let depth = 0;
+      let inStr = false;
+      let esc = false;
+      let endIndex = -1;
+      for (let i = firstBrace; i < text.length; i++) {
+        const ch = text[i];
+        if (esc) { esc = false; continue; }
+        if (ch === '\\' && inStr) { esc = true; continue; }
+        if (ch === '"') { inStr = !inStr; continue; }
+        if (inStr) continue;
+        if (ch === '{') depth++;
+        else if (ch === '}') {
+          depth--;
+          if (depth === 0) { endIndex = i; break; }
+        }
+      }
+      if (endIndex !== -1) {
+        const candidate = text.substring(firstBrace, endIndex + 1);
+        _log('Stage 1: Balanced block length:', candidate.length);
+        const parsed = safeJSONParse(candidate);
+        if (parsed) {
+          _log('JSON extracted via brace-balanced parsing.');
+          return { success: true, data: parsed, raw: text };
+        }
+        _log('Stage 1: safeJSONParse failed on balanced block');
+      } else {
+        _log('Stage 1: Never reached depth 0');
       }
     }
-  } catch (e) {}
+  } catch (e) { _log('Stage 1 error:', e.message); }
 
-  // Stage 2: Last-Ditch substring capture
+  // Stage 2: Try first { to last } as a raw substring
   try {
     const firstBrace = text.indexOf('{');
     const lastBrace = text.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-      const candidate = text.substring(firstBrace, lastBrace + 1);
-      const parsed = JSON.parse(candidate);
-      console.log('YT-to-AI: JSON extracted via last-ditch substring.');
-      return { success: true, data: parsed, raw: text };
+    _log('Stage 2: firstBrace:', firstBrace, 'lastBrace:', lastBrace);
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      let candidate = text.substring(firstBrace, lastBrace + 1);
+      candidate = candidate.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      _log('Stage 2: candidate length:', candidate.length);
+      const parsed = safeJSONParse(candidate);
+      if (parsed) {
+        _log('JSON extracted via first/last brace substring.');
+        return { success: true, data: parsed, raw: text };
+      }
+      _log('Stage 2: safeJSONParse failed');
     }
-  } catch (e) {}
+  } catch (e) { _log('Stage 2 error:', e.message); }
 
-  console.warn('YT-to-AI: JSON extraction failed. Storing raw response.');
+  _warn('JSON extraction FAILED. Full text dumped below:');
+  console.warn('YT-to-AI: RAW TEXT START >>>');
+  console.warn(text);
+  console.warn('<<< RAW TEXT END');
   return { success: false, data: null, raw: text };
 }
 
@@ -248,8 +469,16 @@ async function monitorResponse(isFinal = false, channelName, sessionId) {
     };
 
     const currentTextRaw = lastMessage.innerText;
+    
+    // For JSON responses: prefer textContent from <code> blocks (avoids "Copy code" button text, extra whitespace)
+    let currentTextFromCode = '';
+    const codeBlock = lastMessage.querySelector('pre code');
+    if (codeBlock) {
+      currentTextFromCode = codeBlock.textContent.trim();
+    }
+    
     // If the text seems to have lost its headings but has structure, use the enhanced extractor
-    const currentText = (isFinal && !currentTextRaw.includes('#')) ? extractMarkdown(lastMessage) : currentTextRaw;
+    const currentText = (isFinal && !currentTextRaw.includes('#')) ? extractMarkdown(lastMessage) : (currentTextFromCode || currentTextRaw);
     
     const isGenerating = !!document.querySelector('button[aria-label="Stop generating"], button[aria-label="Stop streaming"], [data-testid="stop-button"]');
     
@@ -335,7 +564,7 @@ async function completeSession(synthesisText, sessionId) {
 }
 
 async function automateChatGPT(retryAttempt = 0) {
-  const data = await chrome.storage.local.get(['pendingAnalysis', 'imageData', 'transcript', 'step', 'totalSteps', 'sessionId', 'videoTitle', 'videoId', 'basePrompt', 'views', 'duration']);
+  const data = await chrome.storage.local.get(['pendingAnalysis', 'imageData', 'transcript', 'step', 'totalSteps', 'sessionId', 'videoTitle', 'videoId', 'views', 'duration']);
   if (!data.pendingAnalysis) {
     _warn('automateChatGPT called but no pendingAnalysis flag');
     return;
@@ -348,6 +577,7 @@ async function automateChatGPT(retryAttempt = 0) {
   const totalSteps = data.totalSteps || 1;
   updateProgressBar(step, totalSteps);
   _log(`Processing Video ${step}/${totalSteps}: "${data.videoTitle}" (retry=${retryAttempt})`);
+  _log(`Transcript: ${data.transcript ? data.transcript.length + ' chars' : 'MISSING'}, Image: ${data.imageData ? (data.imageData.length/1024).toFixed(0) + 'KB' : 'MISSING'}`);
 
   try { // Global try-catch — ANY error must signal STEP_RESULT fail
 
@@ -372,89 +602,78 @@ async function automateChatGPT(retryAttempt = 0) {
   promptInput.focus();
   _log('ChatGPT input field found, injecting assets...');
 
-  // 📦 Multi-Modal Package: Attach Thumbnail and Transcript
-  const dt = new DataTransfer();
-  
-  // 1. Attach Video Metadata & Transcript (Clean context — no prompt mixed in)
-  const metaText = `VIDEO TITLE: ${data.videoTitle || 'Unknown'}\nVIEWS: ${data.views || 'TBD'}\nLENGTH: ${data.duration || 'TBD'}\n\nTRANSCRIPT:\n${data.transcript || ''}`;
-  const metaFile = new File([new Blob([metaText], { type: 'text/plain' })], 'video_transcript.txt', { type: 'text/plain' });
-  dt.items.add(metaFile);
+  // 📦 Upload files via ChatGPT's file input (paste events don't work with React)
+  const filesToUpload = [];
 
-  // 2. Attach Thumbnail
+  // 1. Transcript file
+  const metaText = `VIDEO TITLE: ${data.videoTitle || 'Unknown'}\nVIEWS: ${data.views || 'TBD'}\nLENGTH: ${data.duration || 'TBD'}\n\nTRANSCRIPT:\n${data.transcript || ''}`;
+  filesToUpload.push(new File([metaText], 'video_transcript.txt', { type: 'text/plain' }));
+  _log(`Transcript file created (${metaText.length} chars)`);
+
+  // 2. Thumbnail image
   if (data.imageData && data.imageData.length > 100) {
     try {
-      console.log(`YT-to-AI: [Screenshot→ChatGPT] imageData present (${(data.imageData.length/1024).toFixed(1)}KB), converting to blob...`);
       let blob;
       if (data.imageData.startsWith('data:')) {
-        // Convert base64 data URL to blob directly (more reliable than fetch for large data URLs)
         const [header, b64data] = data.imageData.split(',');
-        const mimeMatch = header.match(/data:([^;]+)/);
-        const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+        const mime = (header.match(/data:([^;]+)/) || [])[1] || 'image/png';
         const byteString = atob(b64data);
         const ab = new ArrayBuffer(byteString.length);
         const ia = new Uint8Array(ab);
         for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
         blob = new Blob([ab], { type: mime });
       } else {
-        const resp = await fetch(data.imageData);
-        blob = await resp.blob();
+        blob = await (await fetch(data.imageData)).blob();
       }
-      console.log(`YT-to-AI: [Screenshot→ChatGPT] Blob created: ${(blob.size/1024).toFixed(1)}KB, type=${blob.type}`);
       if (blob.size > 2500) {
-        dt.items.add(new File([blob], 'video_frame.png', { type: blob.type || 'image/png' }));
-        console.log('YT-to-AI: [Screenshot→ChatGPT] ✓ Thumbnail attached to paste payload');
-      } else {
-        console.warn('YT-to-AI: [Screenshot→ChatGPT] Blob too small, skipping:', blob.size);
+        filesToUpload.push(new File([blob], 'video_thumbnail.png', { type: blob.type || 'image/png' }));
+        _log(`Thumbnail file created (${(blob.size/1024).toFixed(1)}KB)`);
       }
     } catch (e) {
-      console.error('YT-to-AI: [Screenshot→ChatGPT] Thumbnail attachment FAILED:', e.message, e.stack);
+      _err('Thumbnail blob failed:', e.message);
     }
-  } else {
-    console.warn(`YT-to-AI: [Screenshot→ChatGPT] No imageData available (length=${data.imageData?.length || 0})`);
+  }
+
+  // Upload via file input element (the only reliable way on ChatGPT)
+  let uploaded = false;
+  const fileInput = document.querySelector('input[type="file"]');
+  if (fileInput && filesToUpload.length > 0) {
+    const dt = new DataTransfer();
+    filesToUpload.forEach(f => dt.items.add(f));
+    fileInput.files = dt.files;
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    _log(`Uploaded ${filesToUpload.length} files via file input`);
+    uploaded = true;
+    await new Promise(r => setTimeout(r, 2500));
+  }
+
+  // Fallback: try paste if file input not found
+  if (!uploaded) {
+    _warn('No file input found, trying paste fallback...');
+    const dt = new DataTransfer();
+    filesToUpload.forEach(f => dt.items.add(f));
+    const pasteEvt = new ClipboardEvent('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(pasteEvt, 'clipboardData', { value: dt });
+    promptInput.dispatchEvent(pasteEvt);
+    await new Promise(r => setTimeout(r, 2200));
   }
 
   showToast(`Uploading video ${step}/${totalSteps}...`);
-  dispatchPaste(promptInput, dt);
-  await new Promise(r => setTimeout(r, 2200));
 
-  // Inject the ACTUAL analysis prompt (per-video-analysis.txt or user-selected prompt)
-  let analysisPrompt = data.basePrompt || '';
-  if (!analysisPrompt) {
-    // Fallback: fetch the dedicated per-video prompt from server
-    try {
-      const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
-      const promptsData = await promptsRes.json();
-      analysisPrompt = promptsData.find(p => p.id === 'per-video-analysis.txt')?.content || '';
-    } catch (e) { console.warn('YT-to-AI: Prompt fetch failed, using fallback.', e); }
-  }
+  // Always use the dedicated per-video-analysis prompt — never mix in other prompts
+  let analysisPrompt = '';
+  try {
+    const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
+    const promptsData = await promptsRes.json();
+    analysisPrompt = promptsData.find(p => p.id === 'per-video-analysis.txt')?.content || '';
+    _log(`Fetched per-video-analysis.txt (${analysisPrompt.length} chars)`);
+  } catch (e) { _warn('Prompt fetch failed:', e.message); }
   if (!analysisPrompt) {
     analysisPrompt = `[Step ${step}/${totalSteps}] Analyze this video completely. Return ONLY a single pure JSON object using the prescribed schema. No conversational filler. Just the JSON.`;
   }
-  document.execCommand('insertText', false, analysisPrompt);
-  _log(`Prompt injected (${analysisPrompt.length} chars). Waiting for send button...`);
 
-  setTimeout(() => {
-    const sendBtn = document.querySelector('button[data-testid="send-button"]') || 
-                    document.querySelector('button[aria-label="Send prompt"]') ||
-                    document.querySelector('form button[type="submit"]') ||
-                    document.querySelector('button.bg-black');
-    if (sendBtn && !sendBtn.disabled) {
-      sendBtn.click();
-      _log('Send button clicked. Starting monitor...');
-      monitorResponse();
-    } else {
-      _warn('Send button not found or disabled. Trying Enter key fallback...');
-      try {
-        const enter = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true });
-        promptInput.dispatchEvent(enter);
-        _log('Enter key dispatched. Starting monitor...');
-        monitorResponse();
-      } catch (e) {
-        _err('Send fallback failed:', e.message);
-        chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'fail' });
-      }
-    }
-  }, 1500);
+  await injectTextAndSend(promptInput, analysisPrompt);
+  monitorResponse();
 
   } catch (globalErr) {
     _err('FATAL in automateChatGPT:', globalErr.message, globalErr.stack);
@@ -527,27 +746,13 @@ async function generateMasterDossier(channelName, passedTotalSteps, passedSessio
   
   if (dt.items.length > 0) {
     showToast(`Uploading dossier (${dt.items.length} assets)...`);
-    dispatchPaste(promptInput, dt);
-    await new Promise(r => setTimeout(r, 2000));
+    const files = [];
+    for (let i = 0; i < dt.files.length; i++) files.push(dt.files[i]);
+    await uploadFilesToChatGPT(promptInput, files);
   }
 
-  document.execCommand('insertText', false, dossierPrompt);
-    setTimeout(() => {
-      const sendBtn = document.querySelector('button[data-testid="send-button"]') ||
-                      document.querySelector('button[aria-label="Send prompt"]') ||
-                      document.querySelector('form button[type="submit"]') ||
-                      document.querySelector('button.bg-black');
-      
-      if (sendBtn && !sendBtn.disabled) {
-        sendBtn.click();
-        monitorResponse(true, channelName, sid);
-      } else {
-        // Fallback to Enter key if button is disabled or missing
-        const enter = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true });
-        promptInput.dispatchEvent(enter);
-        monitorResponse(true, channelName, sid);
-      }
-    }, 2000); // 2s delay gives more time for large dossiers to be ready
+  await injectTextAndSend(promptInput, dossierPrompt);
+  monitorResponse(true, channelName, sid);
 }
 
 // Init
@@ -600,22 +805,13 @@ async function handleNicheBendTrigger(sessionId) {
 
     if (dt.items.length > 0) {
       showToast(`Uploading evidence (${dt.items.length} assets)...`);
-      dispatchPaste(promptInput, dt);
-      await new Promise(r => setTimeout(r, 2200)); // Wait for upload
+      const files = [];
+      for (let i = 0; i < dt.files.length; i++) files.push(dt.files[i]);
+      await uploadFilesToChatGPT(promptInput, files);
     }
 
-    document.execCommand('insertText', false, benderPrompt);
-    
-    setTimeout(() => {
-      const sendBtn = document.querySelector('button[data-testid="send-button"]') || 
-                      document.querySelector('button[aria-label="Send prompt"]') ||
-                      document.querySelector('form button[type="submit"]') ||
-                      document.querySelector('button.bg-black');
-      if (sendBtn && !sendBtn.disabled) {
-        sendBtn.click();
-        monitorNicheBendResponse(sessionId);
-      }
-    }, 1500);
+    await injectTextAndSend(promptInput, benderPrompt);
+    monitorNicheBendResponse(sessionId);
 
   } catch (err) {
     console.error('Niche Bender failed:', err);
@@ -705,10 +901,9 @@ async function handleSceneAnalyzerTrigger(sessionId) {
         dt.items.add(file);
     }
 
-    dispatchPaste(el, dt);
-    
-    // Let DOM update the image preview thumbnails
-    await new Promise(r => setTimeout(r, 2000));
+    const sceneFiles = [];
+    for (let i = 0; i < dt.files.length; i++) sceneFiles.push(dt.files[i]);
+    await uploadFilesToChatGPT(el, sceneFiles);
 
     // Fetch Prompt
     const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
@@ -716,18 +911,9 @@ async function handleSceneAnalyzerTrigger(sessionId) {
     const scenePrompt = prompts.find(p => p.id === 'scene-analyzer.txt');
     const promptText = scenePrompt ? scenePrompt.content : "Analyze these images and tell me the composition.";
 
-    document.execCommand('insertText', false, promptText);
-    
-    setTimeout(() => {
-      const sendBtn = document.querySelector('button[data-testid="send-button"]') || 
-                      document.querySelector('button[aria-label="Send prompt"]') ||
-                      document.querySelector('button.bg-black');
-      if (sendBtn && !sendBtn.disabled) {
-        showToast('Running Multi-Modal Analysis...');
-        sendBtn.click();
-        monitorSceneAnalyzerResponse(sessionId);
-      }
-    }, 1500);
+    await injectTextAndSend(el, promptText);
+    showToast('Running Multi-Modal Analysis...');
+    monitorSceneAnalyzerResponse(sessionId);
 
   } catch (err) {
     console.error('Scene Analyzer failed:', err);
