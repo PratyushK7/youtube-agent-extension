@@ -20,13 +20,17 @@ function showToast(message) {
   setTimeout(() => toast.remove(), 5000);
 }
 
-function waitForElm(selector) {
-  return new Promise(resolve => {
+function waitForElm(selector, timeout = 15000) {
+  return new Promise((resolve, reject) => {
     const directHit = document.querySelector(selector);
     if (directHit) return resolve(directHit);
+    const timer = setTimeout(() => {
+      observer.disconnect();
+      reject(new Error(`waitForElm timed out after ${timeout}ms for: ${selector}`));
+    }, timeout);
     const observer = new MutationObserver(() => {
       const hit = document.querySelector(selector);
-      if (hit) { observer.disconnect(); resolve(hit); }
+      if (hit) { clearTimeout(timer); observer.disconnect(); resolve(hit); }
     });
     observer.observe(document.body, { childList: true, subtree: true });
   });
@@ -39,6 +43,7 @@ const RESPONSE_SELECTOR = 'message-content, div.model-response-text';
 const STOP_SELECTOR = 'button[aria-label="Stop response"], .generating-indicator';
 
 async function handleNanoBananaSequence(sessionId) {
+  console.log('YT-to-AI: [Gemini] Starting scene analysis for session:', sessionId);
   showToast('Initializing Nano Banana (Vision)...');
   
   try {
@@ -65,16 +70,23 @@ async function handleNanoBananaSequence(sessionId) {
         dt.items.add(file);
     }
 
-    const pasteEvent = new ClipboardEvent('paste', {
-      clipboardData: dt,
-      bubbles: true,
-      cancelable: true
-    });
+    // Reliable paste — Chrome ignores clipboardData in synthetic ClipboardEvent constructor
+    const pasteEvent = new ClipboardEvent('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(pasteEvent, 'clipboardData', { value: dt, writable: false });
     el.dispatchEvent(pasteEvent);
     
-    // 🛡️ Give Gemini plenty of time to process 5 high-res frames
+    // 🛡️ Adaptive wait for Gemini to process frames (up to 15s)
     showToast('Encoding Visual Data (Processing Frames)...');
-    await new Promise(r => setTimeout(r, 7000));
+    let encodingWait = 0;
+    while (encodingWait < 15000) {
+      await new Promise(r => setTimeout(r, 2000));
+      encodingWait += 2000;
+      // Check if Gemini has processed the images (thumbnails appear)
+      const previews = document.querySelectorAll('img[src*="blob:"], .image-preview, .thumbnail-container img, [data-test-id="image-preview"]');
+      if (previews.length >= sessData.session.sceneFrames.length) break;
+    }
+    // Extra buffer for rendering
+    await new Promise(r => setTimeout(r, 1000));
 
     // Fetch Prompt
     const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
@@ -104,17 +116,29 @@ async function handleNanoBananaSequence(sessionId) {
 }
 
 async function monitorNanoBananaResponse(sessionId) {
+  console.log('YT-to-AI: [Gemini] Monitor started for session:', sessionId);
   let lastText = '';
   let stabilityCount = 0;
   let tickCount = 0;
   let handled = false;
   const MAX_TICKS = 150;
+  let emptyTicks = 0;
   
   const interval = setInterval(async () => {
     if (handled) return;
     tickCount++;
+    if (tickCount % 15 === 0) console.log(`YT-to-AI: [Gemini] Monitor tick ${tickCount}/${MAX_TICKS}`);
     const messages = document.querySelectorAll(RESPONSE_SELECTOR);
-    if (messages.length === 0) return;
+    if (messages.length === 0) {
+      emptyTicks++;
+      if (emptyTicks > 30) {
+        handled = true;
+        clearInterval(interval);
+        console.error('YT-to-AI: [Gemini] No response found after 60s. Aborting.');
+        showToast('Gemini did not respond. Try again manually.');
+      }
+      return;
+    }
     
     // ─── Enhanced Markdown Capture ──────────────────────────
     const lastMessage = messages[messages.length - 1];

@@ -19,6 +19,34 @@ const SERVER = 'http://127.0.0.1:3005';
 // Helper for delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Logging helper — all background logs use this prefix
+const log = (msg, ...args) => console.log(`YT-to-AI: [BG] ${msg}`, ...args);
+const logWarn = (msg, ...args) => console.warn(`YT-to-AI: [BG] ${msg}`, ...args);
+const logErr = (msg, ...args) => console.error(`YT-to-AI: [BG] ${msg}`, ...args);
+
+// ─── Step Watchdog Timer ────────────────────────────────────
+// If no STEP_RESULT arrives within 5 minutes after sending to ChatGPT,
+// auto-fail the step so the flow doesn't get permanently stuck.
+let stepWatchdogTimer = null;
+const STEP_WATCHDOG_MS = 5 * 60 * 1000; // 5 minutes
+
+function startStepWatchdog() {
+  clearStepWatchdog();
+  log(`Watchdog started (${STEP_WATCHDOG_MS/1000}s timeout)`);
+  stepWatchdogTimer = setTimeout(() => {
+    logErr('WATCHDOG FIRED — no STEP_RESULT received in time. Auto-failing step.');
+    stepWatchdogTimer = null;
+    handleStepResult({ status: 'fail' });
+  }, STEP_WATCHDOG_MS);
+}
+
+function clearStepWatchdog() {
+  if (stepWatchdogTimer) {
+    clearTimeout(stepWatchdogTimer);
+    stepWatchdogTimer = null;
+  }
+}
+
 // ─── State Persistence (MV3 survival) ──────────────────────
 async function saveState() {
   await chrome.storage.local.set({
@@ -37,10 +65,14 @@ async function saveState() {
 }
 
 async function restoreState() {
-  const data = await chrome.storage.local.get('_bgState');
-  if (data._bgState && data._bgState.queue && data._bgState.queue.length > 0) {
-    Object.assign(state, data._bgState);
-    console.log(`YT-to-AI: State restored — step ${state.currentIndex + 1}/${state.queue.length}, session=${state.sessionId}`);
+  try {
+    const data = await chrome.storage.local.get('_bgState');
+    if (data._bgState && data._bgState.queue && data._bgState.queue.length > 0) {
+      Object.assign(state, data._bgState);
+      log(`State restored — step ${state.currentIndex + 1}/${state.queue.length}, session=${state.sessionId}`);
+    }
+  } catch (e) {
+    logErr('Failed to restore state:', e.message);
   }
 }
 
@@ -118,13 +150,13 @@ function routeMessage(request, sender, sendResponse) {
     return true;
   }
 
-  if (request.action === 'SAVE_NICHE_BENDS') {
-    handleSaveNicheBends(request, sendResponse);
+  if (request.action === 'RESUME_SEQUENTIAL') {
+    handleResumeSequential(request, sender, sendResponse);
     return true;
   }
 
-  if (request.action === 'RESUME_SEQUENTIAL') {
-    handleResumeSequential(request, sender, sendResponse);
+  if (request.action === 'RESET_SESSION') {
+    handleResetSession(sendResponse);
     return true;
   }
 
@@ -140,42 +172,54 @@ function routeMessage(request, sender, sendResponse) {
 
 async function handleDashboardTriggerSynthesis(request, sendResponse) {
   const { sessionId, channelName, totalVideos } = request;
+  log(`Dashboard synthesis trigger: session=${sessionId}, channel=${channelName}`);
   state.sessionId = sessionId;
   state.channelName = channelName;
   state.isSequential = false;
+
+  // Helper to safely send message with retry
+  const safeSendSynthesis = async (tabId, retries = 2) => {
+    for (let i = 0; i <= retries; i++) {
+      try {
+        await chrome.tabs.sendMessage(tabId, {
+          action: 'FINAL_SYNTHESIS',
+          channelName,
+          sessionId,
+          totalSteps: totalVideos
+        });
+        log('FINAL_SYNTHESIS sent to tab', tabId);
+        return;
+      } catch (e) {
+        logWarn(`FINAL_SYNTHESIS send attempt ${i+1} failed:`, e.message);
+        if (i < retries) await delay(2000);
+      }
+    }
+    logErr('All FINAL_SYNTHESIS send attempts failed — reloading tab');
+    try { await chrome.tabs.reload(tabId); } catch (e) {}
+  };
 
   // Create/Focus ChatGPT tab
   chrome.tabs.query({ url: '*://chatgpt.com/*' }, (tabs) => {
     if (tabs.length > 0) {
       state.chatTabId = tabs[0].id;
       chrome.tabs.update(state.chatTabId, { active: true }, () => {
-        setTimeout(() => {
-          chrome.tabs.sendMessage(state.chatTabId, {
-            action: 'FINAL_SYNTHESIS',
-            channelName,
-            sessionId,
-            totalSteps: totalVideos
-          });
-        }, 1500);
+        setTimeout(() => safeSendSynthesis(state.chatTabId), 1500);
       });
     } else {
       chrome.tabs.create({ url: 'https://chatgpt.com/' }, (tab) => {
         state.chatTabId = tab.id;
-        // Wait for page load
         const listener = (tabId, changeInfo) => {
           if (tabId === tab.id && changeInfo.status === 'complete') {
             chrome.tabs.onUpdated.removeListener(listener);
-            setTimeout(() => {
-              chrome.tabs.sendMessage(tab.id, {
-                action: 'FINAL_SYNTHESIS',
-                channelName,
-                sessionId,
-                totalSteps: totalVideos
-              });
-            }, 3000);
+            setTimeout(() => safeSendSynthesis(tab.id), 3000);
           }
         };
         chrome.tabs.onUpdated.addListener(listener);
+        // Timeout safety: if tab never fires 'complete', try anyway after 10s
+        setTimeout(() => {
+          chrome.tabs.onUpdated.removeListener(listener);
+          safeSendSynthesis(tab.id);
+        }, 10000);
       });
     }
   });
@@ -184,6 +228,7 @@ async function handleDashboardTriggerSynthesis(request, sendResponse) {
 }
 
 async function handleStartSequential(request, sender) {
+  log(`Starting sequential: channel=${request.channelName}, videos=${request.queue.length}`);
   // Create a server-side session first
   let sessionId = null;
   try {
@@ -198,8 +243,9 @@ async function handleStartSequential(request, sender) {
     });
     const data = await res.json();
     if (data.success) sessionId = data.session.id;
+    log('Session created:', sessionId);
   } catch (e) {
-    console.warn('YT-to-AI: Could not create server session, continuing offline.', e);
+    logWarn('Could not create server session, continuing offline.', e.message);
   }
 
   state = {
@@ -231,7 +277,7 @@ async function handleResumeSequential(request, sender, sendResponse) {
     sendResponse({ success: false, error: 'No active sequence to resume.' });
     return;
   }
-  console.log(`YT-to-AI: Resuming sequence from step ${state.currentIndex + 1}/${state.queue.length}`);
+  log(`Resuming sequence from step ${state.currentIndex + 1}/${state.queue.length}`);
   
   // Create a fresh YouTube tab to kickstart the monitor
   chrome.tabs.create({ url: `https://www.youtube.com/watch?v=${state.queue[state.currentIndex]}` }, (tab) => {
@@ -241,31 +287,66 @@ async function handleResumeSequential(request, sender, sendResponse) {
   });
 }
 
+async function handleResetSession(sendResponse) {
+  log('RESET_SESSION: Clearing all state...');
+  clearStepWatchdog();
+  
+  state = {
+    queue: [],
+    currentIndex: -1,
+    retryCount: 0,
+    ytTabId: null,
+    chatTabId: null,
+    channelName: '',
+    isSequential: false,
+    basePrompt: '',
+    sessionId: null
+  };
+  
+  await chrome.storage.local.remove([
+    '_bgState', 'isSequential', 'currentIndex', 'totalSteps', 
+    'channelName', 'sessionId', 'pendingAnalysis', 'imageData',
+    'transcript', 'videoTitle', 'videoId', 'step', 'views', 
+    'duration', 'basePrompt'
+  ]);
+  
+  log('RESET_SESSION: State cleared successfully.');
+  sendResponse({ success: true });
+}
+
 async function handleVideoReady(request, sender) {
   try {
     const videoId = new URLSearchParams(new URL(sender.tab.url).search).get('v');
     
-    // 📸 ARTICLE-BASED RESILIENT HARVESTER
-    const fetchBestThumbnail = async (id) => {
+    // 📸 Thumbnail Harvester — use player-provided URL first, then fallback to img.youtube.com
+    const fetchBestThumbnail = async (id, playerUrl) => {
       const urls = [
+        playerUrl,
         `https://img.youtube.com/vi/${id}/maxresdefault.jpg`,
         `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
         `https://img.youtube.com/vi/${id}/0.jpg`
-      ];
+      ].filter(Boolean);
       for (const url of urls) {
         try {
           const res = await fetch(url);
           if (res.ok) {
             const blob = await res.blob();
             // Reject gray placeholders (~1.1kb). Real thumbnails are usually > 5kb.
-            if (blob.size > 2500) return blob;
+            if (blob.size > 2500) {
+              console.log(`YT-to-AI: [Screenshot] Fetched thumbnail from ${url} (${(blob.size/1024).toFixed(1)}KB)`);
+              return blob;
+            } else {
+              console.warn(`YT-to-AI: [Screenshot] Rejected placeholder from ${url} (${blob.size}B)`);
+            }
           }
-        } catch (e) {}
+        } catch (e) {
+          console.warn(`YT-to-AI: [Screenshot] Failed to fetch ${url}:`, e.message);
+        }
       }
       return null;
     };
 
-    const thumbnailBlob = await fetchBestThumbnail(videoId);
+    const thumbnailBlob = await fetchBestThumbnail(videoId, request.thumbnailUrl);
     let finalImageData = '';
 
     if (thumbnailBlob) {
@@ -274,9 +355,17 @@ async function handleVideoReady(request, sender) {
         reader.onloadend = () => resolve(reader.result);
         reader.readAsDataURL(thumbnailBlob);
       });
+      console.log(`YT-to-AI: [Screenshot] Converted to data URL (${(finalImageData.length/1024).toFixed(1)}KB)`);
     } else {
       // Fallback to snapshot if URLs are somehow blocked
-      finalImageData = await chrome.tabs.captureVisibleTab(sender.tab.windowId, { format: 'jpeg', quality: 90 });
+      console.warn('YT-to-AI: [Screenshot] All thumbnail URLs failed, falling back to tab capture');
+      try {
+        finalImageData = await chrome.tabs.captureVisibleTab(sender.tab.windowId, { format: 'jpeg', quality: 90 });
+        console.log(`YT-to-AI: [Screenshot] Tab capture success (${(finalImageData.length/1024).toFixed(1)}KB)`);
+      } catch (captureErr) {
+        console.error('YT-to-AI: [Screenshot] Tab capture also failed:', captureErr.message);
+        finalImageData = '';
+      }
     }
     
     const payload = {
@@ -291,18 +380,14 @@ async function handleVideoReady(request, sender) {
       imageData: finalImageData,
       sessionId: state.sessionId,
       videoId: videoId,
-      prompt: `[SEQUENTIAL ANALYSIS STEP ${state.currentIndex + 1}/${state.queue.length}]\n\n` + 
-              `VIDEO TITLE: ${request.videoTitle}\n` +
-              `VIEWS: ${request.views || 'TBD'}\n` +
-              `LENGTH: ${request.duration || 'TBD'}\n` +
-              `TRANSCRIPT:\n${request.transcript}\n\n` +
-              `INSTRUCTION: Analyze this video completely. Return ONLY a single pure JSON object. No conversational filler, no introductions, no closing remarks. Just the JSON.\n\n` +
-              `JSON Fields: videoNumber, title, hookType, hookText, hookFramework, openingStructure, scriptStructure, storytellingFramework, rehooksUsed, retentionPattern, ctaPlacement, keyTakeaways, thumbnailDescription, titleStrategy, thumbnailStrategy.\n\n` +
-              `---\n\n${state.basePrompt}`
+      basePrompt: state.basePrompt || ''
     };
 
     // Write payload to storage BEFORE opening/triggering ChatGPT tab
     await chrome.storage.local.set(payload);
+
+    // Start watchdog — auto-fail if ChatGPT never responds
+    startStepWatchdog();
 
     if (!state.chatTabId) {
       const tab = await chrome.tabs.create({ url: 'https://chatgpt.com/' });
@@ -323,7 +408,25 @@ async function handleVideoReady(request, sender) {
       await chrome.tabs.update(state.chatTabId, { active: true });
       // Small delay to ensure tab is focused before sending message
       await delay(500);
-      chrome.tabs.sendMessage(state.chatTabId, { action: 'TRIGGER_STEP' });
+      
+      // Send TRIGGER_STEP with error recovery — if content script isn't loaded, reload the tab
+      try {
+        await chrome.tabs.sendMessage(state.chatTabId, { action: 'TRIGGER_STEP' });
+        console.log('YT-to-AI: TRIGGER_STEP sent to ChatGPT tab', state.chatTabId);
+      } catch (msgErr) {
+        console.warn('YT-to-AI: Content script not responding on ChatGPT tab, reloading tab...', msgErr.message);
+        // Content script is dead/not injected — reload the tab so it re-injects and picks up pendingAnalysis from storage
+        try {
+          await chrome.tabs.reload(state.chatTabId);
+          console.log('YT-to-AI: ChatGPT tab reloaded, content script will auto-trigger via pendingAnalysis flag');
+        } catch (reloadErr) {
+          // Tab is truly gone — create a new one
+          console.warn('YT-to-AI: Reload failed, creating new ChatGPT tab');
+          const tab = await chrome.tabs.create({ url: 'https://chatgpt.com/' });
+          state.chatTabId = tab.id;
+          await saveState();
+        }
+      }
     }
   } catch (err) {
     console.error('YT-to-AI: Video Ready flow failed', err);
@@ -333,6 +436,8 @@ async function handleVideoReady(request, sender) {
 }
 
 async function handleStepResult(request) {
+  clearStepWatchdog();
+  log(`STEP_RESULT received: ${request.status} (step ${state.currentIndex + 1}/${state.queue.length})`);
   if (request.status === 'success') {
     state.retryCount = 0;
     state.currentIndex++;
@@ -367,9 +472,20 @@ async function handleStepResult(request) {
     if (state.retryCount < 3) {
       state.retryCount++;
       await saveState();
-      console.log(`YT-to-AI: Retrying step ${state.currentIndex + 1} (attempt ${state.retryCount}/3)`);
+      log(`Retrying step ${state.currentIndex + 1} (attempt ${state.retryCount}/3)`);
       await delay(2000);
-      chrome.tabs.sendMessage(state.chatTabId, { action: 'TRIGGER_STEP', retryAttempt: state.retryCount });
+      try {
+        await chrome.tabs.sendMessage(state.chatTabId, { action: 'TRIGGER_STEP', retryAttempt: state.retryCount });
+      } catch (msgErr) {
+        logWarn('Retry sendMessage failed, reloading ChatGPT tab:', msgErr.message);
+        try {
+          await chrome.tabs.reload(state.chatTabId);
+        } catch (e) {
+          const tab = await chrome.tabs.create({ url: 'https://chatgpt.com/' });
+          state.chatTabId = tab.id;
+          await saveState();
+        }
+      }
     } else {
       // Skip this video after max retries
       console.warn(`YT-to-AI: Skipping video ${state.currentIndex + 1} after 3 failed retries.`);

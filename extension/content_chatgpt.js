@@ -3,28 +3,41 @@
 const style = document.createElement('style');
 style.textContent = `
   #yt-ai-progress-container {
-    position: fixed; top: 0; left: 0; width: 100%; height: 50px;
-    background: rgba(13, 13, 18, 0.95); backdrop-filter: blur(10px);
-    border-bottom: 2px solid rgba(124, 131, 255, 0.3);
+    position: fixed; top: 0; left: 0; width: 100%; height: 44px;
+    background: rgba(15, 17, 23, 0.95); backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
     z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center;
     font-family: 'Inter', sans-serif; transition: all 0.3s ease;
   }
   .yt-ai-progress-bar {
-    width: 60%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin-bottom: 5px;
+    width: 60%; height: 4px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden; margin-bottom: 5px;
   }
   #yt-ai-progress-fill {
-    width: 0%; height: 100%; background: linear-gradient(90deg, #7c83ff, #34d399);
-    box-shadow: 0 0 15px rgba(124, 131, 255, 0.5); transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%; height: 100%; background: #6366f1;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  #yt-ai-progress-text { color: #fff; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
+  #yt-ai-progress-text { color: #94a3b8; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
   .yt-ai-toast {
-    position: fixed; bottom: 30px; right: 30px; background: #059669; color: white;
-    padding: 12px 24px; border-radius: 12px; font-weight: 600; z-index: 10001;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5); animation: toastIn 0.4s ease-out;
+    position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: #e2e8f0;
+    padding: 10px 20px; border-radius: 8px; font-weight: 500; font-size: 13px; z-index: 10001;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); animation: toastIn 0.3s ease-out;
   }
-  @keyframes toastIn { from { transform: translateY(100%) scale(0.9); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+  @keyframes toastIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 `;
 document.head.appendChild(style);
+
+// ─── Logging Helpers ────────────────────────────────────────
+const _log = (msg, ...a) => console.log(`YT-to-AI: [ChatGPT] ${msg}`, ...a);
+const _warn = (msg, ...a) => console.warn(`YT-to-AI: [ChatGPT] ${msg}`, ...a);
+const _err = (msg, ...a) => console.error(`YT-to-AI: [ChatGPT] ${msg}`, ...a);
+
+// Reliable paste helper — Chrome ignores clipboardData in synthetic ClipboardEvent constructor
+function dispatchPaste(element, dataTransfer) {
+  const event = new ClipboardEvent('paste', { bubbles: true, cancelable: true });
+  Object.defineProperty(event, 'clipboardData', { value: dataTransfer, writable: false });
+  element.dispatchEvent(event);
+}
 
 // --- UI Helpers ---
 function showToast(message) {
@@ -55,6 +68,7 @@ function updateProgressBar(current, total) {
 
 // --- Logic ---
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  _log(`Message received: ${request.action}`);
   if (request.action === 'TRIGGER_STEP') {
     automateChatGPT(request.retryAttempt || 0);
   }
@@ -151,33 +165,56 @@ async function saveVideoToSession(reportText) {
   };
 
   if (sessionId) {
-    await new Promise(resolve => {
-      chrome.runtime.sendMessage({
-        action: 'SAVE_VIDEO_TO_SESSION',
-        sessionId,
-        videoData,
-        rawResponse: extraction.raw,
-        screenshot: storageData.imageData || ''
-      }, resolve);
-    });
+    try {
+      await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({
+          action: 'SAVE_VIDEO_TO_SESSION',
+          sessionId,
+          videoData,
+          rawResponse: extraction.raw,
+          screenshot: storageData.imageData || ''
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            _warn('sendMessage failed (background may have restarted):', chrome.runtime.lastError.message);
+            // Retry once after a short delay — service worker may need to wake up
+            setTimeout(() => {
+              chrome.runtime.sendMessage({
+                action: 'SAVE_VIDEO_TO_SESSION',
+                sessionId,
+                videoData,
+                rawResponse: extraction.raw,
+                screenshot: storageData.imageData || ''
+              }, resolve);
+            }, 1000);
+          } else {
+            resolve(response);
+          }
+        });
+      });
+    } catch (e) {
+      _err('Failed to save video to session:', e.message);
+    }
   }
 
   showToast(`Video ${storageData.step || '?'} captured${extraction.success ? ' ✓ JSON' : ' ⚠ Raw text'}`);
 }
 
 async function monitorResponse(isFinal = false, channelName, sessionId) {
-  console.log('YT-to-AI: Heartbeat Monitor Active...');
+  _log(`Monitor started (isFinal=${isFinal})`);
   let lastText = '';
   let stabilityCount = 0;
   let tickCount = 0;
-  let handled = false; // Guard against double-fire
+  let handled = false;
   const MAX_TICKS = 120; // 4 minutes max (120 * 2s)
+  // Track initial message count to avoid reading stale messages from previous conversations
+  const initialMsgCount = document.querySelectorAll('div[data-message-author-role="assistant"]').length;
   
   const interval = setInterval(() => {
-    if (handled) return; // Already resolved — prevent double-fire
+    if (handled) return;
     tickCount++;
+    if (tickCount % 15 === 0) _log(`Monitor tick ${tickCount}/${MAX_TICKS}, stability=${stabilityCount}`);
     const messages = document.querySelectorAll('div[data-message-author-role="assistant"]');
-    if (messages.length === 0) {
+    if (messages.length <= initialMsgCount) {
       if (tickCount > MAX_TICKS) {
         handled = true;
         console.error('YT-to-AI: Monitor timed out waiting for response.');
@@ -224,7 +261,7 @@ async function monitorResponse(isFinal = false, channelName, sessionId) {
 
     if (stabilityCount >= 3 && !isGenerating) {
       handled = true;
-      console.log('✅ YT-to-AI: Stability Reached.');
+      _log(`Stability reached at tick ${tickCount}. Response length: ${currentText.length}`);
       clearInterval(interval);
       
       if (isFinal) {
@@ -244,7 +281,7 @@ async function monitorResponse(isFinal = false, channelName, sessionId) {
     // Timeout failsafe
     if (tickCount > MAX_TICKS) {
       handled = true;
-      console.warn('YT-to-AI: Monitor timed out, treating as success.');
+      _warn(`Monitor timed out at tick ${tickCount}. Saving what we have (${(currentText||lastText).length} chars).`);
       clearInterval(interval);
       
       const finalText = currentText || lastText;
@@ -271,19 +308,38 @@ async function completeSession(synthesisText, sessionId) {
     return;
   }
   
-  await new Promise(resolve => {
-    chrome.runtime.sendMessage({
-      action: 'COMPLETE_SESSION',
-      sessionId: sid,
-      synthesis: synthesisText,
-      screenshot: storageData.imageData || ''
-    }, resolve);
-  });
+  try {
+    await new Promise((resolve) => {
+      chrome.runtime.sendMessage({
+        action: 'COMPLETE_SESSION',
+        sessionId: sid,
+        synthesis: synthesisText,
+        screenshot: storageData.imageData || ''
+      }, () => {
+        if (chrome.runtime.lastError) {
+          _warn('completeSession sendMessage failed, retrying...', chrome.runtime.lastError.message);
+          setTimeout(() => {
+            chrome.runtime.sendMessage({
+              action: 'COMPLETE_SESSION',
+              sessionId: sid,
+              synthesis: synthesisText,
+              screenshot: storageData.imageData || ''
+            }, resolve);
+          }, 1000);
+        } else { resolve(); }
+      });
+    });
+  } catch (e) {
+    _err('Failed to complete session:', e.message);
+  }
 }
 
 async function automateChatGPT(retryAttempt = 0) {
-  const data = await chrome.storage.local.get(['pendingAnalysis', 'imageData', 'prompt', 'step', 'totalSteps', 'sessionId', 'videoTitle', 'videoId']);
-  if (!data.pendingAnalysis) return;
+  const data = await chrome.storage.local.get(['pendingAnalysis', 'imageData', 'transcript', 'step', 'totalSteps', 'sessionId', 'videoTitle', 'videoId', 'basePrompt', 'views', 'duration']);
+  if (!data.pendingAnalysis) {
+    _warn('automateChatGPT called but no pendingAnalysis flag');
+    return;
+  }
 
   // 🛡️ CRITICAL: Clear pending flag immediately to prevent loops
   await chrome.storage.local.remove('pendingAnalysis');
@@ -291,7 +347,9 @@ async function automateChatGPT(retryAttempt = 0) {
   const step = data.step || 1;
   const totalSteps = data.totalSteps || 1;
   updateProgressBar(step, totalSteps);
-  console.log(`YT-to-AI: Processing Video ${step}/${totalSteps}`);
+  _log(`Processing Video ${step}/${totalSteps}: "${data.videoTitle}" (retry=${retryAttempt})`);
+
+  try { // Global try-catch — ANY error must signal STEP_RESULT fail
 
   const waitForInput = () => new Promise((resolve, reject) => {
     let elapsed = 0;
@@ -307,38 +365,73 @@ async function automateChatGPT(retryAttempt = 0) {
   try {
     promptInput = await waitForInput();
   } catch (e) {
-    console.error('YT-to-AI:', e.message);
+    _err('ChatGPT input not found:', e.message);
     chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'fail' });
     return;
   }
   promptInput.focus();
+  _log('ChatGPT input field found, injecting assets...');
 
   // 📦 Multi-Modal Package: Attach Thumbnail and Transcript
   const dt = new DataTransfer();
   
-  // 1. Attach Video Metadata & Transcript (Clean context)
-  const metaText = `VIDEO TITLE: ${data.videoTitle || 'Unknown'}\n\nTRANSCRIPT:\n${data.prompt || ''}`;
+  // 1. Attach Video Metadata & Transcript (Clean context — no prompt mixed in)
+  const metaText = `VIDEO TITLE: ${data.videoTitle || 'Unknown'}\nVIEWS: ${data.views || 'TBD'}\nLENGTH: ${data.duration || 'TBD'}\n\nTRANSCRIPT:\n${data.transcript || ''}`;
   const metaFile = new File([new Blob([metaText], { type: 'text/plain' })], 'video_transcript.txt', { type: 'text/plain' });
   dt.items.add(metaFile);
 
   // 2. Attach Thumbnail
   if (data.imageData && data.imageData.length > 100) {
     try {
-      const resp = await fetch(data.imageData);
-      const blob = await resp.blob();
-      if (blob.size > 2500) {
-        dt.items.add(new File([blob], 'video_frame.png', { type: blob.type }));
+      console.log(`YT-to-AI: [Screenshot→ChatGPT] imageData present (${(data.imageData.length/1024).toFixed(1)}KB), converting to blob...`);
+      let blob;
+      if (data.imageData.startsWith('data:')) {
+        // Convert base64 data URL to blob directly (more reliable than fetch for large data URLs)
+        const [header, b64data] = data.imageData.split(',');
+        const mimeMatch = header.match(/data:([^;]+)/);
+        const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+        const byteString = atob(b64data);
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+        blob = new Blob([ab], { type: mime });
+      } else {
+        const resp = await fetch(data.imageData);
+        blob = await resp.blob();
       }
-    } catch (e) { console.warn('YT-to-AI: Thumbnail attachment failed.', e); }
+      console.log(`YT-to-AI: [Screenshot→ChatGPT] Blob created: ${(blob.size/1024).toFixed(1)}KB, type=${blob.type}`);
+      if (blob.size > 2500) {
+        dt.items.add(new File([blob], 'video_frame.png', { type: blob.type || 'image/png' }));
+        console.log('YT-to-AI: [Screenshot→ChatGPT] ✓ Thumbnail attached to paste payload');
+      } else {
+        console.warn('YT-to-AI: [Screenshot→ChatGPT] Blob too small, skipping:', blob.size);
+      }
+    } catch (e) {
+      console.error('YT-to-AI: [Screenshot→ChatGPT] Thumbnail attachment FAILED:', e.message, e.stack);
+    }
+  } else {
+    console.warn(`YT-to-AI: [Screenshot→ChatGPT] No imageData available (length=${data.imageData?.length || 0})`);
   }
 
-  showToast(`Injecting Video Assets (${data.videoTitle || 'Step ' + step})...`);
-  promptInput.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, clipboardData: dt }));
+  showToast(`Uploading video ${step}/${totalSteps}...`);
+  dispatchPaste(promptInput, dt);
   await new Promise(r => setTimeout(r, 2200));
 
-  // Inject Pure Instruction (Zero-Noise)
-  const instructionPrompt = `[Step ${step}/${totalSteps}] Analyze this video completely. Return ONLY a single pure JSON object using the prescribed schema. No conversational filler. Just the JSON.`;
-  document.execCommand('insertText', false, instructionPrompt);
+  // Inject the ACTUAL analysis prompt (per-video-analysis.txt or user-selected prompt)
+  let analysisPrompt = data.basePrompt || '';
+  if (!analysisPrompt) {
+    // Fallback: fetch the dedicated per-video prompt from server
+    try {
+      const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
+      const promptsData = await promptsRes.json();
+      analysisPrompt = promptsData.find(p => p.id === 'per-video-analysis.txt')?.content || '';
+    } catch (e) { console.warn('YT-to-AI: Prompt fetch failed, using fallback.', e); }
+  }
+  if (!analysisPrompt) {
+    analysisPrompt = `[Step ${step}/${totalSteps}] Analyze this video completely. Return ONLY a single pure JSON object using the prescribed schema. No conversational filler. Just the JSON.`;
+  }
+  document.execCommand('insertText', false, analysisPrompt);
+  _log(`Prompt injected (${analysisPrompt.length} chars). Waiting for send button...`);
 
   setTimeout(() => {
     const sendBtn = document.querySelector('button[data-testid="send-button"]') || 
@@ -347,13 +440,30 @@ async function automateChatGPT(retryAttempt = 0) {
                     document.querySelector('button.bg-black');
     if (sendBtn && !sendBtn.disabled) {
       sendBtn.click();
+      _log('Send button clicked. Starting monitor...');
       monitorResponse();
+    } else {
+      _warn('Send button not found or disabled. Trying Enter key fallback...');
+      try {
+        const enter = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true });
+        promptInput.dispatchEvent(enter);
+        _log('Enter key dispatched. Starting monitor...');
+        monitorResponse();
+      } catch (e) {
+        _err('Send fallback failed:', e.message);
+        chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'fail' });
+      }
     }
   }, 1500);
+
+  } catch (globalErr) {
+    _err('FATAL in automateChatGPT:', globalErr.message, globalErr.stack);
+    chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'fail' });
+  }
 }
 
 async function generateMasterDossier(channelName, passedTotalSteps, passedSessionId) {
-  console.log('YT-to-AI: Initiating Final Synthesis Phase...');
+  _log(`Initiating Final Synthesis: channel=${channelName}, session=${passedSessionId}`);
   
   const data = await chrome.storage.local.get(['sessionId']);
   const total = passedTotalSteps || 1;
@@ -374,7 +484,8 @@ async function generateMasterDossier(channelName, passedTotalSteps, passedSessio
   try {
     promptInput = await waitForInput();
   } catch (e) {
-    console.error('YT-to-AI: Cannot find ChatGPT input for final synthesis.');
+    _err('Cannot find ChatGPT input for final synthesis.');
+    showToast('Error: ChatGPT input not found');
     return;
   }
   
@@ -415,8 +526,8 @@ async function generateMasterDossier(channelName, passedTotalSteps, passedSessio
   promptInput.focus();
   
   if (dt.items.length > 0) {
-    showToast(`Uploading Strategic Dossier (${dt.items.length} assets)...`);
-    promptInput.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true }));
+    showToast(`Uploading dossier (${dt.items.length} assets)...`);
+    dispatchPaste(promptInput, dt);
     await new Promise(r => setTimeout(r, 2000));
   }
 
@@ -488,8 +599,8 @@ async function handleNicheBendTrigger(sessionId) {
     }
 
     if (dt.items.length > 0) {
-      showToast(`Injecting Strategic Evidence (${dt.items.length} assets)...`);
-      promptInput.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true }));
+      showToast(`Uploading evidence (${dt.items.length} assets)...`);
+      dispatchPaste(promptInput, dt);
       await new Promise(r => setTimeout(r, 2200)); // Wait for upload
     }
 
@@ -513,18 +624,29 @@ async function handleNicheBendTrigger(sessionId) {
 }
 
 async function monitorNicheBendResponse(sessionId) {
-  console.log('YT-to-AI: Monitor Active for Niche Bender...');
+  _log('Niche Bender Monitor started...');
   let lastText = '';
   let stabilityCount = 0;
   let tickCount = 0;
   let handled = false;
+  let emptyTicks = 0;
   const MAX_TICKS = 150; // 5 minutes (15 bends takes longer)
   
   const interval = setInterval(() => {
     if (handled) return;
     tickCount++;
+    if (tickCount % 15 === 0) _log(`Niche monitor tick ${tickCount}/${MAX_TICKS}`);
     const messages = document.querySelectorAll('div[data-message-author-role="assistant"]');
-    if (messages.length === 0) return;
+    if (messages.length === 0) {
+      emptyTicks++;
+      if (emptyTicks > 30) { // 60s with no response
+        handled = true;
+        clearInterval(interval);
+        _err('Niche Bender: No AI response after 60s');
+        showToast('ChatGPT did not respond. Try again.');
+      }
+      return;
+    }
     
     const currentText = messages[messages.length - 1].innerText;
     const isGenerating = !!document.querySelector('button[aria-label="Stop generating"], button[aria-label="Stop streaming"], [data-testid="stop-button"]');
@@ -583,12 +705,7 @@ async function handleSceneAnalyzerTrigger(sessionId) {
         dt.items.add(file);
     }
 
-    const pasteEvent = new ClipboardEvent('paste', {
-      clipboardData: dt,
-      bubbles: true,
-      cancelable: true
-    });
-    el.dispatchEvent(pasteEvent);
+    dispatchPaste(el, dt);
     
     // Let DOM update the image preview thumbnails
     await new Promise(r => setTimeout(r, 2000));
@@ -657,9 +774,11 @@ async function monitorSceneAnalyzerResponse(sessionId) {
 
 // ─── Entry Point & URL Trigger Logic ────────────────────────
 async function initializeTriggers() {
+  try {
   const params = new URLSearchParams(window.location.search);
   const sessionId = params.get('sessionId');
   const channelName = params.get('channelName');
+  _log(`Init triggers: synthesis=${params.get('trigger_synthesis')}, niche=${params.get('niche_bend')}, sessionId=${sessionId}`);
 
   if (params.get('trigger_synthesis') === 'true' && sessionId) {
     const totalVideos = params.get('totalVideos');
@@ -678,9 +797,17 @@ async function initializeTriggers() {
   chrome.storage.local.get(['pendingAnalysis'], (data) => {
     if (data.pendingAnalysis) {
       showToast('🚀 Sequential Mode: Resuming Analysis...');
+      _log('pendingAnalysis flag found, auto-triggering automateChatGPT');
       automateChatGPT();
+    } else {
+      _log('No triggers matched. Idle.');
     }
   });
+
+  } catch (initErr) {
+    _err('FATAL in initializeTriggers:', initErr.message, initErr.stack);
+    showToast('Error: Extension init failed — check console');
+  }
 }
 
 // Support both immediate and delayed load (ChatGPT SPA can be tricky)

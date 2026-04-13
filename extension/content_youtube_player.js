@@ -58,10 +58,10 @@ async function harvestVideoInfo() {
   }
   if (!videoTitle) videoTitle = document.title.split(' - YouTube')[0];
   
-  showPlayerStatus(`📦 Harvesting Step ${stepNum}/${totalSteps}: ${videoTitle}`);
+  showPlayerStatus(`Harvesting ${stepNum}/${totalSteps}: ${videoTitle}`);
 
   // THUMBNAIL: Deep harvest from internal player data (100% accuracy)
-  showPlayerStatus('📸 Capturing High-Res Preview...');
+  showPlayerStatus('Capturing thumbnail...');
   let thumbnailUrl = '';
   try {
     const scripts = Array.from(document.querySelectorAll('script'));
@@ -77,7 +77,7 @@ async function harvestVideoInfo() {
   }
 
   // Fetch Transcript via RELAY (Bypass Security)
-  showPlayerStatus('⛓ Fetching Transcript...');
+  showPlayerStatus('Fetching transcript...');
   let transcript = '[TRANSCRIPT UNAVAILABLE: Analyze strategic direction based on Title and Screen Capture.]';
   
   try {
@@ -90,12 +90,16 @@ async function harvestVideoInfo() {
     });
     if (response && response.success && response.transcript) {
       transcript = response.transcript;
+    } else {
+      console.warn('YT-to-AI: Transcript unavailable for video', videoId);
+      showPlayerStatus('Transcript unavailable — continuing without');
     }
   } catch (e) {
     console.error('Transcript relay failed:', e);
+    showPlayerStatus('Transcript error — continuing without');
   }
 
-  showPlayerStatus('📸 Preparing Cinematic Snapshot...');
+  showPlayerStatus('Preparing snapshot...');
   
   // Clean UI for the snapshot
   const sidebar = document.querySelector('#secondary');
@@ -126,7 +130,7 @@ async function harvestVideoInfo() {
     }
   } catch(e) {}
 
-  showPlayerStatus('✅ Data Ready. Sending to AI Brain...');
+  showPlayerStatus('Data ready. Opening ChatGPT...');
   
   // Signal Orchestrator
   chrome.runtime.sendMessage({
@@ -134,7 +138,8 @@ async function harvestVideoInfo() {
     videoTitle: videoTitle,
     transcript: transcript,
     views: viewCount,
-    duration: duration
+    duration: duration,
+    thumbnailUrl: thumbnailUrl || ''
   });
 
   // Restore UI after a delay
@@ -255,12 +260,16 @@ if (urlParams.get('analyze_scene') === 'true') {
     }
   })();
 } else {
-  // Only trigger if we are in a Sequential Analysis flow
-  chrome.storage.local.get(['isSequential'], async (data) => {
-    if (data.isSequential) {
-       console.log('YT-to-AI: Sequential Harvest Mode Active.');
+  // Only trigger if we are in a Sequential Analysis flow with a valid active queue
+  chrome.storage.local.get(['isSequential', '_bgState'], async (data) => {
+    const hasActiveQueue = data._bgState && data._bgState.queue && data._bgState.queue.length > 0 
+                           && data._bgState.currentIndex < data._bgState.queue.length;
+    if (data.isSequential && hasActiveQueue) {
+       console.log('YT-to-AI: [Player] Sequential Harvest Mode Active.');
        
+       try {
        const video = await waitForVideo();
+       console.log('YT-to-AI: [Player] Video element found:', !!video);
        
        let harvestComplete = false;
        const forceSilence = () => { if (video && !harvestComplete) { video.muted = true; video.pause(); } };
@@ -272,16 +281,41 @@ if (urlParams.get('analyze_scene') === 'true') {
          forceSilence();
        }
 
-       setTimeout(async () => {
-         await harvestVideoInfo();
-         harvestComplete = true;
-         if (video) {
-           video.removeEventListener('play', playLock);
-           video.removeEventListener('playing', playLock);
-           video.muted = false; 
-           console.log('YT-to-AI: Player Restrictions Released.');
-         }
-       }, 3500);
+       const waitForMetadata = () => new Promise(resolve => {
+         if (video && video.readyState >= 1) return resolve();
+         if (!video) return resolve();
+         const onLoaded = () => { video.removeEventListener('loadedmetadata', onLoaded); resolve(); };
+         video.addEventListener('loadedmetadata', onLoaded);
+         setTimeout(resolve, 8000);
+       });
+       await waitForMetadata();
+       console.log('YT-to-AI: [Player] Metadata ready. Waiting for UI...');
+       await new Promise(r => setTimeout(r, 1500));
+
+       console.log('YT-to-AI: [Player] Starting harvestVideoInfo...');
+       await harvestVideoInfo();
+       harvestComplete = true;
+       if (video) {
+         video.removeEventListener('play', playLock);
+         video.removeEventListener('playing', playLock);
+         video.muted = false; 
+         console.log('YT-to-AI: [Player] Harvest complete. Player unlocked.');
+       }
+       
+       } catch (harvestErr) {
+         console.error('YT-to-AI: [Player] FATAL harvest error:', harvestErr.message, harvestErr.stack);
+         showPlayerStatus('❌ Harvest failed — sending error signal');
+         // Signal VIDEO_READY with error data so the flow doesn't get permanently stuck
+         chrome.runtime.sendMessage({
+           action: 'VIDEO_READY',
+           videoTitle: document.title.split(' - YouTube')[0] || 'Unknown',
+           transcript: '[HARVEST ERROR: ' + harvestErr.message + ']',
+           views: 'Error',
+           duration: 'Error'
+         });
+       }
+    } else {
+       console.log('YT-to-AI: [Player] Not in sequential mode.');
     }
   });
 }

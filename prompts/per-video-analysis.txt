@@ -6,7 +6,6 @@ Each input will include:
 
 You must perform a **deep, video-level analysis** based ONLY on the provided materials.
 
----
 
 ## INPUT:
 
@@ -17,7 +16,6 @@ A list of videos, each containing:
 - "views": (if available)
 - "duration": (if available)
 
----
 
 ## INSTRUCTIONS (MANDATORY WORKFLOW):
 
@@ -54,7 +52,6 @@ For EACH video:
    - What emotional triggers are used?
    - What desire/pain is being targeted?
 
----
 
 ## OUTPUT FORMAT:
 
@@ -102,7 +99,6 @@ Each object must contain:
 ]
 }
 
----
 
 ## STRICT RULES:
 
@@ -112,7 +108,6 @@ Each object must contain:
 - Be precise and strategic (think like a top YouTube growth consultant)
 - Avoid generic advice — extract patterns from THIS video only
 
----
 
 ## GOAL:
 
@@ -124,7 +119,6 @@ Reverse-engineer:
 
 So the output can directly inform high-performing content creation.
 
----
 
 ## RENDERING LOGIC (UPDATED)
 

@@ -5,7 +5,6 @@ You are bending a proven YouTube format into new niches.
 This includes CROSS-DOMAIN bends.
 But they must follow MECHANISM EQUIVALENCE.
 
----
 
 ## STEP 1 — EXTRACT TRUE MECHANISM
 
@@ -21,7 +20,6 @@ Example:
 Not: belly fat  
 But: effort without results due to hidden blockers  
 
----
 
 ## STEP 2 — MAP TO ANALOGOUS DOMAINS
 
@@ -44,7 +42,6 @@ Avoid defaulting to:
 
 Unless the mapping is precise.
 
----
 
 ## STEP 3 — TENSION MATCH
 
@@ -57,7 +54,6 @@ Each bend must preserve:
 
 If tension changes → reject.
 
----
 
 ## STEP 4 — OUTPUT
 
@@ -69,7 +65,6 @@ Each must:
 • Sustain 30+ videos  
 • Maintain curiosity + consequence  
 
----
 
 ## FORMAT (STRICT)
 
@@ -80,7 +75,6 @@ Markdown only.
 → [Specific Title]
 → [Specific Title]
 
----
 
 ## TITLE RULES
 
@@ -89,7 +83,6 @@ Markdown only.
 • Avoid generic phrasing  
 • Under 8 words when possible  
 
----
 
 ## STYLE
 
@@ -98,7 +91,6 @@ Markdown only.
 • No fluff  
 • No explanations  
 
----
 
 ## FINAL FILTER
 

@@ -61,7 +61,6 @@ After the table, write this line exactly:
 
 "To use in Google Sheets: copy the table above, open a new Google Sheet, click cell A1, then go to Edit → Paste Special → Paste values only."
 
----
 
 HERE IS THE SCRIPT:
 

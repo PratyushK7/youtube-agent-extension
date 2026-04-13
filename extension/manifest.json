@@ -14,8 +14,7 @@
     "https://*.chatgpt.com/*",
     "https://gemini.google.com/*",
     "http://localhost:3005/*",
-    "http://127.0.0.1:3005/*",
-    "<all_urls>"
+    "http://127.0.0.1:3005/*"
   ],
   "background": {
     "service_worker": "background.js"

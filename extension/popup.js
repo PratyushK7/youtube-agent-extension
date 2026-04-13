@@ -1,119 +1,75 @@
-const promptSelect = document.getElementById('prompt-select');
+const sel = document.getElementById('prompt-select');
+const dot = document.getElementById('server-dot');
+const txt = document.getElementById('server-txt');
+const resetBtn = document.getElementById('reset-session');
 
+// Server
+async function init() {
+  let online = false;
+  try {
+    const r = await fetch('http://127.0.0.1:3005/api/sessions', { signal: AbortSignal.timeout(2000) });
+    online = r.ok;
+  } catch {}
+  dot.className = online ? 'dot dot-green' : 'dot dot-red';
+  txt.textContent = online ? 'Online' : 'Offline';
+  txt.style.color = online ? '#22c55e' : '#ef4444';
+  if (online) loadPrompts();
+  else sel.innerHTML = '<option>Server offline</option>';
+
+  // Show reset if stuck
+  const d = await chrome.storage.local.get(['isSequential', '_bgState']);
+  if (d.isSequential || (d._bgState && d._bgState.queue && d._bgState.queue.length > 0)) {
+    resetBtn.classList.remove('hidden');
+  }
+}
+
+// Prompts
 async function loadPrompts() {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-    const res = await fetch('http://127.0.0.1:3005/api/prompts', { signal: controller.signal });
-    clearTimeout(timeoutId);
-    
-    const prompts = await res.json();
-    let optionsHtml = '';
-    
-    const master = prompts.find(p => p.id === 'master_analysis.txt');
-    if (master) {
-      optionsHtml += `
-        <optgroup label="Deep Research Engine">
-          <option value="${master.id}" data-content="${encodeURIComponent(master.content).replace(/'/g, "&apos;")}">
-            FULL CHANNEL METRICS (STRATEGIC SOP)
-          </option>
-        </optgroup>`;
-    }
-    
-    const tools = prompts.filter(p => !p.id.includes('master_analysis'));
-    if (tools.length > 0) {
-      optionsHtml += `<optgroup label="Analytical Tools">`;
-      optionsHtml += tools.map(p => `
-        <option value="${p.id}" data-content="${encodeURIComponent(p.content).replace(/'/g, "&apos;")}">
-          ${p.name.toUpperCase()}
-        </option>
-      `).join('');
-      optionsHtml += `</optgroup>`;
-    }
-    
-    promptSelect.innerHTML = optionsHtml;
-    
-    // Load last used and SYNC with latest server content
+    const r = await fetch('http://127.0.0.1:3005/api/prompts', { signal: AbortSignal.timeout(3000) });
+    const prompts = await r.json();
+    sel.innerHTML = prompts.map(p => `<option value="${p.id}" data-c="${encodeURIComponent(p.content).replace(/'/g,"&apos;")}">${p.name}</option>`).join('');
     const saved = await chrome.storage.local.get('selectedPromptId');
     if (saved.selectedPromptId) {
-      promptSelect.value = saved.selectedPromptId;
-      
-      // Force update the activePrompt content if it exists in the new list
+      sel.value = saved.selectedPromptId;
       const latest = prompts.find(p => p.id === saved.selectedPromptId);
-      if (latest) {
-        await chrome.storage.local.set({ activePrompt: latest.content });
-        console.log('Popup: Synced activePrompt with latest server content.');
-      }
-    } else {
-      promptSelect.dispatchEvent(new Event('change')); 
-    }
-  } catch (e) {
-    console.error('Popup: Connection to local server failed.', e);
-    promptSelect.innerHTML = '<option value="">ERROR: Run .command on Desktop</option>';
-    const statusEl = document.querySelector('.stat span:last-child');
-    if (statusEl) {
-      statusEl.style.color = '#ff4444';
-      statusEl.style.fontWeight = 'bold';
-      statusEl.innerText = 'OFFLINE (Wake server)';
-    }
-  }
+      if (latest) chrome.storage.local.set({ activePrompt: latest.content });
+    } else sel.dispatchEvent(new Event('change'));
+  } catch { sel.innerHTML = '<option>Error loading</option>'; }
 }
 
-promptSelect.onchange = async () => {
+sel.onchange = () => {
+  const o = sel.selectedOptions[0];
+  if (!o || !o.dataset.c) return;
+  chrome.storage.local.set({ selectedPromptId: sel.value, activePrompt: decodeURIComponent(o.dataset.c) });
+};
+
+// Buttons
+document.getElementById('open-yt').onclick = () => chrome.tabs.create({ url: 'https://youtube.com' });
+document.getElementById('view-db').onclick = () => chrome.tabs.create({ url: 'http://127.0.0.1:3005/dashboard.html' });
+
+resetBtn.onclick = () => {
+  chrome.runtime.sendMessage({ action: 'RESET_SESSION' }, r => {
+    if (r && r.success) { resetBtn.textContent = 'Cleared'; setTimeout(() => location.reload(), 500); }
+  });
+};
+
+document.getElementById('copy-logs').onclick = async () => {
+  const btn = document.getElementById('copy-logs');
   try {
-    if (!promptSelect.selectedOptions || promptSelect.selectedOptions.length === 0) return;
-    const option = promptSelect.selectedOptions[0];
-    if (!option.getAttribute('data-content')) return;
-    
-    const content = decodeURIComponent(option.getAttribute('data-content'));
-    await chrome.storage.local.set({ 
-      selectedPromptId: promptSelect.value,
-      activePrompt: content
+    const data = await chrome.storage.local.get(null);
+    const s = { ...data };
+    ['imageData','activePrompt','basePrompt','transcript'].forEach(k => {
+      if (s[k] && s[k].length > 500) s[k] = `[${(s[k].length/1024).toFixed(1)}KB]`;
     });
-  } catch (err) {
-    console.error('Popup: Failed to save selected prompt:', err);
-  }
+    if (s._bgState && s._bgState.basePrompt && s._bgState.basePrompt.length > 500) s._bgState.basePrompt = '[truncated]';
+    let srv = 'UNKNOWN', errs = '';
+    try { const r = await fetch('http://127.0.0.1:3005/api/sessions',{signal:AbortSignal.timeout(2000)}); srv = r.ok ? `OK (${(await r.json()).length})` : `HTTP ${r.status}`; } catch(e) { srv = 'OFFLINE'; }
+    try { const r = await fetch('http://127.0.0.1:3005/data/error.log',{signal:AbortSignal.timeout(2000)}); if(r.ok) errs = (await r.text()).split('\n').slice(-30).join('\n'); } catch {}
+    await navigator.clipboard.writeText(`=== ChannelLens Logs ===\n${new Date().toISOString()}\nServer: ${srv}\n\n${JSON.stringify(s,null,2)}\n\n--- Errors ---\n${errs||'(none)'}\n=== End ===`);
+    btn.textContent = 'Copied!'; btn.style.color = '#22c55e';
+    setTimeout(() => { btn.textContent = 'Copy Debug Logs'; btn.style.color = ''; }, 1500);
+  } catch { btn.textContent = 'Failed'; setTimeout(() => { btn.textContent = 'Copy Debug Logs'; }, 1500); }
 };
 
-document.getElementById('open-yt').onclick = () => {
-  chrome.tabs.create({ url: 'https://youtube.com' });
-};
-
-document.getElementById('view-db').onclick = () => {
-  chrome.tabs.create({ url: 'http://127.0.0.1:3005/dashboard.html' });
-};
-
-async function checkSOP() {
-  const data = await chrome.storage.local.get(['sessionId', 'isSequential', '_bgState']);
-  const statusEl = document.getElementById('sop-status');
-  if (statusEl) {
-    if (data.isSequential && data.sessionId) {
-      statusEl.innerText = 'IN PROGRESS';
-      statusEl.style.color = '#fb923c';
-    } else if (data.sessionId) {
-      statusEl.innerText = 'LOADED';
-      statusEl.style.color = '#10a37f';
-    } else {
-      statusEl.innerText = 'NONE';
-      statusEl.style.color = '#aaa';
-    }
-  }
-
-  const resumeBtn = document.getElementById('resume-session');
-  if (data._bgState && data._bgState.queue && data._bgState.queue.length > 0 && data._bgState.currentIndex < data._bgState.queue.length) {
-    if (resumeBtn) {
-      resumeBtn.style.display = 'flex';
-      resumeBtn.onclick = () => {
-        chrome.runtime.sendMessage({ action: 'RESUME_SEQUENTIAL' }, (response) => {
-          if(response && response.success) {
-            window.close(); // Close popup
-          }
-        });
-      };
-    }
-  }
-}
-
-loadPrompts();
-checkSOP();
+init();

@@ -1,5 +1,5 @@
 import express from 'express';
-import { readFileSync, writeFileSync, readdirSync, existsSync, appendFileSync, mkdirSync, unlinkSync, rmSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, appendFileSync, mkdirSync, unlinkSync, rmSync, renameSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { YoutubeTranscript } from 'youtube-transcript/dist/youtube-transcript.esm.js';
@@ -9,6 +9,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // ─── Persistent Error Logging ──────────────────────────────
 const ERROR_LOG = join(__dirname, 'data', 'error.log');
 
+const MAX_ERROR_LOG_BYTES = 1024 * 1024; // 1MB max
+
 const logError = (err, context = 'Server') => {
   const timestamp = new Date().toISOString();
   const message = `[${timestamp}] [${context}] ${err.stack || err}\n`;
@@ -16,6 +18,18 @@ const logError = (err, context = 'Server') => {
   try {
     const dataDir = join(__dirname, 'data');
     if (!existsSync(dataDir)) { try { mkdirSync(dataDir, { recursive: true }); } catch {} }
+    // Rotate if log exceeds size limit
+    if (existsSync(ERROR_LOG)) {
+      try {
+        const stats = statSync(ERROR_LOG);
+        if (stats.size > MAX_ERROR_LOG_BYTES) {
+          const content = readFileSync(ERROR_LOG, 'utf-8');
+          const lines = content.split('\n');
+          const truncated = lines.slice(-500).join('\n');
+          writeFileSync(ERROR_LOG, truncated);
+        }
+      } catch (rotateErr) { /* ignore rotation errors */ }
+    }
     appendFileSync(ERROR_LOG, message);
   } catch (e) {
     console.error('Failed to write to error log:', e);
@@ -48,6 +62,20 @@ app.use((req, res, next) => {
 app.use(express.static(join(__dirname, 'public')));
 app.use('/data', express.static(join(__dirname, 'data'))); 
 app.use(express.json({ limit: '50mb' })); 
+
+// ─── Request Logging ───────────────────────────────────────
+app.use((req, res, next) => {
+  const start = Date.now();
+  const orig = res.end;
+  res.end = function(...args) {
+    const duration = Date.now() - start;
+    const status = res.statusCode;
+    const icon = status >= 400 ? '❌' : '✓';
+    console.log(`${icon} ${req.method} ${req.url} → ${status} (${duration}ms)`);
+    orig.apply(this, args);
+  };
+  next();
+});
 
 // Root redirect
 app.get('/', (req, res) => {
@@ -112,7 +140,9 @@ function readSessions() {
 }
 
 function writeSessions(sessions) {
-  writeFileSync(SESSIONS_FILE, JSON.stringify(sessions, null, 2));
+  const tmpFile = SESSIONS_FILE + '.tmp';
+  writeFileSync(tmpFile, JSON.stringify(sessions, null, 2));
+  renameSync(tmpFile, SESSIONS_FILE);
 }
 
 // Create a new analysis session
@@ -145,6 +175,10 @@ app.put('/api/session/:id/video', (req, res) => {
   try {
     const { id } = req.params;
     const { videoData, rawResponse, screenshot } = req.body;
+
+    if (videoData && typeof videoData !== 'object') {
+      return res.status(400).json({ error: 'videoData must be an object' });
+    }
 
     const sessions = readSessions();
     const session = sessions.find(s => s.id === id);
@@ -227,6 +261,10 @@ app.post('/api/session/:id/scene-frames', express.json({limit: '200mb'}), (req, 
   try {
     const { id } = req.params;
     const { frames } = req.body; // Array of base64 strings
+
+    if (!Array.isArray(frames) || frames.length === 0 || frames.length > 10) {
+      return res.status(400).json({ error: 'frames must be an array of 1-10 base64 strings' });
+    }
 
     const sessions = readSessions();
     const session = sessions.find(s => s.id === id);
@@ -341,6 +379,7 @@ app.get('/api/session/:id/csv', (req, res) => {
       'Key Takeaways', 'Thumbnail Description'
     ];
 
+    const stringify = (v) => Array.isArray(v) ? v.join('; ') : v;
     const esc = (v) => { const s = String(v ?? ''); return (s.includes(',') || s.includes('"') || s.includes('\n')) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 
     let csv = headers.map(esc).join(',') + '\n';
@@ -350,35 +389,13 @@ app.get('/api/session/:id/csv', (req, res) => {
         v.hookType, v.hookText, v.hookFramework,
         v.openingStructure, v.scriptStructure, v.storytellingFramework,
         v.rehooksUsed, v.retentionPattern, v.ctaPlacement,
-        Array.isArray(v.keyTakeaways) ? v.keyTakeaways.join('; ') : v.keyTakeaways,
-        v.thumbnailDescription
-      ].map(esc).join(',') + '\n';
+        v.keyTakeaways, v.thumbnailDescription
+      ].map(val => esc(stringify(val))).join(',') + '\n';
     });
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="${session.channel || 'session'}_analysis.csv"`);
     res.send(csv);
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-// Delete a session
-app.delete('/api/session/:id', (req, res) => {
-  try {
-    const { id } = req.params;
-    const sessions = readSessions();
-    const sessionIndex = sessions.findIndex(s => s.id === id);
-    if (sessionIndex === -1) return res.status(404).json({ error: 'Session not found' });
-
-    // Delete associated assets folder
-    const assetsDir = join(__dirname, 'data', 'channel_assets', id);
-    if (existsSync(assetsDir)) {
-      rmSync(assetsDir, { recursive: true, force: true });
-    }
-
-    // Remove from sessions list
-    sessions.splice(sessionIndex, 1);
-    writeSessions(sessions);
-
-    res.json({ success: true, message: 'Session and all assets deleted' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

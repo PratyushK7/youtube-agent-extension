@@ -94,7 +94,7 @@ function injectAnalyzerButton() {
   btnAnalyze.onclick = async () => {
     btnAnalyze.disabled = true;
     const depth = parseInt(document.getElementById('yt-depth-dropdown').value);
-    showStatusHUD(`Initializing Strategic Scan (Depth: ${depth})...`);
+    showStatusHUD(`Scanning channel (${depth} videos)...`);
 
     if (isWatch) {
       const channelLink = document.querySelector('ytd-video-owner-renderer a.yt-simple-endpoint');
@@ -109,13 +109,13 @@ function injectAnalyzerButton() {
     
     if (window.location.pathname.includes('/videos')) {
        await navigateToSort('popular');
-       // Wait for video grid to re-render after sort
-       await delay(3000);
-       let queueData = scrapeVideoData(depth);
-       // Retry scrape if empty (sort may still be loading)
-       if (queueData.length === 0) {
-         await delay(3000);
+       // Poll for video grid to render after sort (up to 15s)
+       let queueData = [];
+       for (let attempt = 0; attempt < 10; attempt++) {
+         await delay(1500);
          queueData = scrapeVideoData(depth);
+         if (queueData.length >= depth) break;
+         showStatusHUD(`Waiting for video grid... (${queueData.length}/${depth} found)`);
        }
        if (queueData.length === 0) {
          showStatusHUD('⚠ No videos found. Try scrolling down first.');
@@ -131,7 +131,7 @@ function injectAnalyzerButton() {
          queue: queue,
          prompt: data.activePrompt || ''
        }, (res) => {
-         if (res?.success) showStatusHUD(`Launching Analysis for ${queue.length} Videos...`);
+         if (res?.success) showStatusHUD(`Analyzing ${queue.length} videos...`);
        });
     } else {
        // Navigate to videos first
@@ -156,9 +156,23 @@ function injectAnalyzerButton() {
   });
 }
 
-setInterval(() => {
-  injectAnalyzerButton();
-}, 2000);
+// Inject button on page changes using MutationObserver (avoids high-CPU polling)
+{
+  let injectionScheduled = false;
+  const scheduleInjection = () => {
+    if (injectionScheduled) return;
+    injectionScheduled = true;
+    requestAnimationFrame(() => {
+      injectAnalyzerButton();
+      injectionScheduled = false;
+    });
+  };
+  // Initial injection
+  scheduleInjection();
+  // Watch for YouTube SPA navigations
+  const navObserver = new MutationObserver(scheduleInjection);
+  navObserver.observe(document.body, { childList: true, subtree: true });
+}
 
 // Auto-navigate to first search result if requested by Dashboard
 {
@@ -193,12 +207,14 @@ setInterval(() => {
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
+    // Fallback timeout — only fires if observer hasn't already navigated
     setTimeout(() => {
+      if (window.hasNavigated) return;
+      observer.disconnect();
       const firstVideo = document.querySelector('ytd-video-renderer a#thumbnail, ytd-video-renderer a#video-title');
       if (firstVideo && firstVideo.href && firstVideo.href.includes('/watch')) {
-        observer.disconnect();
         navigateToVideo(firstVideo);
       }
-    }, 1500);
+    }, 5000);
   }
 }
