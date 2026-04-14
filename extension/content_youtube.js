@@ -37,79 +37,75 @@ async function navigateToSort(sortText) {
     'button',
     '[role="tab"]'
   ];
-
-  // Variations for "Popular" in common languages and formats
+  // Variations for "Popular" in common languages
   const targetVariations = [
     cleanSort, "most popular", "popular videos", "más populares", 
-    "populares", "vidi plus", "beliebte videos", "plus populaires", "लोकप्रिय", "popularny"
+    "populares", "beliebte videos", "plus populaires", "लोकप्रिय", "popularny"
   ];
 
-  for (let i = 0; i < 45; i++) { 
-    // Wait for the actual chip bar to be in the DOM
-    const chipBar = document.querySelector('yt-chip-cloud-chip-renderer, #chips, ytd-feed-filter-chip-bar-renderer');
-    if (!chipBar && i < 15) {
-      await delay(800);
-      continue;
-    }
+  for (let i = 0; i < 40; i++) { 
+    // Ensure chip bar exists
+    const bar = document.querySelector('ytd-feed-filter-chip-bar-renderer, #chips, #header tp-yt-paper-tabs');
+    if (!bar && i < 15) { await delay(600); continue; }
 
     const elements = Array.from(document.querySelectorAll(selectors.join(',')));
     
-    // 1. Precise Text/Label Match
+    // Improved Text Search
     let targetEl = elements.find(el => {
       const label = (el.getAttribute('aria-label') || '').toLowerCase();
       const text = el.textContent.trim().toLowerCase();
-      return targetVariations.some(v => label === v || text === v || label.includes(v) || (text.includes(v) && text.length < 22));
+      return targetVariations.some(v => label === v || text === v || label.includes(v) || (text.includes(v) && text.length < 25));
     });
 
-    // 2. Position-Based Fail-safe (Popular is usually the 2nd chip)
-    if (!targetEl && i > 12 && cleanSort === 'popular') {
+    // Fallback: Position-based if text fails
+    if (!targetEl && i > 15 && cleanSort === 'popular') {
        const chips = Array.from(document.querySelectorAll('yt-chip-cloud-chip-renderer'));
        if (chips.length >= 2) targetEl = chips[1];
     }
 
     if (targetEl) {
-      const interactive = targetEl.closest('yt-chip-cloud-chip-renderer') || 
-                          targetEl.closest('tp-yt-paper-tab') || 
-                          targetEl;
+      const interactive = targetEl.closest('yt-chip-cloud-chip-renderer, tp-yt-paper-tab, [role="tab"]') || targetEl;
 
-      const isSelected = interactive.getAttribute('aria-selected') === 'true' || 
-                         interactive.hasAttribute('selected') ||
-                         interactive.classList.contains('iron-selected') ||
-                         interactive.classList.contains('selected');
-      
-      if (isSelected) {
-        console.log(`YT-to-AI: ${sortText} is already active.`);
+      const checkActive = () => (
+        interactive.getAttribute('aria-selected') === 'true' || 
+        interactive.hasAttribute('selected') ||
+        interactive.classList.contains('iron-selected') ||
+        interactive.classList.contains('selected') ||
+        interactive.querySelector('[aria-selected="true"]') !== null
+      );
+
+      if (checkActive()) {
+        console.log(`YT-to-AI: ${sortText} verified active.`);
         return true;
       }
       
-      console.log(`YT-to-AI: Engaged sort: ${sortText}`);
-      interactive.scrollIntoView({ block: 'center' });
-      await delay(800); // Stabilize
-      
-      // Precision Interaction
+      // Ensure it's reachable
+      interactive.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+      await delay(500); 
+
+      // AGGRESSIVE CLICK SEQUENCE
+      console.log(`YT-to-AI: Deploying click logic on ${sortText}`);
       interactive.click();
+      const inner = interactive.querySelector('yt-formatted-string, span, .tab-content');
+      if (inner) inner.click(); // Click inner text too
+      
       interactive.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
       interactive.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
       
-      // Multi-Step Verification
-      for (let j = 0; j < 15; j++) {
-        await delay(800);
-        const confirmed = interactive.getAttribute('aria-selected') === 'true' || 
-                          interactive.hasAttribute('selected') || 
-                          interactive.classList.contains('iron-selected') ||
-                          interactive.classList.contains('selected');
-        if (confirmed) {
-           console.log(`YT-to-AI: ${sortText} confirmed active.`);
-           return true; 
+      // Verification loop
+      for (let j = 0; j < 12; j++) {
+        await delay(1000);
+        if (checkActive()) return true;
+        if (j % 4 === 0) {
+          interactive.click(); // Periodic re-poke
+          if (inner) inner.click();
         }
-        if (j % 5 === 0) interactive.click(); // Persistent re-click
       }
     }
-
     await delay(1000); 
   }
   
-  console.error(`YT-to-AI: FAILED to sort by ${sortText}. Proceeding anyway...`);
+  console.error(`YT-to-AI: Sort failed persistence check for ${sortText}. Proceeding...`);
   return false;
 }
 
@@ -209,10 +205,28 @@ function injectAnalyzerButton() {
         } catch (e) { console.error('Early session creation failed', e); }
 
         if (currentSessionId) {
-          showStatusHUD('Capturing Popular Overview...');
-          await chrome.runtime.sendMessage({ action: 'CAPTURE_YOUTUBE_OVERVIEW', sessionId: currentSessionId });
-          showStatusHUD('Overview Captured ✓');
-          await delay(1000);
+          showStatusHUD('Capturing Full Strategic View...');
+          const originalZoom = document.body.style.zoom || "1";
+          document.body.style.zoom = "0.4"; // Zoom out to see MORE videos
+          await delay(1500); // Give YT time to reflow grid at 40%
+
+          const capRes = await new Promise(resolve => {
+            chrome.runtime.sendMessage({ action: 'CAPTURE_YOUTUBE_OVERVIEW', sessionId: currentSessionId }, resolve);
+          });
+          
+          document.body.style.zoom = originalZoom; // Restore immediately
+          
+          if (capRes && capRes.success) {
+            showStatusHUD('Full Overview Captured ✓');
+            await delay(1000);
+          } else {
+            const errMsg = capRes?.error || 'Unknown Error';
+            const isServer = errMsg.includes('Server') || errMsg.includes('Cloud');
+            showStatusHUD(`❌ ${isServer ? 'Server Sync Failed' : 'Browser Capture Error'}.`);
+            console.error('Capture failed detail:', errMsg);
+            btnAnalyze.disabled = false;
+            return;
+          }
         }
 
         let queueData = [];
@@ -290,12 +304,13 @@ function injectAnalyzerButton() {
        showStatusHUD('🔍 Locating Channel...');
        for (let i = 0; i < 25; i++) {
          const channelLink = document.querySelector('ytd-video-owner-renderer a.yt-simple-endpoint, #owner #channel-name a');
-         if (channelLink && channelLink.href) {
-           const baseUrl = channelLink.href.replace(/\/videos$/, '').replace(/\/$/, '');
-           const target = `${baseUrl}/videos?capture_niche=true&sessionId=${sessionId}`;
-           window.location.href = target;
-           return;
-         }
+          if (channelLink && channelLink.href) {
+            const baseUrl = channelLink.href.replace(/\/videos$/, '').replace(/\/$/, '');
+            // Move to channel home directly for faster capture
+            const target = `${baseUrl}?capture_niche=true&sessionId=${sessionId}`;
+            window.location.href = target;
+            return;
+          }
          await delay(800);
        }
        showStatusHUD('⚠ Channel not found.');
@@ -309,19 +324,40 @@ function injectAnalyzerButton() {
   const captureNiche = params.get('capture_niche') === 'true';
   const sessionId = params.get('sessionId');
   
-  if (captureNiche && sessionId && window.location.pathname.includes('/videos')) {
+  const isAtChannel = window.location.pathname.match(/\/(?:@|channel\/|c\/|user\/)([^\/]+)/) || window.location.pathname.length > 5;
+  if (captureNiche && sessionId && isAtChannel) {
+    console.log('YT-to-AI: Niche Capture Triggered. Path:', window.location.pathname);
     (async () => {
-       await delay(2500); // Wait for SPA stabilization
-       showStatusHUD('Fresh Context Capture...');
-       await navigateToSort('popular');
-       await delay(5000); // Final check stabilization
+       await delay(2000); // Quick stabilization
+       showStatusHUD('Direct View Capture...');
        
-       await chrome.runtime.sendMessage({ action: 'CAPTURE_YOUTUBE_OVERVIEW', sessionId: sessionId });
-
-       showStatusHUD('Handing off to ChatGPT...');
-       await delay(2000);
-       const CHATGPT_URL = 'https://chatgpt.com/g/g-p-69ddde8c65a88191b308076bcb28bebf-channellens/project';
-       window.location.href = `${CHATGPT_URL}?niche_bend=true&sessionId=${sessionId}`;
+       // REMOVED SORTING STEP per request
+       await delay(2000); 
+       
+       showStatusHUD('Capturing Full Strategic View...');
+       const originalZoom = document.body.style.zoom || "1";
+       document.body.style.zoom = "0.4"; // Hyper-zoom for fuller context
+       await delay(2000); // Reflow stabilization
+       
+       chrome.runtime.sendMessage({ action: 'CAPTURE_YOUTUBE_OVERVIEW', sessionId: sessionId }, (res) => {
+         document.body.style.zoom = originalZoom; // Restore
+         
+         if (res && res.success) {
+            showStatusHUD('Full Overview Captured ✓');
+            setTimeout(() => {
+              showStatusHUD('Handing off to ChatGPT...');
+              setTimeout(() => {
+                const CHATGPT_URL = 'https://chatgpt.com/g/g-p-69ddde8c65a88191b308076bcb28bebf-channellens/project';
+                window.location.href = `${CHATGPT_URL}?niche_bend=true&sessionId=${sessionId}`;
+              }, 2000);
+            }, 1000);
+         } else {
+            const errMsg = res?.error || 'Unknown Error';
+            const isServer = errMsg.includes('Server') || errMsg.includes('Cloud');
+            showStatusHUD(`❌ ${isServer ? 'Server Sync Failed' : 'Browser Capture Error'}.`);
+            console.error('Niche Capture failed detail:', errMsg);
+         }
+       });
     })();
   }
 }
@@ -339,8 +375,8 @@ function injectAnalyzerButton() {
       if (channelLink && channelLink.href) {
         observer.disconnect();
         const baseUrl = channelLink.href.replace(/\/videos$/, '').replace(/\/$/, '');
-        const target = `${baseUrl}/videos?capture_niche=true&sessionId=${sessionId}`;
-        showStatusHUD('Channel Found. Entering Videos...');
+        const target = `${baseUrl}?capture_niche=true&sessionId=${sessionId}`;
+        showStatusHUD('Channel Found. Capturing Home...');
         window.location.href = target;
       }
     });

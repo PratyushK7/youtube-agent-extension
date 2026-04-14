@@ -670,22 +670,47 @@ async function focusDashboardTab() {
   });
 }
 async function handleCaptureYoutubeOverview(request, sender, sendResponse) {
-  try {
-    const tabId = sender.tab.id;
-    // Capture the visible tab (ensure we are on the YouTube tab)
-    const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: 'png' });
-    
-    // Send to server
-    const res = await fetch(`${SERVER}/api/session/${request.sessionId}/metadata`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ popularScreenshot: dataUrl })
-    });
-    
-    const data = await res.json();
-    sendResponse({ success: data.success });
-  } catch (err) {
-    logErr('Failed to capture YouTube overview:', err.message);
-    sendResponse({ success: false, error: err.message });
+  let lastError = '';
+  const windowId = sender?.tab?.windowId;
+
+  // 1. Hyper-Resilient Capture Bridge (3 attempts)
+  for (let i = 0; i < 3; i++) {
+    try {
+      let dataUrl = '';
+      try {
+        // Try precise window targeting first (best for multi-monitor)
+        if (windowId) dataUrl = await chrome.tabs.captureVisibleTab(windowId, { format: 'png' });
+      } catch (e) {
+        logWarn(`Precise capture failed, trying active window fallback...`);
+        // Fallback to null (active window) if precise fails
+        dataUrl = await chrome.tabs.captureVisibleTab(null, { format: 'png' });
+      }
+      
+      if (!dataUrl) throw new Error('Browser returned empty capture data');
+
+      // 2. Server Pipeline
+      const res = await fetch(`${SERVER}/api/session/${request.sessionId}/metadata`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ popularScreenshot: dataUrl })
+      });
+      
+      if (!res.ok) {
+        const errorBody = await res.text();
+        throw new Error(`Cloud Sync Rejected (${res.status}): ${errorBody}`);
+      }
+
+      const data = await res.json();
+      sendResponse({ success: data.success });
+      log('✓ Strategic overview captured and synced.');
+      return; 
+    } catch (err) {
+      lastError = err.message;
+      logWarn(`Pipeline attempt ${i+1} failed:`, lastError);
+      if (i < 2) await new Promise(r => setTimeout(r, 1200)); 
+    }
   }
+  
+  logErr('Critical Capture Bridge Failure:', lastError);
+  sendResponse({ success: false, error: lastError });
 }

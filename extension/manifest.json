@@ -10,6 +10,7 @@
     "tabs"
   ],
   "host_permissions": [
+    "<all_urls>",
     "https://*.youtube.com/*",
     "https://*.chatgpt.com/*",
     "https://gemini.google.com/*",

@@ -3010,6 +3010,13 @@
       openSession(currentSession.id, true);
     };
 
+    window.triggerNicheBend = (sessionId, channelUrl) => {
+        const baseUrl = channelUrl.replace(/\/videos$/, '').replace(/\/$/, '');
+        // Landing on the base URL (Home) per user request for faster capture
+        const target = `${baseUrl}?capture_niche=true&sessionId=${sessionId}`;
+        window.open(target, '_blank');
+    };
+
     window.triggerManualNicheBend = async function() {
       if (!currentSession) return;
       // Mark as synthesizing so dashboard polls and shows 'Live'
@@ -3040,6 +3047,18 @@
       if (!currentSession || currentSession.videos.length === 0) return;
       const targetVideoId = currentSession.videos[0].videoId || currentSession.videos[0].id;
       window.open(`https://www.youtube.com/watch?v=${targetVideoId}&analyze_scene=true&sessionId=${currentSession.id}`, '_blank');
+    };
+
+    window.openSopModal = function() {
+      document.getElementById('sop-modal').style.display = 'flex';
+    };
+
+    window.openNicheModal = function() {
+      document.getElementById('niche-modal').style.display = 'flex';
+    };
+
+    window.openSceneModal = function() {
+      document.getElementById('scene-modal').style.display = 'flex';
     };
 
     window.closeModal = function(id) {
