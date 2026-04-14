@@ -5,6 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ChannelLens</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="shortcut icon" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -14,17 +16,17 @@
   <style>
     /* ═══ Shared Design Tokens (mirrors style.css) ═══ */
     :root {
-      --bg-primary: #191919;
-      --bg-secondary: #202020;
-      --bg-card: #252525;
-      --bg-card-hover: #2c2c2c;
-      --bg-elevated: #333333;
-      --border-subtle: rgba(255, 255, 255, 0.055);
-      --border-medium: rgba(255, 255, 255, 0.09);
+      --bg-primary: #0f1117; /* Muted deep slate */
+      --bg-secondary: #161a23;
+      --bg-card: #1c212c;
+      --bg-card-hover: #242a38;
+      --bg-elevated: #2d3446;
+      --border-subtle: rgba(255, 255, 255, 0.05);
+      --border-medium: rgba(255, 255, 255, 0.1);
       --border-focus: rgba(99, 102, 241, 0.5);
-      --text-primary: #ebebeb;
-      --text-secondary: #9b9a97;
-      --text-muted: #5a5a5a;
+      --text-primary: #f1f5f9; /* Slate 50 */
+      --text-secondary: #94a3b8; /* Slate 400 */
+      --text-muted: #64748b; /* Slate 500 */
       --accent-primary: #6366f1;
       --accent-secondary: #818cf8;
       --accent-tertiary: #6366f1;
@@ -50,16 +52,16 @@
     }
 
     :root.light-theme {
-      --bg-primary: #ffffff;
-      --bg-secondary: #f7f6f3;
-      --bg-card: #ffffff;
-      --bg-card-hover: #f1f1ef;
-      --bg-elevated: #e9e9e7;
-      --border-subtle: rgba(0, 0, 0, 0.06);
-      --border-medium: rgba(0, 0, 0, 0.1);
-      --text-primary: #37352f;
-      --text-secondary: #6b6b6b;
-      --text-muted: #9b9a97;
+      --bg-primary: #efeff1; /* Muted Dusty Slate background */
+      --bg-secondary: #e4e6eb; /* Darker secondary for depth */
+      --bg-card: #f8f9fa; /* Off-white cards to reduce glare */
+      --bg-card-hover: #ecedf1;
+      --bg-elevated: #dee1e6;
+      --border-subtle: rgba(0, 0, 0, 0.08);
+      --border-medium: rgba(0, 0, 0, 0.15);
+      --text-primary: #1c1e21;
+      --text-secondary: #4b4f56;
+      --text-muted: #8d949e;
     }
 
     :root.light-theme .bg-grid { display: none; }
@@ -632,38 +634,71 @@
     .btn {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      padding: 7px 14px;
-      border-radius: var(--radius-sm);
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
       font-family: var(--font-sans);
-      font-size: 0.8rem;
-      font-weight: 600;
+      font-size: 0.82rem;
+      font-weight: 700;
       cursor: pointer;
-      transition: var(--transition-fast);
-      border: 1px solid var(--border-medium);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
       text-decoration: none;
       white-space: nowrap;
+      letter-spacing: 0.01em;
     }
 
     .btn-ghost {
       background: transparent;
       color: var(--text-secondary);
+      border-color: var(--border-subtle);
     }
 
     .btn-ghost:hover {
-      background: var(--bg-card-hover);
+      background: var(--bg-secondary);
       color: var(--text-primary);
+      border-color: var(--border-medium);
     }
 
-    .btn-accent {
-      background: rgba(68,131,97,0.08);
-      color: var(--accent-emerald);
-      border-color: rgba(68,131,97,0.15);
+    /* Premium Button Variants */
+    .btn-sop {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: white;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+    .btn-sop:hover {
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+      transform: translateY(-2px);
     }
 
-    .btn-accent:hover {
-      background: rgba(68,131,97,0.14);
-      border-color: rgba(68,131,97,0.3);
+    .btn-niche {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+    }
+    .btn-niche:hover {
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .btn-visual {
+      background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+      color: white;
+      box-shadow: 0 4px 14px rgba(236, 72, 153, 0.4);
+    }
+    .btn-visual:hover {
+      box-shadow: 0 6px 20px rgba(236, 72, 153, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .btn-primary {
+      background: var(--text-primary);
+      color: var(--bg-primary);
+    }
+    .btn-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
     }
 
     /* ═══ Tab Bar ═══ */
@@ -1179,12 +1214,12 @@
     }
 
     .v-card-label {
-      font-size: 0.7rem;
-      font-weight: 600;
+      font-size: 0.72rem;
+      font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       color: var(--accent-warm);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
       gap: 0;
@@ -1337,6 +1372,57 @@
       font-size: 0.88rem;
       line-height: 1.7;
       color: var(--text-secondary);
+    }
+
+    /* ═══ Tools Workspace Grid ═══ */
+    .tools-workspace {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 10px;
+    }
+
+    .tool-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      transition: var(--transition-base);
+    }
+
+    .tool-card:hover {
+      border-color: var(--border-medium);
+      box-shadow: var(--shadow-md);
+    }
+
+    .tool-card.full-width {
+      grid-column: span 2;
+    }
+
+    .tool-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .tool-card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .tool-card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
 
     .sop-section-title {
@@ -1742,23 +1828,10 @@
       </div>
     </div>
     <nav class="sidebar-nav">
-      <div class="sidebar-section-label">Navigation</div>
+      <div class="sidebar-section-label">Main</div>
       <div class="sidebar-nav-item active" data-view="sessions" onclick="showView('sessions')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        Sessions
-      </div>
-      <div class="sidebar-section-label" style="margin-top:12px">Tools</div>
-      <div class="sidebar-nav-item" data-view="scene" onclick="triggerTool('scene')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/></svg>
-        Scene Analyzer
-      </div>
-      <div class="sidebar-nav-item" data-view="niche" onclick="triggerTool('niche')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
-        Niche Bender
-      </div>
-      <div class="sidebar-nav-item" data-view="script" onclick="triggerTool('script')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        Script Writer
+        Your Channels
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -1846,24 +1919,18 @@
         </div>
       </div>
       <div class="header-actions">
-        <button id="btn-scene-analyzer" class="btn btn-ghost">
-          Analyze Scene
-        </button>
-        <button id="btn-niche-bend" class="btn btn-ghost">
-          Niche Bender
-        </button>
-        <button id="btn-export-csv" class="btn btn-ghost">
+        <button id="btn-export-csv" class="btn btn-primary" style="padding: 10px 20px;">
           Export CSV
         </button>
       </div>
     </div>
 
     <div class="tab-bar animate-in delay-1">
-      <button class="tab-btn active" data-tab="metrics"><span class="tab-icon">&#x1F4CB;</span> Full Metrics</button>
-      <button class="tab-btn" data-tab="synthesis"><span class="tab-icon">&#x1F4DD;</span> Master Synthesis</button>
+      <button class="tab-btn active" data-tab="metrics"><span class="tab-icon">&#x1F4CB;</span> Video Insights</button>
+      <button class="tab-btn" data-tab="synthesis"><span class="tab-icon">&#x1F4DD;</span> Tools</button>
     </div>
 
-    <!-- Tab: Full Metrics -->
+    <!-- Tab: Video Insights -->
     <div id="tab-metrics" class="tab-content active">
       <div class="table-card">
         <div class="table-toolbar">
@@ -1886,52 +1953,53 @@
       </div>
     </div>
 
-    <!-- Tab: Synthesis -->
     <div id="tab-synthesis" class="tab-content">
-      <div class="synthesis-card">
-        <div class="synthesis-header">
-          <div class="synthesis-badge">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14">
-              <path d="M12 2a7 7 0 0 1 7 7c0 3-2 5.5-4 7.5L12 22l-3-5.5C7 14.5 5 12 5 9a7 7 0 0 1 7-7z" />
-              <circle cx="12" cy="9" r="2" />
-            </svg>
-            AI Strategic Report
+      <div class="tools-workspace">
+        <!-- Card: Channel SOP -->
+        <div class="tool-card full-width">
+          <div class="tool-card-header">
+            <div class="tool-card-title">Channel SOP</div>
+            <div style="font-size: 0.65rem; color: var(--accent-primary); font-weight: 800;">AI STRATEGY</div>
           </div>
-          <div class="synthesis-title">Master Channel Synthesis</div>
-        </div>
-        <div id="synthesis-content" class="synthesis-body">
-          <div class="synthesis-empty">
-            <div class="synthesis-empty-icon">&#x1F4DD;</div>
-            <p>No synthesis generated yet.<br>Complete all video analyses to generate the master SOP.</p>
-          </div>
-        </div>
-      </div>
-      <div class="synthesis-card" style="margin-top: 24px;" id="niche-bends-card">
-        <div class="synthesis-header">
-          <div class="synthesis-badge"
-            style="background: rgba(251,146,60,0.1); border-color: rgba(251,146,60,0.2); color: var(--accent-warm);">
-            🔥 Strategy
-          </div>
-          <div class="synthesis-title">15 Detailed Niche Bends</div>
-        </div>
-        <div id="niche-bends-content" class="synthesis-body">
-          <div class="synthesis-empty">
-            <p>No niche bends generated yet.<br>Click "🔥 Niche Bender" (top right) to extract the strategic frameworks.
-            </p>
+          <div id="synthesis-content" class="tool-card-body">
+            <div class="synthesis-empty" style="padding: 60px 0;">
+              <p style="margin-bottom: 24px; opacity: 0.8; font-weight: 500;">Channel SOP not yet generated.</p>
+              <button class="btn btn-sop" onclick="triggerManualSynthesis()">
+                🪄 Generate Channel SOP
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-      <!-- ═══ Scene Analysis Output ═══ -->
-      <div id="scene-analysis-card" class="synthesis-card" style="margin-top: 32px">
-        <div class="synthesis-header">
-          <div class="synthesis-badge"
-            style="color: #818cf8; border-color: rgba(99, 102, 241, 0.3); background: rgba(99, 102, 241, 0.1);">VISION
-            AI</div>
-          <div class="synthesis-title">Scene Structural Analysis</div>
+
+        <!-- Card: Niche Bends -->
+        <div class="tool-card">
+          <div class="tool-card-header">
+            <div class="tool-card-title">Niche Bends</div>
+            <div style="font-size: 0.65rem; color: var(--accent-warm); font-weight: 800;">CONCEPTING</div>
+          </div>
+          <div id="niche-bends-content" class="tool-card-body">
+            <div class="synthesis-empty" style="padding: 40px 0;">
+              <p style="margin-bottom: 20px; opacity: 0.8; font-weight: 500;">Niche Bends not yet extracted.</p>
+              <button class="btn btn-niche" onclick="triggerManualNicheBend()">
+                🔥 Generate Niche Bends
+              </button>
+            </div>
+          </div>
         </div>
-        <div id="scene-analysis-content" class="synthesis-body">
-          <div class="synthesis-empty">
-            <p>No scene analysis available yet.<br>Click "👁️ Analyze Scene" to extract styles from the top video.</p>
+
+        <!-- Card: Visual Analysis -->
+        <div class="tool-card">
+          <div class="tool-card-header">
+            <div class="tool-card-title">Visual Analysis</div>
+            <div style="font-size: 0.65rem; color: var(--accent-rose); font-weight: 800;">DESIGN</div>
+          </div>
+          <div id="scene-analysis-content" class="tool-card-body">
+            <div class="synthesis-empty" style="padding: 40px 0;">
+              <p style="margin-bottom: 20px; opacity: 0.8; font-weight: 500;">Visual Analysis not yet performed.</p>
+              <button class="btn btn-visual" onclick="triggerManualVisualAnalysis()">
+                👁️ Run Visual Analysis
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -2054,6 +2122,12 @@
     // ─── Global Markdown Formatter ──────────────────────────
     const formatMarkdown = (md) => {
       if (!md) return '';
+      
+      // If input is an array (like keyTakeaways), convert to a bulleted markdown string
+      if (Array.isArray(md)) {
+        md = md.map(item => `- ${item}`).join('\n');
+      }
+      
       try {
         if (typeof marked === 'undefined') {
           console.warn('Marked.js not loaded, falling back to esc()');
@@ -2363,33 +2437,10 @@
       currentSession = null;
     });
 
+    document.getElementById('btn-export-csv').className = 'btn btn-primary';
+    document.getElementById('btn-export-csv').style.padding = '8px 16px';
     document.getElementById('btn-export-csv').addEventListener('click', () => {
       if (currentSession) window.open(`/api/session/${currentSession.id}/csv`, '_blank');
-    });
-
-    document.getElementById('btn-niche-bend').addEventListener('click', () => {
-      if (currentSession) {
-        if (currentSession.nicheBends) {
-          if (!confirm("Niche bend is already generated. Do you want to generate new?")) return;
-        } else {
-          if (!confirm("Do you want to generate the niche bend?")) return;
-        }
-        window.open(`https://chatgpt.com/?niche_bend=true&sessionId=${currentSession.id}`, '_blank');
-      }
-    });
-
-    document.getElementById('btn-scene-analyzer').addEventListener('click', () => {
-      if (currentSession && currentSession.videos.length > 0) {
-        if (currentSession.sceneAnalysis) {
-          if (!confirm("Scene analysis is already generated. Do you want to generate new?")) return;
-        } else {
-          if (!confirm("Do you want to generate the scene analysis?")) return;
-        }
-        const targetVideoId = currentSession.videos[0].videoId || currentSession.videos[0].id;
-        setTimeout(() => {
-          window.open(`https://www.youtube.com/watch?v=${targetVideoId}&analyze_scene=true&sessionId=${currentSession.id}`, '_blank');
-        }, 100);
-      }
     });
 
     document.getElementById('btn-close-gallery').addEventListener('click', () => {
@@ -2563,26 +2614,34 @@
 
       if (!text) {
         el.innerHTML = `
-          <div class="synthesis-empty">
-            <div class="synthesis-empty-icon">&#x1F4DD;</div>
-            <p style="margin-bottom: 20px;">No master synthesis generated yet.<br>Click below to synthesize all current video analysis into a Strategic SOP.</p>
-            <button class="btn btn-accent" onclick="triggerManualSynthesis()" style="padding: 12px 24px; font-size: 0.95rem;">🪄 Generate Master Synthesis</button>
+          <div class="synthesis-empty" style="padding: 60px 0;">
+            <p style="margin-bottom: 24px; opacity: 0.8; font-weight: 500;">Channel SOP not yet generated.</p>
+            <button class="btn btn-sop" onclick="triggerManualSynthesis()">
+              🪄 Generate Channel SOP
+            </button>
           </div>
         `;
       } else {
         el.innerHTML = `
           <div style="padding: 40px 20px; text-align: center;">
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Strategic Intelligence Ready</div>
-            <button class="btn btn-accent" onclick="openSOPModal()" style="padding: 16px 32px; font-size: 1.1rem; border-radius: 50px; box-shadow: 0 10px 30px rgba(124, 131, 255, 0.4);">👁️ View Strategic SOP</button>
+            <button class="btn btn-accent" onclick="openSOPModal()" style="padding: 16px 32px; font-size: 1.1rem; border-radius: 50px; box-shadow: 0 10px 30px rgba(124, 131, 255, 0.4);">👁️ View Channel SOP</button>
               <div style="margin-top: 20px;">
-                 <button class="btn btn-ghost" onclick="triggerManualSynthesis()" style="font-size: 0.75rem;">🔄 Regenerate Strategic SOP</button>
+                 <button class="btn btn-ghost" onclick="triggerManualSynthesis()" style="font-size: 0.75rem;">🔄 Regenerate SOP</button>
               </div>
           </div>
         `;
       }
 
       if (!bendsText) {
-        bendsEl.innerHTML = '<div class="synthesis-empty"><p>No niche bends generated yet.<br>Click "🔥 Niche Bender" (top right) to extract the strategic frameworks.</p></div>';
+        bendsEl.innerHTML = `
+          <div class="synthesis-empty" style="padding: 40px 0;">
+            <p style="margin-bottom: 24px; opacity: 0.8; font-weight: 500;">Niche Bends not yet extracted.</p>
+            <button class="btn btn-niche" onclick="triggerManualNicheBend()">
+              🔥 Generate Niche Bends
+            </button>
+          </div>
+        `;
       } else {
         const lines = bendsText.split('\n');
         const bendsList = [];
@@ -2648,7 +2707,14 @@
           </div>
         `;
         } else {
-          sceneEl.innerHTML = '<div class="synthesis-empty"><p>No scene analysis available yet.<br>Click "👁️ Analyze Scene" to extract styles from the top video.</p></div>';
+          sceneEl.innerHTML = `
+            <div class="synthesis-empty" style="padding: 40px 0;">
+              <p style="margin-bottom: 24px; opacity: 0.8; font-weight: 500;">Visual Analysis not yet performed.</p>
+              <button class="btn btn-visual" onclick="triggerManualVisualAnalysis()">
+                👁️ Run Visual Analysis
+              </button>
+            </div>
+          `;
         }
       } catch (err) {
         console.error('Error rendering synthesis view:', err);
@@ -2660,6 +2726,17 @@
       if (!currentSession) return;
       const url = `https://chatgpt.com/?trigger_synthesis=true&sessionId=${currentSession.id}&channelName=${encodeURIComponent(currentSession.channel)}&totalVideos=${currentSession.videos.length}`;
       window.open(url, '_blank');
+    };
+
+    window.triggerManualNicheBend = function() {
+      if (!currentSession) return;
+      window.open(`https://chatgpt.com/?niche_bend=true&sessionId=${currentSession.id}`, '_blank');
+    };
+
+    window.triggerManualVisualAnalysis = function() {
+      if (!currentSession || currentSession.videos.length === 0) return;
+      const targetVideoId = currentSession.videos[0].videoId || currentSession.videos[0].id;
+      window.open(`https://www.youtube.com/watch?v=${targetVideoId}&analyze_scene=true&sessionId=${currentSession.id}`, '_blank');
     };
 
     window.openSOPModal = function() {

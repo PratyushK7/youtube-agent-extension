@@ -10,7 +10,8 @@ let state = {
   chatTabId: null,
   channelName: '',
   isSequential: false,
-  sessionId: null
+  sessionId: null,
+  chatUrl: null // Specific conversation URL to prevent history clogging
 };
 
 const SERVER = 'http://127.0.0.1:3005';
@@ -63,7 +64,8 @@ async function saveState() {
       chatTabId: state.chatTabId,
       channelName: state.channelName,
       isSequential: state.isSequential,
-      sessionId: state.sessionId
+      sessionId: state.sessionId,
+      chatUrl: state.chatUrl
     }
   });
 }
@@ -103,13 +105,16 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  // Ensure state is alive (MV3 may have restarted)
-  if (state.queue.length === 0 && ['VIDEO_READY', 'STEP_RESULT', 'SAVE_VIDEO_TO_SESSION', 'COMPLETE_SESSION', 'SAVE_NICHE_BENDS'].includes(request.action)) {
+  // Always ensure state is loaded before routing any sequential/session message
+  const sequentialActions = ['VIDEO_READY', 'STEP_RESULT', 'SAVE_VIDEO_TO_SESSION', 'COMPLETE_SESSION', 'SAVE_NICHE_BENDS', 'FINAL_SYNTHESIS'];
+  
+  if (sequentialActions.includes(request.action)) {
     restoreState().then(() => {
       routeMessage(request, sender, sendResponse);
     });
-    return true;
+    return true; // Keep channel open for async response
   }
+  
   return routeMessage(request, sender, sendResponse);
 });
 
@@ -305,7 +310,8 @@ async function handleResetSession(sendResponse) {
     chatTabId: null,
     channelName: '',
     isSequential: false,
-    sessionId: null
+    sessionId: null,
+    chatUrl: null
   };
   
   await chrome.storage.local.remove([
@@ -393,45 +399,53 @@ async function handleVideoReady(request, sender) {
     // Start watchdog — auto-fail if ChatGPT never responds
     startStepWatchdog();
 
-    if (!state.chatTabId) {
-      const tab = await chrome.tabs.create({ url: 'https://chatgpt.com/' });
-      state.chatTabId = tab.id;
-      await saveState();
-      // The content script will auto-trigger via window.load -> pendingAnalysis check
-    } else {
-      // Verify the ChatGPT tab still exists
-      try {
-        await chrome.tabs.get(state.chatTabId);
-      } catch (e) {
-        // Tab was closed — re-create it
-        const tab = await chrome.tabs.create({ url: 'https://chatgpt.com/' });
-        state.chatTabId = tab.id;
-        await saveState();
-        return; // Content script will auto-trigger on load
-      }
-      await chrome.tabs.update(state.chatTabId, { active: true });
-      // Small delay to ensure tab is focused before sending message
-      await delay(500);
-      
-      // Send TRIGGER_STEP with error recovery — if content script isn't loaded, reload the tab
-      try {
-        await chrome.tabs.sendMessage(state.chatTabId, { action: 'TRIGGER_STEP' });
-        console.log('YT-to-AI: TRIGGER_STEP sent to ChatGPT tab', state.chatTabId);
-      } catch (msgErr) {
-        console.warn('YT-to-AI: Content script not responding on ChatGPT tab, reloading tab...', msgErr.message);
-        // Content script is dead/not injected — reload the tab so it re-injects and picks up pendingAnalysis from storage
+    // --- Enhanced Tab Reuse Logic ---
+    const findAndTriggerChatGPT = async () => {
+      // 1. Try saved tab ID first
+      if (state.chatTabId) {
         try {
-          await chrome.tabs.reload(state.chatTabId);
-          console.log('YT-to-AI: ChatGPT tab reloaded, content script will auto-trigger via pendingAnalysis flag');
-        } catch (reloadErr) {
-          // Tab is truly gone — create a new one
-          console.warn('YT-to-AI: Reload failed, creating new ChatGPT tab');
-          const tab = await chrome.tabs.create({ url: 'https://chatgpt.com/' });
-          state.chatTabId = tab.id;
-          await saveState();
+          const tab = await chrome.tabs.get(state.chatTabId);
+          log('Reusing saved ChatGPT tab:', state.chatTabId);
+          await chrome.tabs.update(state.chatTabId, { active: true });
+          await delay(800);
+          await chrome.tabs.sendMessage(state.chatTabId, { action: 'TRIGGER_STEP' });
+          return true;
+        } catch (e) {
+          logWarn('Saved ChatGPT tab no longer valid, searching for alternatives...');
+          state.chatTabId = null;
         }
       }
-    }
+
+      // 2. Search all open tabs for ANY ChatGPT instance
+      const tabs = await chrome.tabs.query({ url: '*://chatgpt.com/*' });
+      if (tabs.length > 0) {
+        const existingTab = tabs[0];
+        state.chatTabId = existingTab.id;
+        log('Found existing ChatGPT tab to reuse:', state.chatTabId);
+        await chrome.tabs.update(state.chatTabId, { active: true });
+        await delay(1200); // Give content script time to stabilize if tab was inactive
+        
+        try {
+          await chrome.tabs.sendMessage(state.chatTabId, { action: 'TRIGGER_STEP' });
+          await saveState();
+          return true;
+        } catch (e) {
+          logWarn('Found tab but content script not responding, reloading...');
+          await chrome.tabs.reload(state.chatTabId);
+          return true; // Content script will auto-trigger on reload via storage flag
+        }
+      }
+
+      // 3. Create new tab as last resort
+      log('No ChatGPT tab found. Creating new one...');
+      const startUrl = state.chatUrl || 'https://chatgpt.com/';
+      const newTab = await chrome.tabs.create({ url: startUrl });
+      state.chatTabId = newTab.id;
+      await saveState();
+      return true;
+    };
+
+    await findAndTriggerChatGPT();
   } catch (err) {
     console.error('YT-to-AI: Video Ready flow failed', err);
     // CRITICAL: Don't let the flow die silently — skip to next video

@@ -1,7 +1,7 @@
-# YouTube Strategic Research Agent: Requirements & Architecture
+# ChannelLens: Strategic YouTube Analysis & Research Tool
 
 ## 1. Project Objective
-Deliver a high-precision, automated strategic research tool that transforms a YouTube channel's content into a comprehensive strategic dossier. The agent must orchestrate a sequential analysis of the top 5+ videos, harvesting high-fidelity thumbnails and full transcripts, and synthesizing them into a master strategic SOP within ChatGPT.
+Deliver a high-precision, automated strategic research tool that transforms a YouTube channel's content into a comprehensive strategic profile. The agent must orchestrate a sequential analysis of the top 5+ videos, harvesting high-fidelity thumbnails and full transcripts, and synthesizing them into a master strategic SOP within ChatGPT.
 
 ---
 
@@ -47,7 +47,7 @@ Deliver a high-precision, automated strategic research tool that transforms a Yo
 
 ### 📊 3.2 Strategic Dashboard
 - **Glassmorphic UI**: Premium visualization of research history.
-- **Auto-Load Logic**: Dynamic loading of the most recent Strategic Dossier on startup.
+- **Auto-Load Logic**: Dynamic loading of the most recent Strategic Report on startup.
 - **Data Schema**: Support for full strategic JSON arrays and markdown-based synthesis reports.
 
 ---

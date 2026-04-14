@@ -17,7 +17,7 @@ const logError = (err, context = 'Server') => {
   console.error(message);
   try {
     const dataDir = join(__dirname, 'data');
-    if (!existsSync(dataDir)) { try { mkdirSync(dataDir, { recursive: true }); } catch {} }
+    if (!existsSync(dataDir)) { try { mkdirSync(dataDir, { recursive: true }); } catch { } }
     // Rotate if log exceeds size limit
     if (existsSync(ERROR_LOG)) {
       try {
@@ -60,14 +60,14 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(join(__dirname, 'public')));
-app.use('/data', express.static(join(__dirname, 'data'))); 
-app.use(express.json({ limit: '50mb' })); 
+app.use('/data', express.static(join(__dirname, 'data')));
+app.use(express.json({ limit: '50mb' }));
 
 // ─── Request Logging ───────────────────────────────────────
 app.use((req, res, next) => {
   const start = Date.now();
   const orig = res.end;
-  res.end = function(...args) {
+  res.end = function (...args) {
     const duration = Date.now() - start;
     const status = res.statusCode;
     const icon = status >= 400 ? '❌' : '✓';
@@ -80,6 +80,12 @@ app.use((req, res, next) => {
 // Root redirect
 app.get('/', (req, res) => {
   res.redirect('/dashboard.html');
+});
+
+// Favicon handler
+app.get('/favicon.ico', (req, res) => {
+  // Return the high-quality PNG as the icon
+  res.sendFile(join(__dirname, 'public', 'favicon.png'));
 });
 
 const PORT = process.env.PORT || 3005;
@@ -137,9 +143,9 @@ app.post('/api/get-transcripts', async (req, res) => {
             if (tracks && tracks.length > 0) {
               // Prefer English, then auto-generated, then first available
               const track = tracks.find(t => t.languageCode === 'en' && t.kind !== 'asr')
-                         || tracks.find(t => t.languageCode === 'en')
-                         || tracks.find(t => t.kind === 'asr')
-                         || tracks[0];
+                || tracks.find(t => t.languageCode === 'en')
+                || tracks.find(t => t.kind === 'asr')
+                || tracks[0];
               if (track?.baseUrl) {
                 const captionRes = await fetch(track.baseUrl + '&fmt=json3');
                 const captionData = await captionRes.json();
@@ -220,19 +226,29 @@ app.post('/api/session/create', (req, res) => {
     if (!channel) return res.status(400).json({ error: 'Channel name required' });
 
     const sessions = readSessions();
+
+    // Find existing session(s) for this channel (case-insensitive & trimmed)
+    const cleanChannel = channel.trim().toLowerCase();
     
-    // Find existing session for this channel and remove it (+ its assets)
-    const existingIdx = sessions.findIndex(s => s.channel === channel);
-    if (existingIdx !== -1) {
-      const oldSession = sessions[existingIdx];
-      const assetsDir = join(__dirname, 'data', 'channel_assets', oldSession.id);
-      if (existsSync(assetsDir)) {
-        try { rmSync(assetsDir, { recursive: true, force: true }); } catch (e) {}
+    // Find all indices to remove (in case of duplicates)
+    for (let i = sessions.length - 1; i >= 0; i--) {
+      const s = sessions[i];
+      if (s.channel.trim().toLowerCase() === cleanChannel) {
+        const oldSession = s;
+        const assetsDir = join(__dirname, 'data', 'channel_assets', oldSession.id);
+        if (existsSync(assetsDir)) {
+          try { 
+            rmSync(assetsDir, { recursive: true, force: true });
+            console.log(`🧹 Deleted old assets: ${assetsDir}`);
+          } catch (e) {
+            console.error(`❌ Failed to delete old assets: ${e.message}`);
+          }
+        }
+        sessions.splice(i, 1);
+        console.log(`🚮 Removed old session entry for "${channel}" (${oldSession.id})`);
       }
-      sessions.splice(existingIdx, 1);
-      console.log(`Replaced existing session for "${channel}" (${oldSession.id})`);
     }
-    
+
     const session = {
       id: `ses_${Date.now()}`,
       channel,
@@ -338,7 +354,7 @@ app.put('/api/session/:id/niche-bends', (req, res) => {
 });
 
 // Scene Analyzer: Save 5 Frames
-app.post('/api/session/:id/scene-frames', express.json({limit: '200mb'}), (req, res) => {
+app.post('/api/session/:id/scene-frames', express.json({ limit: '200mb' }), (req, res) => {
   try {
     const { id } = req.params;
     const { frames } = req.body; // Array of base64 strings
@@ -505,11 +521,7 @@ if (!existsSync(screenshotsDir)) mkdirSync(screenshotsDir, { recursive: true });
 
 app.listen(PORT, '127.0.0.1', () => {
   console.clear();
-  console.log('🚀 YT-to-AI STRATEGIST: Ready');
+  console.log('🚀 Channel Lens: Ready');
   console.log('──────────────────────────────────────');
   console.log(`📡 Local Hub: http://127.0.0.1:${PORT}`);
-  console.log('📑 ChatGPT Loop: ACTIVE');
-  console.log('📊 Strategic Engine: READY');
-  console.log('──────────────────────────────────────');
-  console.log('Note: API Keys are OPTIONAL for current flow.');
 });

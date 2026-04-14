@@ -192,7 +192,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     automateChatGPT(request.retryAttempt || 0);
   }
   if (request.action === 'FINAL_SYNTHESIS') {
-    generateMasterDossier(request.channelName, request.totalSteps, request.sessionId);
+    generateMasterAnalysis(request.channelName, request.totalSteps, request.sessionId);
   }
 });
 
@@ -201,60 +201,122 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // Fix unescaped double quotes inside JSON string values (ChatGPT often outputs these)
 function fixUnescapedQuotes(jsonText) {
+  // 1. Identify and escape problematic characters that often break parsing
+  jsonText = jsonText
+    .replace(/\u2013/g, '-')  // en dash
+    .replace(/\u2014/g, '-')  // em dash
+    .replace(/\u2192/g, '->') // arrow
+    .replace(/\u2022/g, '-'); // bullet
+
   const lines = jsonText.split('\n');
-  const fixed = lines.map(line => {
-    const keyValMatch = line.match(/^(\s*"[^"]*"\s*:\s*")(.*)$/);
-    if (!keyValMatch) return line;
-    const prefix = keyValMatch[1];
-    const rest = keyValMatch[2];
-    const endMatch = rest.match(/^([\s\S]*)"(\s*[,\}\]]?\s*)$/);
-    if (!endMatch) return line;
-    const innerContent = endMatch[1];
-    const suffix = '"' + endMatch[2];
-    const fixedContent = innerContent.replace(/\\"/g, '\x00ESC\x00')
-                                     .replace(/"/g, '\\"')
-                                     .replace(/\x00ESC\x00/g, '\\"');
-    return prefix + fixedContent + suffix;
-  });
-  return fixed.join('\n');
+  const result = [];
+  let currentKey = null;
+  let currentValue = "";
+  let inString = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    const kvMatch = line.match(/^"([^"]*)"\s*:\s*(.*)$/);
+    if (kvMatch && !inString) {
+      // It's a new key-value start
+      const key = kvMatch[1];
+      let val = kvMatch[2].trim();
+      
+      if (val.startsWith('"')) {
+        // It's a string value
+        if (val.endsWith('",') || val.endsWith('"') || val.endsWith('"},') || val.endsWith('"}')) {
+          // Single line string value - fix internal quotes
+          const endIdx = val.lastIndexOf('"');
+          const content = val.substring(1, endIdx);
+          const suffix = val.substring(endIdx);
+          const fixed = content.replace(/\\"/g, '%%ESC%%').replace(/"/g, '\\"').replace(/%%ESC%%/g, '\\"');
+          result.push(`  "${key}": "${fixed}${suffix}`);
+        } else {
+          // Multiline string start
+          currentKey = key;
+          currentValue = val.substring(1); // Skip opening quote
+          inString = true;
+        }
+      } else {
+        // Non-string value (number, boolean, array, object start)
+        result.push(`  ${line}`);
+      }
+    } else if (inString) {
+      // Continuing a multiline string
+      if (line.endsWith('",') || line.endsWith('"') || line.endsWith('"},') || line.endsWith('"}')) {
+        const endIdx = line.lastIndexOf('"');
+        const content = line.substring(0, endIdx);
+        const suffix = line.substring(endIdx);
+        const fixed = (currentValue + "\\n" + content).replace(/\\"/g, '%%ESC%%').replace(/"/g, '\\"').replace(/%%ESC%%/g, '\\"');
+        result.push(`  "${currentKey}": "${fixed}${suffix}`);
+        inString = false;
+        currentKey = null;
+        currentValue = "";
+      } else {
+        currentValue += "\\n" + line;
+      }
+    } else {
+      // Just a normal line (closing brace, etc)
+      result.push(line);
+    }
+  }
+  
+  const finalJson = result.join('\n');
+  return finalJson.startsWith('{') ? finalJson : '{' + finalJson + '}';
 }
 
 // Safely parse JSON with multiple fix strategies
 function safeJSONParse(text) {
   // Attempt 1: direct parse
-  try { return JSON.parse(text); } catch (e) { _log('safeJSON attempt1 error:', e.message); }
-  // Attempt 2: fix unescaped quotes (most common ChatGPT issue)
+  try { return JSON.parse(text); } catch (e) { }
+  
+  // Attempt 2: fix unescaped quotes & multiline issues
   try {
     const fixed = fixUnescapedQuotes(text);
-    _log('After fixUnescapedQuotes, changed:', fixed !== text, 'length:', fixed.length);
-    // Show the area around the position that failed in attempt 1
-    const posMatch = arguments[1] || '';
     return JSON.parse(fixed);
-  } catch (e) { _log('safeJSON attempt2 error:', e.message); }
-  // Attempt 3: fix trailing commas + unescaped quotes
+  } catch (e) { _log('safeJSON repair attempt failed:', e.message); }
+  
+  // Attempt 3: Trailing comma fix
   try {
-    const fixed = fixUnescapedQuotes(text).replace(/,\s*([\]}])/g, '$1');
+    const fixed = text.replace(/,\s*([\]}])/g, '$1');
     return JSON.parse(fixed);
-  } catch (e) { _log('safeJSON attempt3 error:', e.message); }
-  // Attempt 4: nuclear option — extract key-value pairs with regex
+  } catch (e) { }
+  
+  // Attempt 4: Regex-based property extraction (The Ultimate Fallback)
   try {
-    _log('safeJSON attempt4: trying line-by-line manual construction');
-    // Remove outer braces, split by line, try to reconstruct
-    let inner = text.trim();
-    if (inner.startsWith('{')) inner = inner.substring(1);
-    if (inner.endsWith('}')) inner = inner.substring(0, inner.length - 1);
-    // Replace all unescaped quotes in values by converting to single quotes temporarily
-    // Actually, just try replacing problematic characters
-    inner = inner
-      .replace(/[\u2018\u2019]/g, "'")
-      .replace(/[\u201C\u201D]/g, '"')
-      .replace(/\u2013/g, '-')
-      .replace(/\u2014/g, '-')
-      .replace(/\u2192/g, '->')
-      .replace(/\u2026/g, '...');
-    const reconstructed = '{' + inner + '}';
-    return JSON.parse(reconstructed);
-  } catch (e) { _log('safeJSON attempt4 error:', e.message); }
+    _log('safeJSON Attempt 4: Regex properties');
+    const result = {};
+    const props = [
+      'videoNumber', 'title', 'views', 'duration', 'thumbnailDescription',
+      'hookType', 'hookText', 'hookFramework', 'openingStructure',
+      'scriptStructure', 'storytellingFramework', 'rehooksUsed',
+      'retentionPattern', 'ctaPlacement', 'keyTakeaways'
+    ];
+    
+    props.forEach(prop => {
+      // Try to match string values first
+      const sRegex = new RegExp(`"${prop}"\\s*:\\s*"([\\s\\S]*?)"\\s*(?:,|\\}|$)`, 'i');
+      const sMatch = text.match(sRegex);
+      if (sMatch) {
+        result[prop] = sMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').trim();
+        return;
+      }
+      // Try to match array values (e.g. keyTakeaways)
+      const aRegex = new RegExp(`"${prop}"\\s*:\\s*\\[([\\s\\S]*?)\\]`, 'i');
+      const aMatch = text.match(aRegex);
+      if (aMatch) {
+         try {
+           const items = aMatch[1].split('",').map(s => s.replace(/["\s\[\]]/g, '').trim()).filter(Boolean);
+           result[prop] = items;
+         } catch (e) {}
+      }
+    });
+    
+    if (Object.keys(result).length > 2) return result;
+  } catch (e) { }
+  
   return null;
 }
 
@@ -605,10 +667,11 @@ async function automateChatGPT(retryAttempt = 0) {
   // 📦 Upload files via ChatGPT's file input (paste events don't work with React)
   const filesToUpload = [];
 
-  // 1. Transcript file
+  // 1. Transcript file — Use unique step-based filename to prevent ChatGPT cache confusion
   const metaText = `VIDEO TITLE: ${data.videoTitle || 'Unknown'}\nVIEWS: ${data.views || 'TBD'}\nLENGTH: ${data.duration || 'TBD'}\n\nTRANSCRIPT:\n${data.transcript || ''}`;
-  filesToUpload.push(new File([metaText], 'video_transcript.txt', { type: 'text/plain' }));
-  _log(`Transcript file created (${metaText.length} chars)`);
+  const transcriptFilename = `video_data_step_${step}.txt`;
+  filesToUpload.push(new File([metaText], transcriptFilename, { type: 'text/plain' }));
+  _log(`Transcript file created: ${transcriptFilename} (${metaText.length} chars)`);
 
   // 2. Thumbnail image
   if (data.imageData && data.imageData.length > 100) {
@@ -668,8 +731,14 @@ async function automateChatGPT(retryAttempt = 0) {
     analysisPrompt = promptsData.find(p => p.id === 'per-video-analysis.txt')?.content || '';
     _log(`Fetched per-video-analysis.txt (${analysisPrompt.length} chars)`);
   } catch (e) { _warn('Prompt fetch failed:', e.message); }
+
   if (!analysisPrompt) {
-    analysisPrompt = `[Step ${step}/${totalSteps}] Analyze this video completely. Return ONLY a single pure JSON object using the prescribed schema. No conversational filler. Just the JSON.`;
+    analysisPrompt = `[STEP ${step}/${totalSteps}] IMPORTANT: Focus exclusively on the new data uploaded in "${transcriptFilename}". 
+Analyze this video completely. Return ONLY a single pure JSON object using the prescribed schema. 
+No conversational filler. Just the JSON schema specified.`;
+  } else {
+    // If we have a custom prompt, prepend the step-specific instruction
+    analysisPrompt = `[STEP ${step}/${totalSteps}] IMPORTANT: Focus exclusively on the new data uploaded in "${transcriptFilename}".\n\n${analysisPrompt}`;
   }
 
   await injectTextAndSend(promptInput, analysisPrompt);
@@ -681,7 +750,7 @@ async function automateChatGPT(retryAttempt = 0) {
   }
 }
 
-async function generateMasterDossier(channelName, passedTotalSteps, passedSessionId) {
+async function generateMasterAnalysis(channelName, passedTotalSteps, passedSessionId) {
   _log(`Initiating Final Synthesis: channel=${channelName}, session=${passedSessionId}`);
   
   const data = await chrome.storage.local.get(['sessionId']);
@@ -709,15 +778,15 @@ async function generateMasterDossier(channelName, passedTotalSteps, passedSessio
   }
   
   // Fetch Dynamic Prompt from Server
-  let dossierPrompt = "";
+  let masterPrompt = "";
   try {
     const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
     const promptsData = await promptsRes.json();
-    dossierPrompt = promptsData.find(p => p.id === 'master_analysis.txt')?.content;
-    if (!dossierPrompt) throw new Error('master_analysis.txt not found');
+    masterPrompt = promptsData.find(p => p.id === 'master_analysis.txt')?.content;
+    if (!masterPrompt) throw new Error('master_analysis.txt not found');
   } catch (err) {
     console.warn('YT-to-AI: Synthesis prompt fetch failed.', err);
-    dossierPrompt = "Provide a comprehensive Master Strategic SOP (Markdown) based on the provided video data.";
+    masterPrompt = "Provide a comprehensive Master Strategic SOP (Markdown) based on the provided video data.";
   }
 
   // 📦 Multi-Modal Package: Attach JSON and Screenshots
@@ -740,25 +809,45 @@ async function generateMasterDossier(channelName, passedTotalSteps, passedSessio
         }
       }
     }
-  } catch (e) { console.warn('Failed to harvest evidence for dossier:', e); }
+  } catch (e) { console.warn('Failed to harvest evidence for analysis:', e); }
 
   promptInput.focus();
   
   if (dt.items.length > 0) {
-    showToast(`Uploading dossier (${dt.items.length} assets)...`);
+    showToast(`Uploading analysis (${dt.items.length} assets)...`);
     const files = [];
     for (let i = 0; i < dt.files.length; i++) files.push(dt.files[i]);
     await uploadFilesToChatGPT(promptInput, files);
   }
 
-  await injectTextAndSend(promptInput, dossierPrompt);
+  await injectTextAndSend(promptInput, masterPrompt);
   monitorResponse(true, channelName, sid);
 }
+
+// ─── Chat URL Persistence ───────────────────────────
+// Detect and report the specific conversation URL to background so it can be reused
+function reportChatUrl() {
+  const url = window.location.href;
+  if (url.includes('chatgpt.com/c/')) {
+    chrome.storage.local.get('_bgState', (data) => {
+      if (data._bgState && data._bgState.chatUrl !== url) {
+        chrome.storage.local.set({ 
+          _bgState: { ...data._bgState, chatUrl: url } 
+        });
+        _log(`Conversation URL reported for reuse: ${url}`);
+      }
+    });
+  }
+}
+
+// Check on load AND on message
+window.addEventListener('load', reportChatUrl);
+setInterval(reportChatUrl, 5000); // Check for URL changes (ChatGPT is an SPA)
 
 // Init
 async function handleNicheBendTrigger(sessionId) {
   console.log('YT-to-AI: Initiating Niche Bender Bridge for session:', sessionId);
-  showToast('Niche Bender Triggered. Fetching Dossier...');
+  showToast('Niche Bender Triggered. Fetching Analysis...');
   
   try {
     const sessionRes = await fetch(`http://127.0.0.1:3005/api/session/${sessionId}`);
@@ -968,8 +1057,8 @@ async function initializeTriggers() {
 
   if (params.get('trigger_synthesis') === 'true' && sessionId) {
     const totalVideos = params.get('totalVideos');
-    showToast('🚀 Synthesis Mode: Initializing Master Dossier...');
-    generateMasterDossier(channelName, parseInt(totalVideos || '1'), sessionId);
+    showToast('🚀 Synthesis Mode: Initializing Master Report...');
+    generateMasterAnalysis(channelName, parseInt(totalVideos || '1'), sessionId);
     return;
   }
 

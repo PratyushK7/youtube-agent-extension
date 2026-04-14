@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "YT Research Dossier Agent",
+  "name": "ChannelLens",
   "version": "1.1",
-  "description": "Professional-grade YouTube research agent that builds comprehensive strategic dossiers.",
+  "description": "Professional-grade YouTube research tool that builds comprehensive strategic channel reports.",
   "permissions": [
     "activeTab",
     "storage",

@@ -24,30 +24,49 @@ async function navigateToSort(sortText) {
   const cleanSort = sortText.toLowerCase();
   showStatusHUD(`Sorting by: ${sortText.toUpperCase()}`);
   
-  for (let i = 0; i < 8; i++) {
-    const chips = Array.from(document.querySelectorAll('yt-chip-cloud-chip-renderer'));
-    const allButtons = Array.from(document.querySelectorAll('button, tp-yt-paper-button, yt-formatted-string, span'));
-    const target = chips.find(el => el.textContent.trim().toLowerCase().includes(cleanSort)) ||
-                   allButtons.find(el => el.textContent.trim().toLowerCase().includes(cleanSort));
+  for (let i = 0; i < 15; i++) { // Increased retries for slower loads
+    const allButtons = Array.from(document.querySelectorAll('button, [role="button"], [role="tab"]'));
     
-    if (target) {
-      const isSelected = target.hasAttribute('selected') || target.classList.contains('selected');
-      if (isSelected) return true;
-      const clickable = target.querySelector('button') || target;
-      clickable.click();
-      await delay(3500); 
+    const targetBtn = allButtons.find(btn => {
+      const label = (btn.getAttribute('aria-label') || '').toLowerCase();
+      const text = btn.textContent.trim().toLowerCase();
+      return label.includes(cleanSort) || text === cleanSort;
+    });
+
+    if (targetBtn) {
+      // Modern YouTube uses aria-selected="true" for the active sort
+      const isSelected = targetBtn.getAttribute('aria-selected') === 'true' || 
+                         targetBtn.classList.contains('selected') ||
+                         targetBtn.hasAttribute('selected');
+      
+      if (isSelected) {
+        console.log(`YT-to-AI: ${sortText} already selected.`);
+        return true;
+      }
+      
+      console.log(`YT-to-AI: Clicking sort button: ${sortText}`);
+      targetBtn.click();
+      
+      // Give the grid time to begin updating
+      await delay(2500); 
       return true;
     }
-    await delay(800); 
+
+    await delay(1000); 
   }
   
-  if (cleanSort === 'popular' || cleanSort === 'latest') {
-    const sortParam = cleanSort === 'popular' ? 'p' : 'dd';
-    const baseUrl = window.location.origin + window.location.pathname;
-    window.location.href = `${baseUrl}?view=0&sort=${sortParam}&flow=grid`;
-    await delay(5000);
-    return true;
+  // URL Fallback Strategy (Advanced)
+  const sortParam = cleanSort === 'popular' ? 'p' : 'dd';
+  const url = new URL(window.location.href);
+  if (url.searchParams.get('sort') !== sortParam) {
+    url.searchParams.set('view', '0');
+    url.searchParams.set('sort', sortParam);
+    url.searchParams.set('flow', 'grid');
+    showStatusHUD(`Syncing via URL: ${sortParam}`);
+    window.location.href = url.toString();
+    return new Promise(() => {}); // Stop execution for redirect
   }
+  
   return false;
 }
 
