@@ -172,6 +172,12 @@
       font-size: 0.85rem;
       font-weight: 600;
       color: var(--text-primary);
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .sidebar-logo:hover {
+      opacity: 0.8;
     }
 
     .sidebar-logo svg {
@@ -247,6 +253,38 @@
     .sidebar-nav-item:hover {
       background: var(--bg-card-hover);
       color: var(--text-primary);
+    }
+
+    .sidebar-search {
+      padding: 12px;
+      position: relative;
+    }
+
+    .sidebar-search input {
+      width: 100%;
+      padding: 8px 12px 8px 32px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.8rem;
+      transition: var(--transition-base);
+      outline: none;
+    }
+
+    .sidebar-search input:focus {
+      border-color: var(--accent);
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+    }
+
+    .sidebar-search svg {
+      position: absolute;
+      left: 22px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
     }
 
     .sidebar-nav-item.active {
@@ -591,6 +629,38 @@
       color: white;
       transform: scale(1.05);
       box-shadow: none;
+    }
+
+    .btn-pin-session {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-full);
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border-subtle);
+      color: rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      transition: var(--transition-base);
+      backdrop-filter: blur(8px);
+    }
+
+    .btn-pin-session:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--accent);
+      transform: scale(1.1);
+    }
+
+    .btn-pin-session.is-pinned {
+      color: var(--accent);
+      background: rgba(99, 102, 241, 0.25);
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
     }
 
     .card-body {
@@ -2117,15 +2187,21 @@
   <!-- Research Hub Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-logo">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linejoin="round">
-          <path d="M12 2L2 7L12 12L22 7L12 2Z" />
-          <path d="M2 17L12 22L22 17" />
-          <path d="M2 12L12 17L22 12" />
-        </svg>
+      <div class="sidebar-logo" onclick="goHome()">
+        <img src="/favicon.png" width="22" height="22"
+          style="border-radius: 6px; box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);">
         <span>ChannelLens</span>
       </div>
+    </div>
+
+    <div class="sidebar-search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" id="sidebar-search-input" placeholder="Search channels..."
+        oninput="handleSidebarSearch(this.value)">
     </div>
 
     <div class="sidebar-nav">
@@ -2138,7 +2214,7 @@
           </svg>
           Library
         </div>
-        <div class="sidebar-nav-item" onclick="showToast('Favorites feature coming soon!')">
+        <div class="sidebar-nav-item" data-view="pinned" onclick="showView('pinned')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
           </svg>
@@ -2222,7 +2298,7 @@
       <div id="empty-state" class="empty-state" style="display:none;">
         <p style="font-size:2.5rem;margin-bottom:16px;opacity:0.3">&#x1F50D;</p>
         <h3>No analysis sessions yet</h3>
-        <p>Use the browser extension to analyze a YouTube channel with ChatGPT.</p>
+        <p>Analyze a YouTube channel to get started.</p>
       </div>
     </div>
 
@@ -2240,14 +2316,14 @@
             <h1 id="session-title" class="session-title"></h1>
             <div class="session-meta">
               <span id="session-meta-text"></span>
-            <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
-              <span id="session-meta-badge" class="session-meta-badge"></span>
-              <button id="btn-stop-synthesis" class="btn btn-ghost" 
-                      style="display: none; padding: 4px 10px; font-size: 0.65rem; border-color: var(--accent-red); color: var(--accent-red);" 
-                      onclick="resetSessionStatus()">
-                Abort Synthesis
-              </button>
-            </div>
+              <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
+                <span id="session-meta-badge" class="session-meta-badge"></span>
+                <button id="btn-stop-synthesis" class="btn btn-ghost"
+                  style="display: none; padding: 4px 10px; font-size: 0.65rem; border-color: var(--accent-red); color: var(--accent-red);"
+                  onclick="resetSessionStatus()">
+                  Abort Synthesis
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -2418,10 +2494,6 @@
     <div id="status-debug"
       style="position:fixed; bottom:10px; right:10px; font-size:10px; color:rgba(255,255,255,0.2); z-index:9999;">JS
       LOADED</div>
-    <div class="footer"
-      style="text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.75rem; border-top: 1px solid var(--border-subtle); margin-top: 60px;">
-      YouTube Agent Dashboard v1.4.5
-    </div>
   </div><!-- end main-wrapper -->
 
   <script>
@@ -2434,10 +2506,20 @@
     window.showView = function (view) {
       document.querySelectorAll('.sidebar-nav-item').forEach(i => i.classList.remove('active'));
       document.querySelector(`.sidebar-nav-item[data-view="${view}"]`)?.classList.add('active');
-      if (view === 'sessions') {
+
+      if (view === 'sessions' || view === 'pinned') {
+        window.currentLibraryFilter = view;
         document.getElementById('sessions-grid-view').style.display = 'block';
         document.getElementById('session-view').style.display = 'none';
+        loadSessions(); // Reload to apply filter
       }
+    };
+
+    window.goHome = function () {
+      const searchInput = document.getElementById('sidebar-search-input');
+      if (searchInput) searchInput.value = '';
+      window.sidebarSearchQuery = '';
+      showView('sessions');
     };
 
     window.triggerTool = function (tool) {
@@ -2544,6 +2626,29 @@
       container.appendChild(toast);
       setTimeout(() => toast.remove(), 4000);
     }
+    window.togglePin = async function (id, currentPinned) {
+      try {
+        const res = await fetch(`/api/session/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pinned: !currentPinned })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.session.pinned ? 'Added to Pinned' : 'Removed from Pinned', 'info');
+          loadSessions();
+        }
+      } catch (err) {
+        showToast('Failed to update favorite status', 'error');
+      }
+    };
+
+    window.sidebarSearchQuery = '';
+    window.handleSidebarSearch = function (query) {
+      window.sidebarSearchQuery = query.toLowerCase().trim();
+      loadSessions();
+    };
+
     async function loadSessions() {
       const debug = document.getElementById('status-debug');
       if (debug) debug.textContent = 'FETCHING...';
@@ -2572,20 +2677,46 @@
         // 🏡 Update Sidebar Quick List
         const sidebarList = document.getElementById('sidebar-session-list');
         if (sidebarList) {
-          sidebarList.innerHTML = sessions.slice(0, 8).map(s => `
-            <div class="sidebar-nav-item ${currentSession && currentSession.id === s.id ? 'active' : ''}" onclick="openSession('${s.id}')">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(s.channel)}</span>
-            </div>
-          `).join('');
+          const filteredForSidebar = sessions.filter(s =>
+            !window.sidebarSearchQuery || s.channel.toLowerCase().includes(window.sidebarSearchQuery)
+          );
+
+          if (filteredForSidebar.length === 0) {
+            sidebarList.innerHTML = `<div style="padding: 10px; font-size: 0.75rem; color: var(--text-muted); font-style: italic;">${window.sidebarSearchQuery ? 'No results' : 'No history yet'}</div>`;
+          } else {
+            sidebarList.innerHTML = filteredForSidebar.slice(0, 10).map(s => `
+              <div class="sidebar-nav-item ${currentSession && currentSession.id === s.id ? 'active' : ''}" onclick="openSession('${s.id}')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(s.channel)}</span>
+              </div>
+            `).join('');
+          }
         }
 
 
         const lastActiveSessionId = currentSession ? currentSession.id : null;
-        grid.innerHTML = sessions.map(s => {
+
+        let displaySessions = sessions.filter(s =>
+          !window.sidebarSearchQuery || s.channel.toLowerCase().includes(window.sidebarSearchQuery)
+        );
+
+        if (window.currentLibraryFilter === 'pinned') {
+          displaySessions = displaySessions.filter(s => s.pinned);
+        }
+
+        if (displaySessions.length === 0) {
+          const msg = window.sidebarSearchQuery ? `No matches for "${esc(window.sidebarSearchQuery)}"` : (window.currentLibraryFilter === 'pinned' ? 'No pinned sessions yet' : 'No sessions analyzed yet');
+          grid.innerHTML = `<div style="grid-column: 1/-1; padding: 60px; text-align: center; opacity: 0.5;">${msg}</div>`;
+          return;
+        }
+
+        grid.innerHTML = displaySessions.map(s => {
           try {
             return `
               <div class="card" onclick="openSession('${s.id}')" style="position:relative;">
+                <button class="btn-pin-session ${s.pinned ? 'is-pinned' : ''}" onclick="event.stopPropagation(); togglePin('${s.id}', ${!!s.pinned})">
+                   <svg width="14" height="14" viewBox="0 0 24 24" fill="${s.pinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                </button>
                 <button class="btn-delete-session" onclick="event.stopPropagation(); confirmDelete('${s.id}', '${esc(s.channel)}')">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
                 </button>
@@ -2730,7 +2861,7 @@
 
         badge.textContent = statusText;
         badge.className = `session-meta-badge ${currentSession.status === 'complete' ? 'complete' : 'progress'}`;
-        
+
         const stopBtn = document.getElementById('btn-stop-synthesis');
         if (currentSession.status === 'synthesizing') {
           badge.classList.add('live-sync');
@@ -3188,7 +3319,7 @@
     window.resetSessionStatus = async function () {
       if (!currentSession) return;
       if (!confirm("This will stop the synthesis monitoring and return the session to 'In Progress'. Are you sure?")) return;
-      
+
       try {
         await fetch(`/api/session/${currentSession.id}`, {
           method: 'PATCH',

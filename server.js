@@ -301,13 +301,14 @@ app.put('/api/session/:id/metadata', express.json(), (req, res) => {
 app.patch('/api/session/:id', express.json(), (req, res) => {
   try {
     const { id } = req.params;
-    const { status, channel } = req.body;
+    const { status, channel, pinned } = req.body;
     const sessions = readSessions();
     const session = sessions.find(s => s.id === id);
     if (!session) return res.status(404).json({ error: 'Session not found' });
 
     if (status) session.status = status;
     if (channel) session.channel = channel;
+    if (pinned !== undefined) session.pinned = !!pinned;
     
     session.updatedAt = new Date().toISOString();
     writeSessions(sessions);
