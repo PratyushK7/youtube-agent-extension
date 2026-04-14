@@ -252,16 +252,61 @@ app.post('/api/session/create', (req, res) => {
     const session = {
       id: `ses_${Date.now()}`,
       channel,
+      channelUrl: '',
       totalVideos: totalVideos || 0,
       promptUsed: promptUsed || 'master_analysis',
       status: 'in-progress',
       videos: [],
       synthesis: '',
+      popularScreenshot: '',
       startedAt: new Date().toISOString(),
       completedAt: null
     };
 
     sessions.unshift(session);
+    writeSessions(sessions);
+    res.json({ success: true, session });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/session/:id/metadata', express.json(), (req, res) => {
+  try {
+    const { id } = req.params;
+    const { popularScreenshot, channelUrl } = req.body;
+    const sessions = readSessions();
+    const session = sessions.find(s => s.id === id);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    if (popularScreenshot) {
+      const sessionAssetsDir = join(__dirname, 'data', 'channel_assets', id);
+      if (!existsSync(sessionAssetsDir)) mkdirSync(sessionAssetsDir, { recursive: true });
+      const imgPath = join(sessionAssetsDir, 'popular_overview.png');
+      const base64Data = popularScreenshot.replace(/^data:image\/\w+;base64,/, '');
+      writeFileSync(imgPath, base64Data, 'base64');
+      session.popularScreenshot = `/data/channel_assets/${id}/popular_overview.png`;
+    }
+
+    if (channelUrl) {
+      session.channelUrl = channelUrl;
+    }
+
+    writeSessions(sessions);
+    res.json({ success: true, session });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Update session status or metadata
+app.patch('/api/session/:id', express.json(), (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, channel } = req.body;
+    const sessions = readSessions();
+    const session = sessions.find(s => s.id === id);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    if (status) session.status = status;
+    if (channel) session.channel = channel;
+    
     writeSessions(sessions);
     res.json({ success: true, session });
   } catch (err) { res.status(500).json({ error: err.message }); }

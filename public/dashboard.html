@@ -636,8 +636,35 @@
     }
 
     .session-meta-badge.progress {
-      background: rgba(203,145,47,0.12);
-      color: var(--accent-warm);
+      background: rgba(124, 131, 255, 0.1);
+      color: var(--accent-primary);
+      border-color: rgba(124, 131, 255, 0.2);
+    }
+    
+    .session-meta-badge.live-sync {
+      color: #10b981 !important;
+      border-color: rgba(16, 185, 129, 0.3) !important;
+      background: rgba(16, 185, 129, 0.05) !important;
+      position: relative;
+      padding-left: 20px;
+    }
+    .session-meta-badge.live-sync::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 6px;
+      height: 6px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+      animation: pulse-dot 1.5s infinite;
+    }
+    @keyframes pulse-dot {
+      0% { opacity: 1; transform: translateY(-50%) scale(1); }
+      50% { opacity: 0.5; transform: translateY(-50%) scale(0.8); }
+      100% { opacity: 1; transform: translateY(-50%) scale(1); }
     }
 
     .header-actions {
@@ -678,33 +705,43 @@
 
     /* Premium Button Variants */
     .btn-sop {
-      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
       color: white;
-      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
     .btn-sop:hover {
-      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
-      transform: translateY(-2px);
+      box-shadow: 0 0 20px rgba(79, 70, 229, 0.2);
+      filter: brightness(1.1);
     }
 
     .btn-niche {
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      background: linear-gradient(135deg, #10b981 0%, #065f46 100%);
       color: white;
-      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
     .btn-niche:hover {
-      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
-      transform: translateY(-2px);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+      filter: brightness(1.1);
     }
 
     .btn-visual {
-      background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+      background: linear-gradient(135deg, #9f1239 0%, #881337 100%);
       color: white;
-      box-shadow: 0 4px 14px rgba(236, 72, 153, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
     .btn-visual:hover {
-      box-shadow: 0 6px 20px rgba(236, 72, 153, 0.6);
-      transform: translateY(-2px);
+      box-shadow: 0 0 20px rgba(159, 18, 57, 0.2);
+      filter: brightness(1.1);
+    }
+
+    .btn-accent {
+      background: rgba(255, 255, 255, 0.9);
+      color: #000;
+      font-weight: 800;
+    }
+    .btn-accent:hover {
+      background: #fff;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
     }
 
     .btn-primary {
@@ -1623,17 +1660,34 @@
 
     /* ═══ Markdown Styles (Professional) ═══ */
     .markdown-content {
-      line-height: 1.6;
+      line-height: 1.7;
       color: var(--text-primary);
+      font-size: 0.95rem;
     }
     .markdown-content h1, .markdown-content h2, .markdown-content h3 {
-      margin: 1.2em 0 0.6em;
+      margin: 1.6em 0 0.8em;
       color: var(--text-primary);
       letter-spacing: -0.01em;
+      font-weight: 700;
     }
-    .markdown-content h1 { font-size: 1.4rem; border-bottom: 1px solid var(--border-medium); padding-bottom: 0.2em; }
-    .markdown-content h2 { font-size: 1.1rem; color: var(--accent-primary); border-bottom: none; }
-    .markdown-content h3 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+    .markdown-content h1 { 
+      font-size: 1.6rem; 
+      border-bottom: 2px solid var(--accent-primary); 
+      padding-bottom: 0.3em;
+      color: var(--accent-primary);
+    }
+    .markdown-content h2 { 
+      font-size: 1.25rem; 
+      color: var(--text-primary); 
+      border-left: 4px solid var(--accent-primary);
+      padding-left: 12px;
+    }
+    .markdown-content h3 { 
+      font-size: 1rem; 
+      text-transform: uppercase; 
+      letter-spacing: 0.08em; 
+      color: var(--accent-warm); 
+    }
     
     /* Compact mode for table cells */
     td .markdown-content h1 { font-size: 1.1rem; margin-top: 0.5em; }
@@ -1642,19 +1696,25 @@
     td .markdown-content p { margin-bottom: 0.8em; font-size: 0.85rem; }
     td .markdown-content ul, td .markdown-content ol { margin-bottom: 1em; padding-left: 1.2em; font-size: 0.85rem; }
 
-    .markdown-content p { margin-bottom: 1.2em; color: var(--text-secondary); }
-    .markdown-content ul, .markdown-content ol { margin-bottom: 1.5em; padding-left: 1.5em; }
-    .markdown-content li { margin-bottom: 0.4em; color: var(--text-secondary); }
-    .markdown-content li strong { color: var(--text-primary); }
+    .markdown-content p { margin-bottom: 1.4em; color: var(--text-secondary); }
+    .markdown-content ul, .markdown-content ol { margin-bottom: 1.6em; padding-left: 1.8em; }
+    .markdown-content li { margin-bottom: 0.6em; color: var(--text-secondary); position: relative; }
+    .markdown-content li strong { color: var(--text-primary); font-weight: 600; }
+    
+    /* Premium List Indicators */
+    .markdown-content ul li::marker { color: var(--accent-primary); }
+    .markdown-content ol li::marker { color: var(--accent-warm); font-weight: 700; }
+
     .markdown-content blockquote {
       border-left: 4px solid var(--accent-primary);
-      background: rgba(124, 131, 255, 0.05);
-      padding: 1rem 1.5rem;
-      margin: 1.5em 0;
-      border-top-right-radius: var(--radius-md);
-      border-bottom-right-radius: var(--radius-md);
+      background: rgba(99, 102, 241, 0.04);
+      padding: 1.2rem 1.8rem;
+      margin: 1.8em 0;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
       font-style: italic;
+      color: var(--text-secondary);
     }
+
     .markdown-content code {
       background: var(--bg-elevated);
       padding: 0.2em 0.4em;
@@ -1673,18 +1733,36 @@
     }
     .markdown-content table {
       width: 100%;
-      border-collapse: collapse;
-      margin: 1.5em 0;
-      font-size: 0.9rem;
-      min-width: unset; /* Override general table min-width */
+      border-collapse: separate;
+      border-spacing: 0;
+      margin: 2em 0;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--border-medium);
     }
     .markdown-content th, .markdown-content td {
-      border: 1px solid var(--border-medium);
-      padding: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      border-right: 1px solid var(--border-subtle);
       text-align: left;
     }
-    .markdown-content th { background: var(--bg-elevated); }
-    .markdown-content hr { border: none; border-top: 1px solid var(--border-medium); margin: 2em 0; }
+    .markdown-content th {
+      background: var(--bg-secondary);
+      color: var(--accent-primary);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    .markdown-content tr:last-child td { border-bottom: none; }
+    .markdown-content td:last-child, .markdown-content th:last-child { border-right: none; }
+    
+    .markdown-content hr { 
+      border: none; 
+      height: 1px; 
+      background: linear-gradient(90deg, transparent, var(--border-medium), transparent);
+      margin: 3em 0; 
+    }
 
     /* ═══ Responsive ═══ */
     @media (max-width: 768px) {
@@ -2045,10 +2123,10 @@
             <div style="font-size: 0.65rem; color: var(--accent-primary); font-weight: 800;">AI STRATEGY</div>
           </div>
           <div id="synthesis-content" class="tool-card-body">
-            <div class="synthesis-empty" style="padding: 60px 0;">
+            <div class="synthesis-empty" style="padding: 40px 0;">
               <p style="margin-bottom: 24px; opacity: 0.8; font-weight: 500;">Channel SOP not yet generated.</p>
               <button class="btn btn-sop" onclick="triggerManualSynthesis()">
-                🪄 Generate Channel SOP
+                Generate Strategic SOP
               </button>
             </div>
           </div>
@@ -2064,7 +2142,7 @@
             <div class="synthesis-empty" style="padding: 40px 0;">
               <p style="margin-bottom: 20px; opacity: 0.8; font-weight: 500;">Niche Bends not yet extracted.</p>
               <button class="btn btn-niche" onclick="triggerManualNicheBend()">
-                🔥 Generate Niche Bends
+                Extract Niche Bends
               </button>
             </div>
           </div>
@@ -2080,7 +2158,7 @@
             <div class="synthesis-empty" style="padding: 40px 0;">
               <p style="margin-bottom: 20px; opacity: 0.8; font-weight: 500;">Visual Analysis not yet performed.</p>
               <button class="btn btn-visual" onclick="triggerManualVisualAnalysis()">
-                👁️ Run Visual Analysis
+                Run Visual Analysis
               </button>
             </div>
           </div>
@@ -2094,14 +2172,49 @@
     <div class="sop-container">
       <div class="sop-header">
         <div class="sop-title">Strategic Channel SOP</div>
-        <button class="btn btn-ghost" onclick="closeSOPModal()" style="padding:8px; min-width:unset;">&times;</button>
+        <button class="btn btn-ghost" onclick="closeModal('sop-modal')" style="padding:8px; min-width:unset;">&times;</button>
       </div>
-      <div id="sop-modal-content" class="sop-scroller markdown-content">
-        <!-- Content will be injected here -->
+      <div id="sop-modal-content" class="sop-scroller markdown-content"></div>
+      <div class="sop-footer">
+        <button class="btn btn-ghost" onclick="closeModal('sop-modal')">Close Dashboard</button>
+        <div style="display:flex; gap:10px;">
+          <button id="btn-download-md" class="btn btn-secondary">Download .md</button>
+          <button id="btn-copy-sop" class="btn btn-primary">Copy Full SOP</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Niche Bends Modal ═══ -->
+  <div id="niche-modal" class="sop-modal">
+    <div class="sop-container">
+      <div class="sop-header">
+        <div class="sop-title">Niche Pivot Laboratory</div>
+        <button class="btn btn-ghost" onclick="closeModal('niche-modal')" style="padding:8px; min-width:unset;">&times;</button>
+      </div>
+      <div id="niche-modal-content" class="sop-scroller" style="padding: 30px;">
+        <!-- Grid will be injected here -->
       </div>
       <div class="sop-footer">
-        <button class="btn btn-ghost" onclick="closeSOPModal()">Close Dashboard</button>
-        <button id="btn-copy-sop" class="btn btn-primary">📋 Copy Full SOP</button>
+        <button class="btn btn-ghost" onclick="closeModal('niche-modal')">Close</button>
+        <button class="btn btn-primary" onclick="navigator.clipboard.writeText(currentSession.nicheBends); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy Bends', 2000);">Copy Bends</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Visual Analysis Modal ═══ -->
+  <div id="scene-modal" class="sop-modal">
+    <div class="sop-container">
+      <div class="sop-header">
+        <div class="sop-title">Vision Intelligence Studio</div>
+        <button class="btn btn-ghost" onclick="closeModal('scene-modal')" style="padding:8px; min-width:unset;">&times;</button>
+      </div>
+      <div id="scene-modal-content" class="sop-scroller markdown-content" style="padding: 40px;">
+        <!-- Analysis will be injected here -->
+      </div>
+      <div class="sop-footer">
+        <button class="btn btn-ghost" onclick="closeModal('scene-modal')">Close</button>
+        <button class="btn btn-primary" id="btn-copy-vision">Copy Vision Prompt</button>
       </div>
     </div>
   </div>
@@ -2401,7 +2514,10 @@
         const oldDataStr = JSON.stringify({
           status: currentSession?.status,
           videoCount: currentSession?.videos?.length,
-          hasSynth: !!currentSession?.synthesis
+          hasSynth: !!currentSession?.synthesis,
+          hasNiche: !!currentSession?.nicheBends,
+          // Track total content length/state of videos to catch updates to existing videos
+          videoState: currentSession?.videos?.map(v => v.title + (v.capturedAt || '')).join('|')
         });
         
         currentSession = data.session;
@@ -2409,7 +2525,9 @@
         const newDataStr = JSON.stringify({
           status: currentSession.status,
           videoCount: currentSession.videos.length,
-          hasSynth: !!currentSession.synthesis
+          hasSynth: !!currentSession.synthesis,
+          hasNiche: !!currentSession.nicheBends,
+          videoState: currentSession.videos.map(v => v.title + (v.capturedAt || '')).join('|')
         });
 
         // 🚀 DIFFERENTIAL RENDER: If nothing essential changed, skip the heavy DOM wipe
@@ -2442,8 +2560,16 @@
         document.getElementById('session-meta-text').textContent =
           `${currentSession.videos.length} videos \u2022 ${new Date(currentSession.startedAt).toLocaleString()}`;
         const badge = document.getElementById('session-meta-badge');
-        badge.textContent = currentSession.status === 'complete' ? 'Complete' : 'In Progress';
+        const isPolling = (currentSession.status === 'in-progress' || currentSession.status === 'synthesizing') && document.visibilityState === 'visible';
+        
+        let statusText = 'Complete';
+        if (currentSession.status === 'synthesizing') statusText = '● Strategic Synthesis...';
+        else if (isPolling) statusText = '● Live Analysis';
+        else if (currentSession.status === 'in-progress') statusText = 'In Progress';
+
+        badge.textContent = statusText;
         badge.className = `session-meta-badge ${currentSession.status === 'complete' ? 'complete' : 'progress'}`;
+        if (isPolling || currentSession.status === 'synthesizing') badge.classList.add('live-sync');
 
         document.getElementById('metrics-count').textContent = `${currentSession.videos.length} videos analyzed`;
 
@@ -2747,35 +2873,47 @@
 
       if (!text) {
         el.innerHTML = `
-          <div class="synthesis-empty" style="padding: 60px 0;">
-            <p style="margin-bottom: 24px; opacity: 0.8; font-weight: 500;">Channel SOP not yet generated.</p>
+          <div class="synthesis-empty" style="padding: 40px 0;">
+            <p style="margin-bottom: 20px; opacity: 0.6; font-size: 0.85rem;">Strategic Channel SOP not yet generated.</p>
             <button class="btn btn-sop" onclick="triggerManualSynthesis()">
-              🪄 Generate Channel SOP
+              Generate Strategic SOP
             </button>
           </div>
         `;
       } else {
         el.innerHTML = `
-          <div style="padding: 40px 20px; text-align: center;">
-            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Strategic Intelligence Ready</div>
-            <button class="btn btn-accent" onclick="openSOPModal()" style="padding: 16px 32px; font-size: 1.1rem; border-radius: 50px; box-shadow: 0 10px 30px rgba(124, 131, 255, 0.4);">👁️ View Channel SOP</button>
-              <div style="margin-top: 20px;">
-                 <button class="btn btn-ghost" onclick="triggerManualSynthesis()" style="font-size: 0.75rem;">🔄 Regenerate SOP</button>
-              </div>
+          <div style="padding: 30px 20px; text-align: center;">
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Intelligence Pipeline Ready</p>
+            <button class="btn btn-accent" onclick="openSOPModal()">View Channel SOP</button>
+            <div style="margin-top: 16px;">
+               <button class="btn btn-ghost" onclick="triggerManualSynthesis()" style="font-size: 0.7rem; padding: 6px 14px;">Regenerate SOP</button>
+            </div>
           </div>
         `;
       }
 
+      // ═══ Niche Bends Handling ═══
       if (!bendsText) {
         bendsEl.innerHTML = `
           <div class="synthesis-empty" style="padding: 40px 0;">
-            <p style="margin-bottom: 24px; opacity: 0.8; font-weight: 500;">Niche Bends not yet extracted.</p>
+            <p style="margin-bottom: 20px; opacity: 0.6; font-size: 0.85rem;">Niche Bends not yet extracted.</p>
             <button class="btn btn-niche" onclick="triggerManualNicheBend()">
-              🔥 Generate Niche Bends
+              Extract Niche Bends
             </button>
           </div>
         `;
       } else {
+        bendsEl.innerHTML = `
+          <div style="padding: 30px 20px; text-align: center;">
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Creative Concepting Ready</p>
+            <button class="btn btn-accent" onclick="openNicheModal()">View Niche Bends</button>
+            <div style="margin-top: 16px;">
+               <button class="btn btn-ghost" onclick="triggerManualNicheBend()" style="font-size: 0.7rem; padding: 6px 14px;">Regenerate Bends</button>
+            </div>
+          </div>
+        `;
+
+        // Populate the Niche Modal (Background Parsing)
         const lines = bendsText.split('\n');
         const bendsList = [];
         let currentBend = null;
@@ -2783,19 +2921,18 @@
         lines.forEach(line => {
           const trimmed = line.trim();
           if (!trimmed) return;
-
           if (/^(?:\*\*?)?\d+\.\s+/.test(trimmed)) {
             if (currentBend && currentBend.items.length > 0) bendsList.push(currentBend);
             let title = trimmed.replace(/^(?:\*\*?)?\d+\.\s+/, '').replace(/:?\*?\*?$/, '').trim();
             title = title.replace(/^#+\s*/, '').replace(/^\[/, '').replace(/\]$/, '');
             currentBend = { title, items: [] };
-          }
-          else if (currentBend && /^(?:→|\-|\*|•)\s+/.test(trimmed)) {
+          } else if (currentBend && /^(?:→|\-|\*|•)\s+/.test(trimmed)) {
             currentBend.items.push(trimmed.replace(/^(?:→|\-|\*|•)\s+/, '').trim());
           }
         });
         if (currentBend && currentBend.items.length > 0) bendsList.push(currentBend);
 
+        const modalContent = document.getElementById('niche-modal-content');
         if (bendsList.length > 0) {
           let gridHtml = '<div class="niche-grid">';
           bendsList.forEach((b, i) => {
@@ -2810,45 +2947,47 @@
             `;
           });
           gridHtml += '</div>';
-          bendsEl.innerHTML = gridHtml;
+          modalContent.innerHTML = gridHtml;
         } else {
-          // Fallback if parsing fails to find the structure
-          bendsEl.innerHTML = '<p>' + formatMarkdown(bendsText) + '</p>';
+          modalContent.innerHTML = '<p>' + formatMarkdown(bendsText) + '</p>';
         }
       }
 
+      // ═══ Visual Analysis Handling ═══
       const sceneEl = document.getElementById('scene-analysis-content');
+      const sceneModalContent = document.getElementById('scene-modal-content');
 
       if (sceneAnalysis || (sceneFrames && sceneFrames.length > 0)) {
-        let framesPreview = '';
-        if (sceneFrames && sceneFrames.length > 0) {
-          // Cinematic Channel Art Strip (Anti-Escape version)
-          framesPreview = `
-            <div style=\"display:flex; width:100%; height:120px; border-radius:var(--radius-md); overflow:hidden; margin-bottom:12px; cursor:pointer; border:1px solid var(--border-subtle);\" class=\"scene-frames-preview\">", "oldString": "            <div style=\"display:flex; width:100%; height:180px; border-radius:12px; overflow:hidden; margin-bottom:16px; cursor:pointer; box-shadow:0 10px 30px rgba(0,0,0,0.4);\" class=\"scene-frames-preview\">
-              ${sceneFrames.map((src, idx) => `<img src="${src}" onclick="openGallery(${JSON.stringify(sceneFrames)}, ${idx})" style="flex:1; object-fit:cover; min-width:0; transition: transform 0.3s ease, filter 0.3s ease;" onmouseover="this.style.transform='scale(1.08)'; this.style.filter='brightness(1.2)';" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)';">`).join('')}
+        sceneEl.innerHTML = `
+          <div style="padding: 30px 20px; text-align: center;">
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Style Analysis Ready</p>
+            <button class="btn btn-accent" onclick="openSceneModal()">View Visual Profile</button>
+            <div style="margin-top: 16px;">
+               <button class="btn btn-ghost" onclick="triggerManualVisualAnalysis()" style="font-size: 0.7rem; padding: 6px 14px;">Regenerate Profile</button>
             </div>
-            <div style="margin-bottom: 24px;">
-              <button class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 14px;" onclick='openGallery(${JSON.stringify(sceneFrames)})'>📁 See Channel Art</button>
-            </div>
-          `;
-        }
-
-        sceneEl.innerHTML = framesPreview + formatMarkdown(sceneAnalysis || "No text analysis provided.");
-        sceneEl.innerHTML += `
-          <div style="margin-top: 24px; text-align: right; border-top: 1px solid var(--border); padding-top: 16px;">
-            <button class="btn btn-primary" style="display:inline-flex; align-items:center; gap:8px;" onclick="navigator.clipboard.writeText(\`${(sceneAnalysis || '').replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`); this.innerHTML='&#10003; Copied!'; setTimeout(()=>this.innerHTML='📋 Copy Vision Prompt', 2000);">📋 Copy Vision Prompt</button>
           </div>
         `;
-        } else {
-          sceneEl.innerHTML = `
-            <div class="synthesis-empty" style="padding: 40px 0;">
-              <p style="margin-bottom: 24px; opacity: 0.8; font-weight: 500;">Visual Analysis not yet performed.</p>
-              <button class="btn btn-visual" onclick="triggerManualVisualAnalysis()">
-                👁️ Run Visual Analysis
-              </button>
+
+        // Populate Visual Modal
+        let framesPreview = '';
+        if (sceneFrames && sceneFrames.length > 0) {
+          framesPreview = `
+            <div style="display:flex; width:100%; height:180px; border-radius:var(--radius-lg); overflow:hidden; margin-bottom:24px; cursor:pointer; border:1px solid var(--border-medium); box-shadow:var(--shadow-lg);" class="scene-frames-preview">
+              ${sceneFrames.map((src, idx) => `<img src="${src}" onclick="openGallery(${JSON.stringify(sceneFrames)}, ${idx})" style="flex:1; object-fit:cover; min-width:0; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.1)';" onmouseout="this.style.transform='scale(1)';">`).join('')}
             </div>
           `;
         }
+        sceneModalContent.innerHTML = framesPreview + formatMarkdown(sceneAnalysis || "No visual metrics recorded yet.");
+      } else {
+        sceneEl.innerHTML = `
+          <div class="synthesis-empty" style="padding: 40px 0;">
+            <p style="margin-bottom: 20px; opacity: 0.6; font-size: 0.85rem;">Visual Analysis not yet performed.</p>
+            <button class="btn btn-visual" onclick="triggerManualVisualAnalysis()">
+              Run Visual Analysis
+            </button>
+          </div>
+        `;
+      }
       } catch (err) {
         console.error('Error rendering synthesis view:', err);
       }
@@ -2857,15 +2996,44 @@
     // ═══ Global Actions ═══
     const CHATGPT_URL = 'https://chatgpt.com/g/g-p-69ddde8c65a88191b308076bcb28bebf-channellens/project';
 
-    window.triggerManualSynthesis = function() {
+    window.triggerManualSynthesis = async function() {
       if (!currentSession) return;
+      // Mark as synthesizing so dashboard polls and shows 'Live'
+      await fetch(`/api/session/${currentSession.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'synthesizing' })
+      });
       const url = `${CHATGPT_URL}?trigger_synthesis=true&sessionId=${currentSession.id}&channelName=${encodeURIComponent(currentSession.channel)}&totalVideos=${currentSession.videos.length}`;
       window.open(url, '_blank');
+      // Force immediate poll jumpstart
+      openSession(currentSession.id, true);
     };
 
-    window.triggerManualNicheBend = function() {
+    window.triggerManualNicheBend = async function() {
       if (!currentSession) return;
-      window.open(`${CHATGPT_URL}?niche_bend=true&sessionId=${currentSession.id}`, '_blank');
+      // Mark as synthesizing so dashboard polls and shows 'Live'
+      await fetch(`/api/session/${currentSession.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'synthesizing' })
+      });
+      // Go to YouTube first to capture fresh overview
+      const ytUrl = (currentSession.channelUrl || '').replace(/\/videos$/, '');
+      if (ytUrl) {
+        const target = `${ytUrl}/videos?capture_niche=true&sessionId=${currentSession.id}`;
+        window.open(target, '_blank');
+      } else if (currentSession.videos && currentSession.videos.length > 0) {
+        // Fallback: Use the first analyzed video to find the channel
+        const firstVid = currentSession.videos[0];
+        const videoId = firstVid.videoId || firstVid.id;
+        const target = `https://www.youtube.com/watch?v=${videoId}&capture_niche=true&sessionId=${currentSession.id}`;
+        window.open(target, '_blank');
+      } else {
+        // Ultimate fallback
+        window.open(`${CHATGPT_URL}?niche_bend=true&sessionId=${currentSession.id}`, '_blank');
+      }
+      openSession(currentSession.id, true);
     };
 
     window.triggerManualVisualAnalysis = function() {
@@ -2874,11 +3042,17 @@
       window.open(`https://www.youtube.com/watch?v=${targetVideoId}&analyze_scene=true&sessionId=${currentSession.id}`, '_blank');
     };
 
+    window.closeModal = function(id) {
+      document.getElementById(id).style.display = 'none';
+      document.body.style.overflow = '';
+    };
+
     window.openSOPModal = function() {
       if (!currentSession || !currentSession.synthesis) return;
       const modal = document.getElementById('sop-modal');
       const content = document.getElementById('sop-modal-content');
       const copyBtn = document.getElementById('btn-copy-sop');
+      const dlBtn = document.getElementById('btn-download-md');
       
       content.innerHTML = formatMarkdown(currentSession.synthesis);
       modal.style.display = 'flex';
@@ -2886,8 +3060,20 @@
       
       copyBtn.onclick = () => {
         navigator.clipboard.writeText(currentSession.synthesis);
-        copyBtn.innerHTML = '&#10003; Copied SOP!';
-        setTimeout(() => copyBtn.innerHTML = '📋 Copy Full SOP', 2000);
+        copyBtn.innerHTML = 'Copied SOP!';
+        setTimeout(() => copyBtn.innerHTML = 'Copy Full SOP', 2000);
+      };
+
+      dlBtn.onclick = () => {
+        const blob = new Blob([currentSession.synthesis], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Channel_SOP_${currentSession.channel.replace(/\s+/g, '_')}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       };
     };
 
@@ -2975,5 +3161,4 @@
     setTimeout(initResizableTable, 1000);
   </script>
 </body>
-
 </html>

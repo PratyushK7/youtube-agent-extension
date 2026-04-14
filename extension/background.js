@@ -161,6 +161,10 @@ function routeMessage(request, sender, sendResponse) {
     return true;
   }
 
+  if (request.action === 'CAPTURE_YOUTUBE_OVERVIEW') {
+    handleCaptureYoutubeOverview(request, sender, sendResponse);
+    return true;
+  }
   if (request.action === 'RESUME_SEQUENTIAL') {
     handleResumeSequential(request, sender, sendResponse);
     return true;
@@ -240,23 +244,25 @@ async function handleDashboardTriggerSynthesis(request, sendResponse) {
 
 async function handleStartSequential(request, sender) {
   log(`Starting sequential: channel=${request.channelName}, videos=${request.queue.length}`);
-  // Create a server-side session first
-  let sessionId = null;
-  try {
-    const res = await fetch(`${SERVER}/api/session/create`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        channel: request.channelName,
-        totalVideos: request.queue.length,
-        promptUsed: 'sequential_chatgpt'
-      })
-    });
-    const data = await res.json();
-    if (data.success) sessionId = data.session.id;
-    log('Session created:', sessionId);
-  } catch (e) {
-    logWarn('Could not create server session, continuing offline.', e.message);
+  // Create a server-side session first (if not already provided by caller)
+  let sessionId = request.sessionId || null;
+  if (!sessionId) {
+    try {
+      const res = await fetch(`${SERVER}/api/session/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channel: request.channelName,
+          totalVideos: request.queue.length,
+          promptUsed: 'sequential_chatgpt'
+        })
+      });
+      const data = await res.json();
+      if (data.success) sessionId = data.session.id;
+      log('Session created:', sessionId);
+    } catch (e) {
+      logWarn('Could not create server session, continuing offline.', e.message);
+    }
   }
 
   state = {
@@ -662,4 +668,24 @@ async function focusDashboardTab() {
       console.warn('YT-to-AI: Dashboard tab not found. Please keep it open at http://127.0.0.1:3005');
     }
   });
+}
+async function handleCaptureYoutubeOverview(request, sender, sendResponse) {
+  try {
+    const tabId = sender.tab.id;
+    // Capture the visible tab (ensure we are on the YouTube tab)
+    const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: 'png' });
+    
+    // Send to server
+    const res = await fetch(`${SERVER}/api/session/${request.sessionId}/metadata`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ popularScreenshot: dataUrl })
+    });
+    
+    const data = await res.json();
+    sendResponse({ success: data.success });
+  } catch (err) {
+    logErr('Failed to capture YouTube overview:', err.message);
+    sendResponse({ success: false, error: err.message });
+  }
 }

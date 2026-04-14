@@ -35,14 +35,18 @@ const _err = (msg, ...a) => console.error(`YT-to-AI: [ChatGPT] ${msg}`, ...a);
 // Reliable file upload — uses ChatGPT's file input (paste doesn't work with React)
 async function uploadFilesToChatGPT(targetInput, files) {
   if (!files || !files.length) return;
-  const fileInput = document.querySelector('input[type="file"]');
+  // ChatGPT Project/GPTs might have multiple inputs; find the one most likely in the prompt zone
+  let fileInput = document.querySelector('#prompt-textarea')?.closest('form')?.querySelector('input[type="file"]');
+  if (!fileInput) fileInput = document.querySelector('input[type="file"]');
+  
   if (fileInput) {
     const dt = new DataTransfer();
     files.forEach(f => dt.items.add(f));
     fileInput.files = dt.files;
     fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-    _log(`Uploaded ${files.length} files via file input`);
-    await new Promise(r => setTimeout(r, 2500));
+    _log(`Uploaded ${files.length} files via file input: ${files.map(f => f.name).join(', ')}`);
+    // Project view often needs more time for the 'chips' to render and finalize the upload progress
+    await new Promise(r => setTimeout(r, 3500));
     return;
   }
   _warn('No file input found, trying paste fallback...');
@@ -190,7 +194,9 @@ function hideProgressBar() {
   if (bar) {
     bar.style.opacity = '0';
     bar.style.transition = 'opacity 0.5s ease-out';
-    setTimeout(() => bar.remove(), 600);
+    setTimeout(() => {
+      if (bar.parentNode) bar.remove();
+    }, 600);
   }
 }
 
@@ -577,19 +583,17 @@ async function monitorResponse(isFinal = false, channelName, sessionId) {
       clearInterval(interval);
       
       if (isFinal) {
-        completeSession(currentText, sessionId).then(() => {
+        completeSession(currentText, sessionId).finally(() => {
           showToast('Master Synthesis Complete ✓');
           hideProgressBar();
         });
       } else {
-        saveVideoToSession(currentText).then(async () => {
+        saveVideoToSession(currentText).finally(async () => {
           // 🏁 Cleanup: If this is the last video in the research queue, hide the progress bar
           const data = await chrome.storage.local.get(['step', 'totalSteps']);
           if (data.step && data.totalSteps && data.step >= data.totalSteps) {
             hideProgressBar();
           }
-          chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'success' });
-        }).catch(() => {
           chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'success' });
         });
       }
@@ -819,20 +823,27 @@ async function generateMasterAnalysis(channelName, passedTotalSteps, passedSessi
   // 📦 Multi-Modal Package: Attach JSON and Screenshots
   const dt = new DataTransfer();
   try {
-    const sessionRes = await fetch(`http://127.0.0.1:3005/api/session/${sid}`);
+    const serverUrl = 'http://127.0.0.1:3005'; // Centralized server ref
+    const sessionRes = await fetch(`${serverUrl}/api/session/${sid}`);
     const sessionData = await sessionRes.json();
     if (sessionData.success) {
       // 1. Attach Raw JSON
       const metricsBlob = new Blob([JSON.stringify(sessionData.session.videos, null, 2)], { type: 'application/json' });
-      dt.items.add(new File([metricsBlob], 'video_metrics.json', { type: 'application/json' }));
+      dt.items.add(new File([metricsBlob], 'video_metrics_full.json', { type: 'application/json' }));
       
-      // 2. Attach Screenshots
-      for (let i = 0; i < sessionData.session.videos.length; i++) {
-        const v = sessionData.session.videos[i];
-        if (v.screenshot) {
-          const res = await fetch(`http://127.0.0.1:3005${v.screenshot}`);
-          const blob = await res.blob();
-          dt.items.add(new File([blob], `evidence_${i+1}.png`, { type: 'image/png' }));
+      // 2. Attach Screenshots (Limit to Top 10 to avoid ChatGPT upload limits/hangs)
+      const videosWithScreenshots = sessionData.session.videos.filter(v => v.screenshot);
+      const sampledVideos = videosWithScreenshots.slice(0, 10);
+      
+      if (sampledVideos.length > 0) {
+        _log(`Harvesting ${sampledVideos.length} evidence images for synthesis...`);
+        for (let i = 0; i < sampledVideos.length; i++) {
+          const v = sampledVideos[i];
+          try {
+            const res = await fetch(`${serverUrl}${v.screenshot}`);
+            const blob = await res.blob();
+            dt.items.add(new File([blob], `evidence_v${v.stepNumber || i+1}.png`, { type: 'image/png' }));
+          } catch (e) { _err(`Failed fetch for evidence image: ${v.screenshot}`, e); }
         }
       }
     }
@@ -901,27 +912,25 @@ async function handleNicheBendTrigger(sessionId) {
     const promptInput = await waitForInput();
     promptInput.focus();
 
-    // 📦 Multi-Modal Package: Attach JSON and Screenshots
+    // 📦 Hybrid Package: Attach JSON and Popular Overview Screenshot
     const dt = new DataTransfer();
     
-    // 1. Attach Raw JSON
+    // 1. Attach Raw JSON for deep context
     const metricsBlob = new Blob([JSON.stringify(sessionData.session.videos, null, 2)], { type: 'application/json' });
     dt.items.add(new File([metricsBlob], 'video_metrics.json', { type: 'application/json' }));
-    
-    // 2. Attach Screenshots
-    for (let i = 0; i < sessionData.session.videos.length; i++) {
-        const v = sessionData.session.videos[i];
-        if (v.screenshot) {
-          try {
-            const res = await fetch(`http://127.0.0.1:3005${v.screenshot}`);
-            const blob = await res.blob();
-            dt.items.add(new File([blob], `evidence_${i+1}.png`, { type: 'image/png' }));
-          } catch (e) {}
-        }
+
+    // 2. Attach the Golden Overview Screenshot
+    if (sessionData.session.popularScreenshot) {
+      _log(`Niche Bender: Harvesting Popular Overview screenshot...`);
+      try {
+        const res = await fetch(`http://127.0.0.1:3005${sessionData.session.popularScreenshot}`);
+        const blob = await res.blob();
+        dt.items.add(new File([blob], `popular_overview_sorted.png`, { type: 'image/png' }));
+      } catch (e) { _err(`Niche Bender: Screenshot fetch failed`, e); }
     }
 
     if (dt.items.length > 0) {
-      showToast(`Uploading evidence (${dt.items.length} assets)...`);
+      showToast(`Uploading Popular Overview...`);
       const files = [];
       for (let i = 0; i < dt.files.length; i++) files.push(dt.files[i]);
       await uploadFilesToChatGPT(promptInput, files);
