@@ -260,6 +260,7 @@ app.post('/api/session/create', (req, res) => {
       synthesis: '',
       popularScreenshot: '',
       startedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       completedAt: null
     };
 
@@ -290,6 +291,7 @@ app.put('/api/session/:id/metadata', express.json(), (req, res) => {
       session.channelUrl = channelUrl;
     }
 
+    session.updatedAt = new Date().toISOString();
     writeSessions(sessions);
     res.json({ success: true, session });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -307,6 +309,7 @@ app.patch('/api/session/:id', express.json(), (req, res) => {
     if (status) session.status = status;
     if (channel) session.channel = channel;
     
+    session.updatedAt = new Date().toISOString();
     writeSessions(sessions);
     res.json({ success: true, session });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -348,6 +351,7 @@ app.put('/api/session/:id/video', (req, res) => {
     };
 
     session.videos.push(entry);
+    session.updatedAt = new Date().toISOString();
     writeSessions(sessions);
     res.json({ success: true, videoCount: session.videos.length, entry });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -480,6 +484,24 @@ app.delete('/api/session/:id', (req, res) => {
 app.get('/api/sessions', (req, res) => {
   try {
     const sessions = readSessions();
+    let changed = false;
+    const now = Date.now();
+    const TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+
+    // 🛡️ Auto-Recovery for stuck synthesis
+    sessions.forEach(s => {
+      if (s.status === 'synthesizing') {
+        const lastUpdate = new Date(s.updatedAt || s.startedAt).getTime();
+        if (now - lastUpdate > TIMEOUT_MS) {
+          console.log(`🛡️ Auto-recovering stuck session: ${s.id} (${s.channel})`);
+          s.status = 'in-progress';
+          s.updatedAt = new Date().toISOString();
+          changed = true;
+        }
+      }
+    });
+    if (changed) writeSessions(sessions);
+
     // Return summary (without heavy rawResponse/screenshot data)
     const summaries = sessions.map(s => ({
       id: s.id,

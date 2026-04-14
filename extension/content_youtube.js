@@ -1,4 +1,14 @@
-// content_youtube.js
+// --- Global Signal Handler ---
+chrome.runtime.onMessage.addListener((request) => {
+  if (request.action === 'GLOBAL_STOP') {
+    hideStatusHUD();
+    console.log('YT-to-AI: Global Stop received.');
+    // If we're in the middle of sequential navigation, force-reload to kill loops
+    chrome.storage.local.get(['isSequential'], (data) => {
+      if (data.isSequential) window.location.reload();
+    });
+  }
+});
 
 async function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -9,8 +19,18 @@ function showStatusHUD(text) {
   if (!hud) {
     hud = document.createElement('div');
     hud.id = 'yt-ai-status-hud';
-    hud.innerHTML = '<div class="hud-pulse"></div><span id="yt-ai-status-text"></span>';
+    hud.innerHTML = `
+      <div class="hud-pulse"></div>
+      <span id="yt-ai-status-text"></span>
+      <button id="yt-ai-hud-cancel" title="Stop Analysis">×</button>
+    `;
     document.body.appendChild(hud);
+    
+    document.getElementById('yt-ai-hud-cancel').onclick = (e) => {
+      e.stopPropagation();
+      chrome.runtime.sendMessage({ action: 'STOP_EXECUTION' });
+      hideStatusHUD();
+    };
   }
   document.getElementById('yt-ai-status-text').innerText = text;
   hud.style.opacity = '1';
@@ -301,19 +321,26 @@ function injectAnalyzerButton() {
   
   if (captureNiche && sessionId && window.location.pathname.includes('/watch')) {
     (async () => {
-       showStatusHUD('🔍 Locating Channel...');
-       for (let i = 0; i < 25; i++) {
-         const channelLink = document.querySelector('ytd-video-owner-renderer a.yt-simple-endpoint, #owner #channel-name a');
-          if (channelLink && channelLink.href) {
-            const baseUrl = channelLink.href.replace(/\/videos$/, '').replace(/\/$/, '');
+        showStatusHUD('🔍 Locating Channel...');
+        for (let i = 0; i < 25; i++) {
+          // Robust owner link discovery (YouTube UI changes often)
+          const ownerLink = document.querySelector('ytd-video-owner-renderer a.yt-simple-endpoint')
+            || document.querySelector('#owner #channel-name a')
+            || document.querySelector('ytd-watch-metadata #owner #channel-name a')
+            || Array.from(document.querySelectorAll('a')).find(a => a.href && (a.href.includes('/@') || a.href.includes('/channel/')) && !a.href.includes('/watch'));
+
+          if (ownerLink && ownerLink.href) {
+            const baseUrl = ownerLink.href.split('?')[0].split('#')[0].replace(/\/videos$/, '').replace(/\/$/, '');
+            console.log('YT-to-AI: Found channel home:', baseUrl);
+            
             // Move to channel home directly for faster capture
             const target = `${baseUrl}?capture_niche=true&sessionId=${sessionId}`;
             window.location.href = target;
             return;
           }
-         await delay(800);
-       }
-       showStatusHUD('⚠ Channel not found.');
+          await delay(800);
+        }
+        showStatusHUD('⚠ Channel discovery failed.');
     })();
   }
 }

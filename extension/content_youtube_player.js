@@ -469,7 +469,13 @@ if (urlParams.get('analyze_scene') === 'true') {
         });
       }
     } else {
-      console.log('YT-to-AI: [Player] Not in sequential mode.');
+      const isNiche = urlParams.get('capture_niche') === 'true';
+      const isScene = urlParams.get('analyze_scene') === 'true';
+      if (isNiche) {
+        showPlayerStatus('🔍 Locating Channel for Niche Analysis...');
+      } else if (!isScene) {
+        console.log('YT-to-AI: [Player] Idle (Not in sequential mode).');
+      }
     }
   });
 }

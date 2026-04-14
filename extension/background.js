@@ -179,6 +179,10 @@ function routeMessage(request, sender, sendResponse) {
     handleDashboardTriggerSynthesis(request, sendResponse);
     return true;
   }
+  if (request.action === 'STOP_EXECUTION') {
+    handleStopExecution(sendResponse);
+    return true;
+  }
   
   return false;
 }
@@ -713,4 +717,21 @@ async function handleCaptureYoutubeOverview(request, sender, sendResponse) {
   
   logErr('Critical Capture Bridge Failure:', lastError);
   sendResponse({ success: false, error: lastError });
+}
+async function handleStopExecution(sendResponse) {
+  log('STOP_EXECUTION: Global kill signal received.');
+  
+  // 1. Reset Internal State
+  await handleResetSession(() => {});
+  
+  // 2. Broadcast to all Tabs
+  chrome.tabs.query({}, (tabs) => {
+    tabs.forEach(tab => {
+      try {
+        chrome.tabs.sendMessage(tab.id, { action: 'GLOBAL_STOP' });
+      } catch (e) { /* ignore tabs without content scripts */ }
+    });
+  });
+
+  if (sendResponse) sendResponse({ success: true });
 }

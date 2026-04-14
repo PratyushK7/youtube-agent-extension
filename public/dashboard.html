@@ -16,7 +16,8 @@
   <style>
     /* ═══ Shared Design Tokens (mirrors style.css) ═══ */
     :root {
-      --bg-primary: #0f1117; /* Muted deep slate */
+      --bg-primary: #0f1117;
+      /* Muted deep slate */
       --bg-secondary: #161a23;
       --bg-card: #1c212c;
       --bg-card-hover: #242a38;
@@ -24,9 +25,12 @@
       --border-subtle: rgba(255, 255, 255, 0.05);
       --border-medium: rgba(255, 255, 255, 0.1);
       --border-focus: rgba(99, 102, 241, 0.5);
-      --text-primary: #f1f5f9; /* Slate 50 */
-      --text-secondary: #94a3b8; /* Slate 400 */
-      --text-muted: #64748b; /* Slate 500 */
+      --text-primary: #f1f5f9;
+      /* Slate 50 */
+      --text-secondary: #94a3b8;
+      /* Slate 400 */
+      --text-muted: #64748b;
+      /* Slate 500 */
       --accent-primary: #6366f1;
       --accent-secondary: #818cf8;
       --accent-tertiary: #6366f1;
@@ -52,9 +56,12 @@
     }
 
     :root.light-theme {
-      --bg-primary: #efeff1; /* Muted Dusty Slate background */
-      --bg-secondary: #e4e6eb; /* Darker secondary for depth */
-      --bg-card: #f8f9fa; /* Off-white cards to reduce glare */
+      --bg-primary: #efeff1;
+      /* Muted Dusty Slate background */
+      --bg-secondary: #e4e6eb;
+      /* Darker secondary for depth */
+      --bg-card: #f8f9fa;
+      /* Off-white cards to reduce glare */
       --bg-card-hover: #ecedf1;
       --bg-elevated: #dee1e6;
       --border-subtle: rgba(0, 0, 0, 0.08);
@@ -64,21 +71,55 @@
       --text-muted: #8d949e;
     }
 
-    :root.light-theme .bg-grid { display: none; }
-    :root.light-theme header { background: rgba(255,255,255,0.97); border-bottom-color: var(--border-medium); }
+    :root.light-theme .bg-grid {
+      display: none;
+    }
+
+    :root.light-theme header {
+      background: rgba(255, 255, 255, 0.97);
+      border-bottom-color: var(--border-medium);
+    }
+
     :root.light-theme .nav-link:hover,
     :root.light-theme .btn-ghost:hover,
-    :root.light-theme .tab-btn:hover { background: rgba(0,0,0,0.03); }
-    :root.light-theme tbody tr:hover { background: rgba(0,0,0,0.015); }
-    :root.light-theme .niche-card { background: var(--bg-card); border-color: var(--border-subtle); }
-    :root.light-theme .niche-card:hover { background: var(--bg-card-hover); }
+    :root.light-theme .tab-btn:hover {
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    :root.light-theme tbody tr:hover {
+      background: rgba(0, 0, 0, 0.015);
+    }
+
+    :root.light-theme .niche-card {
+      background: var(--bg-card);
+      border-color: var(--border-subtle);
+    }
+
+    :root.light-theme .niche-card:hover {
+      background: var(--bg-card-hover);
+    }
+
     :root.light-theme .v-card-value .markdown-content,
     :root.light-theme .v-card-value .markdown-content p,
-    :root.light-theme .v-card-value .markdown-content li { color: var(--text-primary) !important; }
-    :root.light-theme .sidebar { background: var(--bg-secondary); }
-    :root.light-theme .video-list-item.active { background: var(--bg-elevated); }
-    :root.light-theme .v-card-label { color: var(--text-muted); }
-    :root.light-theme .v-card-section { border-bottom-color: var(--border-medium); }
+    :root.light-theme .v-card-value .markdown-content li {
+      color: var(--text-primary) !important;
+    }
+
+    :root.light-theme .sidebar {
+      background: var(--bg-secondary);
+    }
+
+    :root.light-theme .video-list-item.active {
+      background: var(--bg-elevated);
+    }
+
+    :root.light-theme .v-card-label {
+      color: var(--text-muted);
+    }
+
+    :root.light-theme .v-card-section {
+      border-bottom-color: var(--border-medium);
+    }
 
     *,
     *::before,
@@ -133,7 +174,9 @@
       color: var(--text-primary);
     }
 
-    .sidebar-logo svg { color: var(--accent-primary); }
+    .sidebar-logo svg {
+      color: var(--accent-primary);
+    }
 
     .sidebar-section-label {
       padding: 0 10px;
@@ -145,19 +188,6 @@
       letter-spacing: 0.05em;
     }
 
-    .sidebar-status-widget {
-      margin: 16px;
-      padding: 14px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      transition: var(--transition-base);
-    }
-
-    .sidebar-status-widget:hover {
-      border-color: var(--border-medium);
-      background: var(--bg-card-hover);
-    }
 
     .sidebar-sessions {
       flex: 1;
@@ -195,7 +225,11 @@
       margin-top: 1px;
     }
 
-    .sidebar-nav { flex: 1; overflow-y: auto; padding: 4px 8px; }
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 8px;
+    }
 
     .sidebar-nav-item {
       display: flex;
@@ -209,9 +243,21 @@
       transition: var(--transition-fast);
       margin-bottom: 1px;
     }
-    .sidebar-nav-item:hover { background: var(--bg-card-hover); color: var(--text-primary); }
-    .sidebar-nav-item.active { background: var(--bg-elevated); color: var(--text-primary); }
-    .sidebar-nav-item svg { opacity: 0.6; flex-shrink: 0; }
+
+    .sidebar-nav-item:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+    }
+
+    .sidebar-nav-item.active {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .sidebar-nav-item svg {
+      opacity: 0.6;
+      flex-shrink: 0;
+    }
 
     .sidebar-footer {
       padding: 8px;
@@ -511,12 +557,12 @@
     }
 
     .badge-complete {
-      background: rgba(68,131,97,0.15);
+      background: rgba(68, 131, 97, 0.15);
       color: #448361;
     }
 
     .badge-progress {
-      background: rgba(203,145,47,0.15);
+      background: rgba(203, 145, 47, 0.15);
       color: #cb912f;
     }
 
@@ -631,7 +677,7 @@
     }
 
     .session-meta-badge.complete {
-      background: rgba(68,131,97,0.12);
+      background: rgba(68, 131, 97, 0.12);
       color: var(--accent-emerald);
     }
 
@@ -640,7 +686,7 @@
       color: var(--accent-primary);
       border-color: rgba(124, 131, 255, 0.2);
     }
-    
+
     .session-meta-badge.live-sync {
       color: #10b981 !important;
       border-color: rgba(16, 185, 129, 0.3) !important;
@@ -648,6 +694,7 @@
       position: relative;
       padding-left: 20px;
     }
+
     .session-meta-badge.live-sync::before {
       content: "";
       position: absolute;
@@ -661,10 +708,22 @@
       box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
       animation: pulse-dot 1.5s infinite;
     }
+
     @keyframes pulse-dot {
-      0% { opacity: 1; transform: translateY(-50%) scale(1); }
-      50% { opacity: 0.5; transform: translateY(-50%) scale(0.8); }
-      100% { opacity: 1; transform: translateY(-50%) scale(1); }
+      0% {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+      }
+
+      50% {
+        opacity: 0.5;
+        transform: translateY(-50%) scale(0.8);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+      }
     }
 
     .header-actions {
@@ -709,6 +768,7 @@
       color: white;
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
+
     .btn-sop:hover {
       box-shadow: 0 0 20px rgba(79, 70, 229, 0.2);
       filter: brightness(1.1);
@@ -719,6 +779,7 @@
       color: white;
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
+
     .btn-niche:hover {
       box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
       filter: brightness(1.1);
@@ -729,6 +790,7 @@
       color: white;
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
+
     .btn-visual:hover {
       box-shadow: 0 0 20px rgba(159, 18, 57, 0.2);
       filter: brightness(1.1);
@@ -739,6 +801,7 @@
       color: #000;
       font-weight: 800;
     }
+
     .btn-accent:hover {
       background: #fff;
       box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
@@ -748,6 +811,7 @@
       background: var(--text-primary);
       color: var(--bg-primary);
     }
+
     .btn-primary:hover {
       opacity: 0.9;
       transform: translateY(-1px);
@@ -824,13 +888,18 @@
       transform: scale(1.1);
       box-shadow: 0 0 20px rgba(124, 131, 255, 0.3);
     }
-    
+
     .gallery-nav-btn:active {
       transform: scale(0.95);
     }
 
-    .gallery-nav-btn.prev { left: -90px; }
-    .gallery-nav-btn.next { right: -90px; }
+    .gallery-nav-btn.prev {
+      left: -90px;
+    }
+
+    .gallery-nav-btn.next {
+      right: -90px;
+    }
 
     .tab-icon {
       display: none;
@@ -862,6 +931,7 @@
         opacity: 0;
         transform: scale(0.95);
       }
+
       to {
         opacity: 1;
         transform: scale(1);
@@ -1086,7 +1156,8 @@
       z-index: 10;
     }
 
-    .resizer:hover, .resizer.resizing {
+    .resizer:hover,
+    .resizer.resizing {
       background: var(--border-medium);
       box-shadow: none;
     }
@@ -1179,7 +1250,7 @@
       box-shadow: var(--shadow-md);
     }
 
-    .v-card.collapsed .v-card-sections, 
+    .v-card.collapsed .v-card-sections,
     .v-card.collapsed .v-card-divider,
     .v-card.collapsed .v-card-raw {
       display: none;
@@ -1199,7 +1270,7 @@
     .v-card.collapsed:hover::after {
       opacity: 1;
     }
-    
+
     .v-card:not(.collapsed)::after {
       content: 'Click to collapse';
       opacity: 0.4;
@@ -1296,7 +1367,8 @@
     }
 
     .v-card-value .markdown-content p {
-       margin-bottom: 0px; /* Tighten up card view */
+      margin-bottom: 0px;
+      /* Tighten up card view */
     }
 
     .v-card-divider {
@@ -1664,46 +1736,98 @@
       color: var(--text-primary);
       font-size: 0.95rem;
     }
-    .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+
+    .markdown-content h1,
+    .markdown-content h2,
+    .markdown-content h3 {
       margin: 1.6em 0 0.8em;
       color: var(--text-primary);
       letter-spacing: -0.01em;
       font-weight: 700;
     }
-    .markdown-content h1 { 
-      font-size: 1.6rem; 
-      border-bottom: 2px solid var(--accent-primary); 
+
+    .markdown-content h1 {
+      font-size: 1.6rem;
+      border-bottom: 2px solid var(--accent-primary);
       padding-bottom: 0.3em;
       color: var(--accent-primary);
     }
-    .markdown-content h2 { 
-      font-size: 1.25rem; 
-      color: var(--text-primary); 
+
+    .markdown-content h2 {
+      font-size: 1.25rem;
+      color: var(--text-primary);
       border-left: 4px solid var(--accent-primary);
       padding-left: 12px;
     }
-    .markdown-content h3 { 
-      font-size: 1rem; 
-      text-transform: uppercase; 
-      letter-spacing: 0.08em; 
-      color: var(--accent-warm); 
-    }
-    
-    /* Compact mode for table cells */
-    td .markdown-content h1 { font-size: 1.1rem; margin-top: 0.5em; }
-    td .markdown-content h2 { font-size: 0.95rem; margin-top: 0.5em; color: var(--text-primary); font-weight: 800; }
-    td .markdown-content h3 { font-size: 0.8rem; margin-top: 0.4em; }
-    td .markdown-content p { margin-bottom: 0.8em; font-size: 0.85rem; }
-    td .markdown-content ul, td .markdown-content ol { margin-bottom: 1em; padding-left: 1.2em; font-size: 0.85rem; }
 
-    .markdown-content p { margin-bottom: 1.4em; color: var(--text-secondary); }
-    .markdown-content ul, .markdown-content ol { margin-bottom: 1.6em; padding-left: 1.8em; }
-    .markdown-content li { margin-bottom: 0.6em; color: var(--text-secondary); position: relative; }
-    .markdown-content li strong { color: var(--text-primary); font-weight: 600; }
-    
+    .markdown-content h3 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent-warm);
+    }
+
+    /* Compact mode for table cells */
+    td .markdown-content h1 {
+      font-size: 1.1rem;
+      margin-top: 0.5em;
+    }
+
+    td .markdown-content h2 {
+      font-size: 0.95rem;
+      margin-top: 0.5em;
+      color: var(--text-primary);
+      font-weight: 800;
+    }
+
+    td .markdown-content h3 {
+      font-size: 0.8rem;
+      margin-top: 0.4em;
+    }
+
+    td .markdown-content p {
+      margin-bottom: 0.8em;
+      font-size: 0.85rem;
+    }
+
+    td .markdown-content ul,
+    td .markdown-content ol {
+      margin-bottom: 1em;
+      padding-left: 1.2em;
+      font-size: 0.85rem;
+    }
+
+    .markdown-content p {
+      margin-bottom: 1.4em;
+      color: var(--text-secondary);
+    }
+
+    .markdown-content ul,
+    .markdown-content ol {
+      margin-bottom: 1.6em;
+      padding-left: 1.8em;
+    }
+
+    .markdown-content li {
+      margin-bottom: 0.6em;
+      color: var(--text-secondary);
+      position: relative;
+    }
+
+    .markdown-content li strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
     /* Premium List Indicators */
-    .markdown-content ul li::marker { color: var(--accent-primary); }
-    .markdown-content ol li::marker { color: var(--accent-warm); font-weight: 700; }
+    .markdown-content ul li::marker {
+      color: var(--accent-primary);
+    }
+
+    .markdown-content ol li::marker {
+      color: var(--accent-warm);
+      font-weight: 700;
+    }
 
     .markdown-content blockquote {
       border-left: 4px solid var(--accent-primary);
@@ -1723,6 +1847,7 @@
       font-size: 0.85em;
       color: var(--accent-tertiary);
     }
+
     .markdown-content pre {
       background: var(--bg-elevated);
       padding: 1.5rem;
@@ -1731,6 +1856,7 @@
       margin: 1.5em 0;
       border: 1px solid var(--border-subtle);
     }
+
     .markdown-content table {
       width: 100%;
       border-collapse: separate;
@@ -1740,12 +1866,15 @@
       overflow: hidden;
       border: 1px solid var(--border-medium);
     }
-    .markdown-content th, .markdown-content td {
+
+    .markdown-content th,
+    .markdown-content td {
       padding: 14px 16px;
       border-bottom: 1px solid var(--border-subtle);
       border-right: 1px solid var(--border-subtle);
       text-align: left;
     }
+
     .markdown-content th {
       background: var(--bg-secondary);
       color: var(--accent-primary);
@@ -1754,14 +1883,21 @@
       font-size: 0.75rem;
       letter-spacing: 0.05em;
     }
-    .markdown-content tr:last-child td { border-bottom: none; }
-    .markdown-content td:last-child, .markdown-content th:last-child { border-right: none; }
-    
-    .markdown-content hr { 
-      border: none; 
-      height: 1px; 
+
+    .markdown-content tr:last-child td {
+      border-bottom: none;
+    }
+
+    .markdown-content td:last-child,
+    .markdown-content th:last-child {
+      border-right: none;
+    }
+
+    .markdown-content hr {
+      border: none;
+      height: 1px;
       background: linear-gradient(90deg, transparent, var(--border-medium), transparent);
-      margin: 3em 0; 
+      margin: 3em 0;
     }
 
     /* ═══ Responsive ═══ */
@@ -1865,7 +2001,7 @@
       height: 90vh;
       border-radius: var(--radius-xl);
       border: 1px solid var(--border-medium);
-      box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -1873,8 +2009,15 @@
     }
 
     @keyframes modalSlideUp {
-      from { transform: translateY(40px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+      from {
+        transform: translateY(40px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
 
     .sop-header {
@@ -1883,10 +2026,14 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(255,255,255,0.02);
+      background: rgba(255, 255, 255, 0.02);
     }
 
-    .sop-title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; }
+    .sop-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
 
     .sop-scroller {
       flex: 1;
@@ -1900,8 +2047,9 @@
       display: flex;
       justify-content: flex-end;
       gap: 16px;
-      background: rgba(255,255,255,0.01);
+      background: rgba(255, 255, 255, 0.01);
     }
+
     /* ═══ Toast System ═══ */
     .toast-container {
       position: fixed;
@@ -1922,7 +2070,7 @@
       border-radius: var(--radius-full);
       font-size: 0.85rem;
       font-weight: 600;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4), 0 0 1px var(--accent-primary);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 1px var(--accent-primary);
       border: 1px solid var(--border-medium);
       backdrop-filter: blur(12px);
       display: flex;
@@ -1934,13 +2082,27 @@
     }
 
     @keyframes toastIn {
-      from { transform: translateY(100%) scale(0.9); opacity: 0; }
-      to { transform: translateY(0) scale(1); opacity: 1; }
+      from {
+        transform: translateY(100%) scale(0.9);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
     }
 
     @keyframes toastOut {
-      from { transform: translateY(0) scale(1); opacity: 1; }
-      to { transform: translateY(20px) scale(0.9); opacity: 0; }
+      from {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+
+      to {
+        transform: translateY(20px) scale(0.9);
+        opacity: 0;
+      }
     }
   </style>
 </head>
@@ -1956,7 +2118,12 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-logo">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2L2 7L12 12L22 7L12 2Z"/><path d="M2 17L12 22L22 17"/><path d="M2 12L12 17L22 12"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linejoin="round">
+          <path d="M12 2L2 7L12 12L22 7L12 2Z" />
+          <path d="M2 17L12 22L22 17" />
+          <path d="M2 12L12 17L22 12" />
+        </svg>
         <span>ChannelLens</span>
       </div>
     </div>
@@ -1966,11 +2133,15 @@
       <div class="sidebar-section">
         <div class="sidebar-section-label">Navigation</div>
         <div class="sidebar-nav-item active" data-view="sessions" onclick="showView('sessions')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
+          </svg>
           Library
         </div>
         <div class="sidebar-nav-item" onclick="showToast('Favorites feature coming soon!')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
           Pinned
         </div>
       </div>
@@ -1980,267 +2151,277 @@
         <div class="sidebar-section-label">Recent History</div>
         <div id="sidebar-session-list" class="sidebar-nav-list">
           <!-- Populated via JS -->
-          <div style="padding: 10px; font-size: 0.75rem; color: var(--text-muted); font-style: italic;">No history yet</div>
+          <div style="padding: 10px; font-size: 0.75rem; color: var(--text-muted); font-style: italic;">No history yet
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Status Engine Footer -->
-    <div class="sidebar-status-widget">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-        <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Engine Status</div>
-        <div id="engine-status-dot" class="hud-pulse" style="width: 6px; height: 6px; background: #64748b;"></div>
-      </div>
-      <div id="engine-status-text" style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">Idle</div>
-      
-      <div id="engine-progress-bar" style="display: none; height: 3px; background: var(--border-subtle); border-radius: 2px; margin-top: 10px; overflow: hidden;">
-        <div id="engine-progress-fill" style="height: 100%; background: var(--accent-primary); width: 0%; transition: width 0.3s ease;"></div>
-      </div>
-    </div>
+
 
     <div class="sidebar-footer">
       <button id="theme-toggle" class="sidebar-btn">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5" />
+          <path
+            d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+        </svg>
         Toggle theme
       </button>
     </div>
   </aside>
 
   <div class="main-wrapper">
-  <header style="display:none;">
-    <div class="header-inner">
-      <a href="dashboard.html" class="logo">
-        <div class="logo-icon">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
-            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
-            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
-          </svg>
-        </div>
-        <span class="logo-text">Channel<span class="logo-accent">Lens</span></span>
-      </a>
-      <nav class="header-nav">
-        <a href="dashboard.html" class="nav-link active">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-          </svg>
-          Dashboard
+    <header style="display:none;">
+      <div class="header-inner">
+        <a href="dashboard.html" class="logo">
+          <div class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+              <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+              <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <span class="logo-text">Channel<span class="logo-accent">Lens</span></span>
         </a>
-        <button id="theme-toggle" class="nav-link" style="background:transparent;cursor:pointer;border:none;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="5" />
-            <path
-              d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-          </svg>
-        </button>
-      </nav>
-    </div>
-  </header>
-
-  <!-- ═══ Sessions Grid ═══ -->
-  <div id="sessions-grid-view" class="container">
-    <div class="page-header animate-in">
-      <div class="page-badge">Extension Analysis History</div>
-      <h1 class="page-title">Channels</h1>
-      <p class="page-subtitle">Your analyzed YouTube channels. Click to view detailed metrics.</p>
-    </div>
-    <div id="loading-indicator" style="text-align:center; padding: 40px; color: var(--text-muted);">
-      <div
-        style="width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px;">
+        <nav class="header-nav">
+          <a href="dashboard.html" class="nav-link active">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+            </svg>
+            Dashboard
+          </a>
+          <button id="theme-toggle" class="nav-link" style="background:transparent;cursor:pointer;border:none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5" />
+              <path
+                d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+            </svg>
+          </button>
+        </nav>
       </div>
-      Loading your sessions...
-    </div>
-    <div id="sessions-grid" class="grid"></div>
-    <div id="empty-state" class="empty-state" style="display:none;">
-      <p style="font-size:2.5rem;margin-bottom:16px;opacity:0.3">&#x1F50D;</p>
-      <h3>No analysis sessions yet</h3>
-      <p>Use the browser extension to analyze a YouTube channel with ChatGPT.</p>
-    </div>
-  </div>
+    </header>
 
-  <!-- ═══ Session Detail ═══ -->
-  <div id="session-view" class="container">
-    <div class="session-header animate-in">
-      <div style="display:flex; align-items:center; gap: 10px;">
-        <button id="btn-back" class="btn btn-ghost"
-          style="padding: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <div>
-          <h1 id="session-title" class="session-title"></h1>
-          <div class="session-meta">
-            <span id="session-meta-text"></span>
-            <span id="session-meta-badge" class="session-meta-badge"></span>
-          </div>
+    <!-- ═══ Sessions Grid ═══ -->
+    <div id="sessions-grid-view" class="container">
+      <div class="page-header animate-in">
+        <div class="page-badge">Extension Analysis History</div>
+        <h1 class="page-title">Channels</h1>
+        <p class="page-subtitle">Your analyzed YouTube channels. Click to view detailed metrics.</p>
+      </div>
+      <div id="loading-indicator" style="text-align:center; padding: 40px; color: var(--text-muted);">
+        <div
+          style="width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px;">
         </div>
+        Loading your sessions...
       </div>
-      <div class="header-actions">
-        <button id="btn-export-csv" class="btn btn-primary" style="padding: 10px 20px;">
-          Export CSV
-        </button>
-      </div>
-    </div>
-
-    <div class="tab-bar animate-in delay-1">
-      <button class="tab-btn active" data-tab="metrics"><span class="tab-icon">&#x1F4CB;</span> Video Insights</button>
-      <button class="tab-btn" data-tab="synthesis"><span class="tab-icon">&#x1F4DD;</span> Tools</button>
-    </div>
-
-    <!-- Tab: Video Insights -->
-    <div id="tab-metrics" class="tab-content active">
-      <div class="table-card">
-        <div class="table-toolbar">
-          <span class="table-toolbar-label" id="metrics-count"></span>
-          <div class="layout-toggle">
-            <button class="layout-btn active" data-layout="list">List</button>
-            <button class="layout-btn" data-layout="cards">Cards</button>
-          </div>
-        </div>
-        <div id="metrics-list-view" class="metrics-list-view">
-          <div id="video-list-sidebar" class="video-list-sidebar"></div>
-          <div id="video-list-content" class="video-list-content">
-            <div class="video-list-placeholder">
-              <div style="font-size: 3rem; margin-bottom: 16px; opacity: 0.3;">📋</div>
-              <p>Select a video from the list to view strategic analysis</p>
-            </div>
-          </div>
-        </div>
-        <div id="metrics-cards-view" class="video-cards" style="display:none; padding:24px;"></div>
+      <div id="sessions-grid" class="grid"></div>
+      <div id="empty-state" class="empty-state" style="display:none;">
+        <p style="font-size:2.5rem;margin-bottom:16px;opacity:0.3">&#x1F50D;</p>
+        <h3>No analysis sessions yet</h3>
+        <p>Use the browser extension to analyze a YouTube channel with ChatGPT.</p>
       </div>
     </div>
 
-    <div id="tab-synthesis" class="tab-content">
-      <div class="tools-workspace">
-        <!-- Card: Channel SOP -->
-        <div class="tool-card full-width">
-          <div class="tool-card-header">
-            <div class="tool-card-title">Channel SOP</div>
-            <div style="font-size: 0.65rem; color: var(--accent-primary); font-weight: 800;">AI STRATEGY</div>
-          </div>
-          <div id="synthesis-content" class="tool-card-body">
-            <div class="synthesis-empty" style="padding: 40px 0;">
-              <p style="margin-bottom: 24px; opacity: 0.8; font-weight: 500;">Channel SOP not yet generated.</p>
-              <button class="btn btn-sop" onclick="triggerManualSynthesis()">
-                Generate Strategic SOP
+    <!-- ═══ Session Detail ═══ -->
+    <div id="session-view" class="container">
+      <div class="session-header animate-in">
+        <div style="display:flex; align-items:center; gap: 10px;">
+          <button id="btn-back" class="btn btn-ghost"
+            style="padding: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div>
+            <h1 id="session-title" class="session-title"></h1>
+            <div class="session-meta">
+              <span id="session-meta-text"></span>
+            <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
+              <span id="session-meta-badge" class="session-meta-badge"></span>
+              <button id="btn-stop-synthesis" class="btn btn-ghost" 
+                      style="display: none; padding: 4px 10px; font-size: 0.65rem; border-color: var(--accent-red); color: var(--accent-red);" 
+                      onclick="resetSessionStatus()">
+                Abort Synthesis
               </button>
             </div>
-          </div>
-        </div>
-
-        <!-- Card: Niche Bends -->
-        <div class="tool-card">
-          <div class="tool-card-header">
-            <div class="tool-card-title">Niche Bends</div>
-            <div style="font-size: 0.65rem; color: var(--accent-warm); font-weight: 800;">CONCEPTING</div>
-          </div>
-          <div id="niche-bends-content" class="tool-card-body">
-            <div class="synthesis-empty" style="padding: 40px 0;">
-              <p style="margin-bottom: 20px; opacity: 0.8; font-weight: 500;">Niche Bends not yet extracted.</p>
-              <button class="btn btn-niche" onclick="triggerManualNicheBend()">
-                Extract Niche Bends
-              </button>
             </div>
           </div>
         </div>
+        <div class="header-actions">
+          <button id="btn-export-csv" class="btn btn-primary" style="padding: 10px 20px;">
+            Export CSV
+          </button>
+        </div>
+      </div>
 
-        <!-- Card: Visual Analysis -->
-        <div class="tool-card">
-          <div class="tool-card-header">
-            <div class="tool-card-title">Visual Analysis</div>
-            <div style="font-size: 0.65rem; color: var(--accent-rose); font-weight: 800;">DESIGN</div>
+      <div class="tab-bar animate-in delay-1">
+        <button class="tab-btn active" data-tab="metrics"><span class="tab-icon">&#x1F4CB;</span> Video
+          Insights</button>
+        <button class="tab-btn" data-tab="synthesis"><span class="tab-icon">&#x1F4DD;</span> Tools</button>
+      </div>
+
+      <!-- Tab: Video Insights -->
+      <div id="tab-metrics" class="tab-content active">
+        <div class="table-card">
+          <div class="table-toolbar">
+            <span class="table-toolbar-label" id="metrics-count"></span>
+            <div class="layout-toggle">
+              <button class="layout-btn active" data-layout="list">List</button>
+              <button class="layout-btn" data-layout="cards">Cards</button>
+            </div>
           </div>
-          <div id="scene-analysis-content" class="tool-card-body">
-            <div class="synthesis-empty" style="padding: 40px 0;">
-              <p style="margin-bottom: 20px; opacity: 0.8; font-weight: 500;">Visual Analysis not yet performed.</p>
-              <button class="btn btn-visual" onclick="triggerManualVisualAnalysis()">
-                Run Visual Analysis
-              </button>
+          <div id="metrics-list-view" class="metrics-list-view">
+            <div id="video-list-sidebar" class="video-list-sidebar"></div>
+            <div id="video-list-content" class="video-list-content">
+              <div class="video-list-placeholder">
+                <div style="font-size: 3rem; margin-bottom: 16px; opacity: 0.3;">📋</div>
+                <p>Select a video from the list to view strategic analysis</p>
+              </div>
+            </div>
+          </div>
+          <div id="metrics-cards-view" class="video-cards" style="display:none; padding:24px;"></div>
+        </div>
+      </div>
+
+      <div id="tab-synthesis" class="tab-content">
+        <div class="tools-workspace">
+          <!-- Card: Channel SOP -->
+          <div class="tool-card full-width">
+            <div class="tool-card-header">
+              <div class="tool-card-title">Channel SOP</div>
+              <div style="font-size: 0.65rem; color: var(--accent-primary); font-weight: 800;">STRATEGY</div>
+            </div>
+            <div id="synthesis-content" class="tool-card-body">
+              <div class="synthesis-empty" style="padding: 40px 0;">
+                <p style="margin-bottom: 24px; opacity: 0.8; font-weight: 500;">Channel SOP not yet generated.</p>
+                <button class="btn btn-sop" onclick="triggerManualSynthesis()">
+                  Generate Strategic SOP
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card: Niche Bends -->
+          <div class="tool-card">
+            <div class="tool-card-header">
+              <div class="tool-card-title">Niche Bends</div>
+              <div style="font-size: 0.65rem; color: var(--accent-warm); font-weight: 800;">CONCEPTING</div>
+            </div>
+            <div id="niche-bends-content" class="tool-card-body">
+              <div class="synthesis-empty" style="padding: 40px 0;">
+                <p style="margin-bottom: 20px; opacity: 0.8; font-weight: 500;">Niche Bends not yet extracted.</p>
+                <button class="btn btn-niche" onclick="triggerManualNicheBend()">
+                  Extract Niche Bends
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card: Visual Analysis -->
+          <div class="tool-card">
+            <div class="tool-card-header">
+              <div class="tool-card-title">Visual Analysis</div>
+              <div style="font-size: 0.65rem; color: var(--accent-rose); font-weight: 800;">DESIGN</div>
+            </div>
+            <div id="scene-analysis-content" class="tool-card-body">
+              <div class="synthesis-empty" style="padding: 40px 0;">
+                <p style="margin-bottom: 20px; opacity: 0.8; font-weight: 500;">Visual Analysis not yet performed.</p>
+                <button class="btn btn-visual" onclick="triggerManualVisualAnalysis()">
+                  Run Visual Analysis
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- ═══ SOP Modal ═══ -->
-  <div id="sop-modal" class="sop-modal">
-    <div class="sop-container">
-      <div class="sop-header">
-        <div class="sop-title">Strategic Channel SOP</div>
-        <button class="btn btn-ghost" onclick="closeModal('sop-modal')" style="padding:8px; min-width:unset;">&times;</button>
-      </div>
-      <div id="sop-modal-content" class="sop-scroller markdown-content"></div>
-      <div class="sop-footer">
-        <button class="btn btn-ghost" onclick="closeModal('sop-modal')">Close Dashboard</button>
-        <div style="display:flex; gap:10px;">
-          <button id="btn-download-md" class="btn btn-secondary">Download .md</button>
-          <button id="btn-copy-sop" class="btn btn-primary">Copy Full SOP</button>
+    <!-- ═══ SOP Modal ═══ -->
+    <div id="sop-modal" class="sop-modal">
+      <div class="sop-container">
+        <div class="sop-header">
+          <div class="sop-title">Strategic Channel SOP</div>
+          <button class="btn btn-ghost" onclick="closeModal('sop-modal')"
+            style="padding:8px; min-width:unset;">&times;</button>
+        </div>
+        <div id="sop-modal-content" class="sop-scroller markdown-content"></div>
+        <div class="sop-footer">
+          <button class="btn btn-ghost" onclick="closeModal('sop-modal')">Close Dashboard</button>
+          <div style="display:flex; gap:10px;">
+            <button id="btn-download-md" class="btn btn-secondary">Download .md</button>
+            <button id="btn-copy-sop" class="btn btn-primary">Copy Full SOP</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- ═══ Niche Bends Modal ═══ -->
-  <div id="niche-modal" class="sop-modal">
-    <div class="sop-container">
-      <div class="sop-header">
-        <div class="sop-title">Niche Pivot Laboratory</div>
-        <button class="btn btn-ghost" onclick="closeModal('niche-modal')" style="padding:8px; min-width:unset;">&times;</button>
-      </div>
-      <div id="niche-modal-content" class="sop-scroller" style="padding: 30px;">
-        <!-- Grid will be injected here -->
-      </div>
-      <div class="sop-footer">
-        <button class="btn btn-ghost" onclick="closeModal('niche-modal')">Close</button>
-        <button class="btn btn-primary" onclick="navigator.clipboard.writeText(currentSession.nicheBends); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy Bends', 2000);">Copy Bends</button>
+    <!-- ═══ Niche Bends Modal ═══ -->
+    <div id="niche-modal" class="sop-modal">
+      <div class="sop-container">
+        <div class="sop-header">
+          <div class="sop-title">Niche Pivot Laboratory</div>
+          <button class="btn btn-ghost" onclick="closeModal('niche-modal')"
+            style="padding:8px; min-width:unset;">&times;</button>
+        </div>
+        <div id="niche-modal-content" class="sop-scroller" style="padding: 30px;">
+          <!-- Grid will be injected here -->
+        </div>
+        <div class="sop-footer">
+          <button class="btn btn-ghost" onclick="closeModal('niche-modal')">Close</button>
+          <button class="btn btn-primary"
+            onclick="navigator.clipboard.writeText(currentSession.nicheBends); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy Bends', 2000);">Copy
+            Bends</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- ═══ Visual Analysis Modal ═══ -->
-  <div id="scene-modal" class="sop-modal">
-    <div class="sop-container">
-      <div class="sop-header">
-        <div class="sop-title">Vision Intelligence Studio</div>
-        <button class="btn btn-ghost" onclick="closeModal('scene-modal')" style="padding:8px; min-width:unset;">&times;</button>
-      </div>
-      <div id="scene-modal-content" class="sop-scroller markdown-content" style="padding: 40px;">
-        <!-- Analysis will be injected here -->
-      </div>
-      <div class="sop-footer">
-        <button class="btn btn-ghost" onclick="closeModal('scene-modal')">Close</button>
-        <button class="btn btn-primary" id="btn-copy-vision">Copy Vision Prompt</button>
+    <!-- ═══ Visual Analysis Modal ═══ -->
+    <div id="scene-modal" class="sop-modal">
+      <div class="sop-container">
+        <div class="sop-header">
+          <div class="sop-title">Vision Intelligence Studio</div>
+          <button class="btn btn-ghost" onclick="closeModal('scene-modal')"
+            style="padding:8px; min-width:unset;">&times;</button>
+        </div>
+        <div id="scene-modal-content" class="sop-scroller markdown-content" style="padding: 40px;">
+          <!-- Analysis will be injected here -->
+        </div>
+        <div class="sop-footer">
+          <button class="btn btn-ghost" onclick="closeModal('scene-modal')">Close</button>
+          <button class="btn btn-primary" id="btn-copy-vision">Copy Vision Prompt</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- ═══ Frame Gallery Modal ═══ -->
-  <div id="gallery-modal"
-    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
-    <button id="btn-close-gallery"
-      style="position:absolute; top:20px; right:30px; background:transparent; border:none; color:white; font-size:2rem; cursor:pointer;">&times;</button>
-    
-    <div style="position:relative; display:flex; align-items:center; justify-content:center; width:80%; height:80vh;">
-      <button class="gallery-nav-btn prev" onclick="changeGalleryImage(-1)">&#8249;</button>
-      <div id="gallery-container" style="display:flex; align-items:center; justify-content:center; width:100%; height:100%;"></div>
-      <button class="gallery-nav-btn next" onclick="changeGalleryImage(1)">&#8250;</button>
+    <!-- ═══ Frame Gallery Modal ═══ -->
+    <div id="gallery-modal"
+      style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+      <button id="btn-close-gallery"
+        style="position:absolute; top:20px; right:30px; background:transparent; border:none; color:white; font-size:2rem; cursor:pointer;">&times;</button>
+
+      <div style="position:relative; display:flex; align-items:center; justify-content:center; width:80%; height:80vh;">
+        <button class="gallery-nav-btn prev" onclick="changeGalleryImage(-1)">&#8249;</button>
+        <div id="gallery-container"
+          style="display:flex; align-items:center; justify-content:center; width:100%; height:100%;"></div>
+        <button class="gallery-nav-btn next" onclick="changeGalleryImage(1)">&#8250;</button>
+      </div>
+
+      <div id="gallery-counter"
+        style="margin-top:20px; color:rgba(255,255,255,0.6); font-family:monospace; font-size:1.1rem; letter-spacing:2px;">
+      </div>
     </div>
-    
-    <div id="gallery-counter" style="margin-top:20px; color:rgba(255,255,255,0.6); font-family:monospace; font-size:1.1rem; letter-spacing:2px;"></div>
-  </div>
 
-  <div id="status-debug"
-    style="position:fixed; bottom:10px; right:10px; font-size:10px; color:rgba(255,255,255,0.2); z-index:9999;">JS
-    LOADED</div>
-  <div class="footer"
-    style="text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.75rem; border-top: 1px solid var(--border-subtle); margin-top: 60px;">
-    YouTube Agent Dashboard v1.4.5
-  </div>
+    <div id="status-debug"
+      style="position:fixed; bottom:10px; right:10px; font-size:10px; color:rgba(255,255,255,0.2); z-index:9999;">JS
+      LOADED</div>
+    <div class="footer"
+      style="text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.75rem; border-top: 1px solid var(--border-subtle); margin-top: 60px;">
+      YouTube Agent Dashboard v1.4.5
+    </div>
   </div><!-- end main-wrapper -->
 
   <script>
@@ -2250,7 +2431,7 @@
     let galleryIndex = 0;
 
     // Sidebar navigation
-    window.showView = function(view) {
+    window.showView = function (view) {
       document.querySelectorAll('.sidebar-nav-item').forEach(i => i.classList.remove('active'));
       document.querySelector(`.sidebar-nav-item[data-view="${view}"]`)?.classList.add('active');
       if (view === 'sessions') {
@@ -2259,7 +2440,7 @@
       }
     };
 
-    window.triggerTool = function(tool) {
+    window.triggerTool = function (tool) {
       if (!currentSession) {
         alert('Open a session first, then use tools.');
         return;
@@ -2270,9 +2451,9 @@
       if (tool === 'niche') document.getElementById('btn-niche-bend')?.click();
       if (tool === 'script') alert('Script Writer: Select a prompt in the extension popup and use ChatGPT directly.');
     };
-    
+
     // Global Gallery Opener
-    window.openGallery = function(frames, startIdx = 0) {
+    window.openGallery = function (frames, startIdx = 0) {
       if (!frames || !frames.length) return;
       galleryImages = frames;
       galleryIndex = startIdx;
@@ -2281,7 +2462,7 @@
       document.body.style.overflow = 'hidden';
     };
 
-    window.changeGalleryImage = function(dir) {
+    window.changeGalleryImage = function (dir) {
       galleryIndex += dir;
       if (galleryIndex < 0) galleryIndex = galleryImages.length - 1;
       if (galleryIndex >= galleryImages.length) galleryIndex = 0;
@@ -2292,7 +2473,7 @@
       const container = document.getElementById('gallery-container');
       const counter = document.getElementById('gallery-counter');
       const src = galleryImages[galleryIndex];
-      
+
       container.innerHTML = `<img src="${src}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.8); animation: fadeScale 0.3s ease-out;">`;
       counter.innerText = `FRAME ${galleryIndex + 1} / ${galleryImages.length}`;
     }
@@ -2318,12 +2499,12 @@
     // ─── Global Markdown Formatter ──────────────────────────
     const formatMarkdown = (md) => {
       if (!md) return '';
-      
+
       // If input is an array (like keyTakeaways), convert to a bulleted markdown string
       if (Array.isArray(md)) {
         md = md.map(item => `- ${item}`).join('\n');
       }
-      
+
       try {
         if (typeof marked === 'undefined') {
           console.warn('Marked.js not loaded, falling back to esc()');
@@ -2353,13 +2534,13 @@
         container.className = 'toast-container';
         document.body.appendChild(container);
       }
-      
+
       const toast = document.createElement('div');
       toast.className = 'toast';
-      
+
       const icon = type === 'success' ? '✓' : 'ℹ';
       toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
-      
+
       container.appendChild(toast);
       setTimeout(() => toast.remove(), 4000);
     }
@@ -2399,26 +2580,6 @@
           `).join('');
         }
 
-        // 🚀 Update Engine Status Widget
-        const activeSession = sessions.find(s => s.status === 'in-progress');
-        const statusDot = document.getElementById('engine-status-dot');
-        const statusText = document.getElementById('engine-status-text');
-        const statusBar = document.getElementById('engine-progress-bar');
-        const statusFill = document.getElementById('engine-progress-fill');
-
-        if (activeSession) {
-          statusDot.style.background = 'var(--accent-primary)';
-          statusDot.style.boxShadow = '0 0 10px var(--accent-primary)';
-          statusText.textContent = `Researching ${activeSession.channel.slice(0, 15)}...`;
-          statusBar.style.display = 'block';
-          const progress = Math.round((activeSession.analyzedVideos / (activeSession.totalVideos || 1)) * 100);
-          statusFill.style.width = `${progress}%`;
-        } else {
-          statusDot.style.background = '#64748b';
-          statusDot.style.boxShadow = 'none';
-          statusText.textContent = 'Engine Idle';
-          statusBar.style.display = 'none';
-        }
 
         const lastActiveSessionId = currentSession ? currentSession.id : null;
         grid.innerHTML = sessions.map(s => {
@@ -2501,8 +2662,8 @@
         tableY: tableContainer ? tableContainer.scrollTop : 0,
         // Track which cards were expanded so we don't collapse them on refresh
         expandedCardIndexes: Array.from(document.querySelectorAll('.v-card:not(.collapsed)')).map(c => {
-           const num = c.querySelector('.v-card-num')?.textContent;
-           return num;
+          const num = c.querySelector('.v-card-num')?.textContent;
+          return num;
         })
       };
 
@@ -2519,9 +2680,9 @@
           // Track total content length/state of videos to catch updates to existing videos
           videoState: currentSession?.videos?.map(v => v.title + (v.capturedAt || '')).join('|')
         });
-        
+
         currentSession = data.session;
-        
+
         const newDataStr = JSON.stringify({
           status: currentSession.status,
           videoCount: currentSession.videos.length,
@@ -2532,26 +2693,26 @@
 
         // 🚀 DIFFERENTIAL RENDER: If nothing essential changed, skip the heavy DOM wipe
         if (isSilent && oldDataStr === newDataStr) {
-           _openSessionLock = null;
-           return; 
+          _openSessionLock = null;
+          return;
         }
 
         if (!isSilent) {
           document.getElementById('sessions-grid-view').style.display = 'none';
           document.getElementById('session-view').style.display = 'block';
           window.scrollTo({ top: 0, behavior: 'smooth' });
-          
+
           // Sync URL State (Session & Tab) - Use replaceState if we're already there
           const url = new URL(window.location);
           const needsPush = url.searchParams.get('sessionId') !== id;
-          
+
           url.searchParams.set('sessionId', id);
           const currentTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'metrics';
           url.searchParams.set('tab', currentTab);
-          
+
           const currentLayout = document.querySelector('.layout-btn.active')?.dataset.layout || 'cards';
           url.searchParams.set('layout', currentLayout);
-          
+
           if (needsPush) window.history.pushState({}, '', url);
           else window.history.replaceState({}, '', url);
         }
@@ -2561,7 +2722,7 @@
           `${currentSession.videos.length} videos \u2022 ${new Date(currentSession.startedAt).toLocaleString()}`;
         const badge = document.getElementById('session-meta-badge');
         const isPolling = (currentSession.status === 'in-progress' || currentSession.status === 'synthesizing') && document.visibilityState === 'visible';
-        
+
         let statusText = 'Complete';
         if (currentSession.status === 'synthesizing') statusText = '● Strategic Synthesis...';
         else if (isPolling) statusText = '● Live Analysis';
@@ -2569,7 +2730,14 @@
 
         badge.textContent = statusText;
         badge.className = `session-meta-badge ${currentSession.status === 'complete' ? 'complete' : 'progress'}`;
-        if (isPolling || currentSession.status === 'synthesizing') badge.classList.add('live-sync');
+        
+        const stopBtn = document.getElementById('btn-stop-synthesis');
+        if (currentSession.status === 'synthesizing') {
+          badge.classList.add('live-sync');
+          if (stopBtn) stopBtn.style.display = 'inline-flex';
+        } else {
+          if (stopBtn) stopBtn.style.display = 'none';
+        }
 
         document.getElementById('metrics-count').textContent = `${currentSession.videos.length} videos analyzed`;
 
@@ -2581,23 +2749,23 @@
           const urlParams = new URLSearchParams(window.location.search);
           const targetTab = urlParams.get('tab') || 'metrics';
           const targetLayout = urlParams.get('layout') || 'list';
-          
+
           switchTab(targetTab);
           switchLayout(targetLayout);
         }
-        
+
         // Targeted scroll and UI state restore
         if (isSilent) {
           // 1. Restore Expanded Cards
           if (savedScroll.expandedCardIndexes.length > 0) {
             document.querySelectorAll('.v-card').forEach(c => {
-               const num = c.querySelector('.v-card-num')?.textContent;
-               if (savedScroll.expandedCardIndexes.includes(num)) {
-                 c.classList.remove('collapsed');
-               }
+              const num = c.querySelector('.v-card-num')?.textContent;
+              if (savedScroll.expandedCardIndexes.includes(num)) {
+                c.classList.remove('collapsed');
+              }
             });
           }
-          
+
           // 2. Snap Scroll Positions
           requestAnimationFrame(() => {
             window.scrollTo(0, savedScroll.windowY);
@@ -2651,7 +2819,7 @@
       document.querySelector(`.tab-btn[data-tab="${tab}"]`)?.classList.add('active');
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       document.getElementById(`tab-${tab}`)?.classList.add('active');
-      
+
       // Update URL Tab Parameter
       if (currentSession) {
         const url = new URL(window.location);
@@ -2669,10 +2837,10 @@
       document.querySelectorAll('.layout-btn').forEach(b => b.classList.remove('active'));
       const activeBtn = document.querySelector(`.layout-btn[data-layout="${layout}"]`);
       if (activeBtn) activeBtn.classList.add('active');
-      
+
       document.getElementById('metrics-list-view').style.display = layout === 'list' ? 'grid' : 'none';
       document.getElementById('metrics-cards-view').style.display = layout === 'cards' ? 'grid' : 'none';
-      
+
       if (currentSession) {
         const url = new URL(window.location);
         url.searchParams.set('layout', layout);
@@ -2684,14 +2852,14 @@
       document.getElementById('session-view').style.display = 'none';
       document.getElementById('sessions-grid-view').style.display = 'block';
       if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
-      
+
       // Clear URL State
       const url = new URL(window.location);
       url.searchParams.delete('sessionId');
       url.searchParams.delete('tab');
       url.searchParams.delete('layout');
       window.history.pushState({}, '', url);
-      
+
       loadSessions(); // Reload data grid upon returning
       currentSession = null;
     });
@@ -2741,22 +2909,22 @@
       const sidebar = document.getElementById('video-list-sidebar');
       // Preserve active selection if possible
       const activeNum = sidebar.querySelector('.video-list-item.active')?.dataset.num;
-      
+
       sidebar.innerHTML = videos.map((v, i) => {
-          const num = v.stepNumber || v.videoNumber || i + 1;
-          const isActive = activeNum == num;
-          return `
+        const num = v.stepNumber || v.videoNumber || i + 1;
+        const isActive = activeNum == num;
+        return `
             <div class="video-list-item ${isActive ? 'active' : ''}" data-num="${num}" onclick="selectVideoInList(${i}, this)">
               <div class="video-list-item-num">VIDEO #${num}</div>
               <div class="video-list-item-title">${esc(v.title)}</div>
             </div>
           `;
       }).join('');
-      
+
       // Auto-select first video if nothing is selected
       if (!activeNum && videos.length > 0) {
-          const firstItem = sidebar.querySelector('.video-list-item');
-          if (firstItem) selectVideoInList(0, firstItem);
+        const firstItem = sidebar.querySelector('.video-list-item');
+        if (firstItem) selectVideoInList(0, firstItem);
       }
     }
 
@@ -2768,15 +2936,15 @@
       el.classList.add('active');
 
       const fields = [
-        ['Hook Text', v.hookText, true], 
-        ['Hook Framework', v.hookFramework], 
+        ['Hook Text', v.hookText, true],
+        ['Hook Framework', v.hookFramework],
         ['Opening Structure', v.openingStructure],
-        ['Script Structure', v.scriptStructure, true], 
-        ['Storytelling', v.storytellingFramework, true], 
+        ['Script Structure', v.scriptStructure, true],
+        ['Storytelling', v.storytellingFramework, true],
         ['Rehooks', v.rehooksUsed],
-        ['Retention Pattern', v.retentionPattern], 
+        ['Retention Pattern', v.retentionPattern],
         ['CTA Placement', v.ctaPlacement],
-        ['Key Takeaways', v.keyTakeaways, true], 
+        ['Key Takeaways', v.keyTakeaways, true],
         ['Thumbnail', v.thumbnailDescription, true]
       ];
 
@@ -2835,15 +3003,15 @@
       try {
         document.getElementById('metrics-cards-view').innerHTML = videos.map((v, i) => {
           const fields = [
-            ['Hook Text', v.hookText, true], 
-            ['Hook Framework', v.hookFramework], 
+            ['Hook Text', v.hookText, true],
+            ['Hook Framework', v.hookFramework],
             ['Opening Structure', v.openingStructure],
-            ['Script Structure', v.scriptStructure, true], 
-            ['Storytelling', v.storytellingFramework, true], 
+            ['Script Structure', v.scriptStructure, true],
+            ['Storytelling', v.storytellingFramework, true],
             ['Rehooks', v.rehooksUsed],
-            ['Retention Pattern', v.retentionPattern], 
+            ['Retention Pattern', v.retentionPattern],
             ['CTA Placement', v.ctaPlacement],
-            ['Key Takeaways', v.keyTakeaways, true], 
+            ['Key Takeaways', v.keyTakeaways, true],
             ['Thumbnail', v.thumbnailDescription, true]
           ];
           return `<div class="v-card collapsed" onclick="this.classList.toggle('collapsed')">
@@ -2871,8 +3039,8 @@
         const bendsEl = document.getElementById('niche-bends-content');
         const bendsCard = document.getElementById('niche-bends-card');
 
-      if (!text) {
-        el.innerHTML = `
+        if (!text) {
+          el.innerHTML = `
           <div class="synthesis-empty" style="padding: 40px 0;">
             <p style="margin-bottom: 20px; opacity: 0.6; font-size: 0.85rem;">Strategic Channel SOP not yet generated.</p>
             <button class="btn btn-sop" onclick="triggerManualSynthesis()">
@@ -2880,8 +3048,8 @@
             </button>
           </div>
         `;
-      } else {
-        el.innerHTML = `
+        } else {
+          el.innerHTML = `
           <div style="padding: 30px 20px; text-align: center;">
             <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Intelligence Pipeline Ready</p>
             <button class="btn btn-accent" onclick="openSOPModal()">View Channel SOP</button>
@@ -2890,11 +3058,11 @@
             </div>
           </div>
         `;
-      }
+        }
 
-      // ═══ Niche Bends Handling ═══
-      if (!bendsText) {
-        bendsEl.innerHTML = `
+        // ═══ Niche Bends Handling ═══
+        if (!bendsText) {
+          bendsEl.innerHTML = `
           <div class="synthesis-empty" style="padding: 40px 0;">
             <p style="margin-bottom: 20px; opacity: 0.6; font-size: 0.85rem;">Niche Bends not yet extracted.</p>
             <button class="btn btn-niche" onclick="triggerManualNicheBend()">
@@ -2902,8 +3070,8 @@
             </button>
           </div>
         `;
-      } else {
-        bendsEl.innerHTML = `
+        } else {
+          bendsEl.innerHTML = `
           <div style="padding: 30px 20px; text-align: center;">
             <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Creative Concepting Ready</p>
             <button class="btn btn-accent" onclick="openNicheModal()">View Niche Bends</button>
@@ -2913,30 +3081,30 @@
           </div>
         `;
 
-        // Populate the Niche Modal (Background Parsing)
-        const lines = bendsText.split('\n');
-        const bendsList = [];
-        let currentBend = null;
+          // Populate the Niche Modal (Background Parsing)
+          const lines = bendsText.split('\n');
+          const bendsList = [];
+          let currentBend = null;
 
-        lines.forEach(line => {
-          const trimmed = line.trim();
-          if (!trimmed) return;
-          if (/^(?:\*\*?)?\d+\.\s+/.test(trimmed)) {
-            if (currentBend && currentBend.items.length > 0) bendsList.push(currentBend);
-            let title = trimmed.replace(/^(?:\*\*?)?\d+\.\s+/, '').replace(/:?\*?\*?$/, '').trim();
-            title = title.replace(/^#+\s*/, '').replace(/^\[/, '').replace(/\]$/, '');
-            currentBend = { title, items: [] };
-          } else if (currentBend && /^(?:→|\-|\*|•)\s+/.test(trimmed)) {
-            currentBend.items.push(trimmed.replace(/^(?:→|\-|\*|•)\s+/, '').trim());
-          }
-        });
-        if (currentBend && currentBend.items.length > 0) bendsList.push(currentBend);
+          lines.forEach(line => {
+            const trimmed = line.trim();
+            if (!trimmed) return;
+            if (/^(?:\*\*?)?\d+\.\s+/.test(trimmed)) {
+              if (currentBend && currentBend.items.length > 0) bendsList.push(currentBend);
+              let title = trimmed.replace(/^(?:\*\*?)?\d+\.\s+/, '').replace(/:?\*?\*?$/, '').trim();
+              title = title.replace(/^#+\s*/, '').replace(/^\[/, '').replace(/\]$/, '');
+              currentBend = { title, items: [] };
+            } else if (currentBend && /^(?:→|\-|\*|•)\s+/.test(trimmed)) {
+              currentBend.items.push(trimmed.replace(/^(?:→|\-|\*|•)\s+/, '').trim());
+            }
+          });
+          if (currentBend && currentBend.items.length > 0) bendsList.push(currentBend);
 
-        const modalContent = document.getElementById('niche-modal-content');
-        if (bendsList.length > 0) {
-          let gridHtml = '<div class="niche-grid">';
-          bendsList.forEach((b, i) => {
-            gridHtml += `
+          const modalContent = document.getElementById('niche-modal-content');
+          if (bendsList.length > 0) {
+            let gridHtml = '<div class="niche-grid">';
+            bendsList.forEach((b, i) => {
+              gridHtml += `
               <div class="niche-card">
                 <div class="niche-card-number">Concept ${i + 1}</div>
                 <div class="niche-card-title">${esc(b.title)}</div>
@@ -2945,20 +3113,20 @@
                 </ul>
               </div>
             `;
-          });
-          gridHtml += '</div>';
-          modalContent.innerHTML = gridHtml;
-        } else {
-          modalContent.innerHTML = '<p>' + formatMarkdown(bendsText) + '</p>';
+            });
+            gridHtml += '</div>';
+            modalContent.innerHTML = gridHtml;
+          } else {
+            modalContent.innerHTML = '<p>' + formatMarkdown(bendsText) + '</p>';
+          }
         }
-      }
 
-      // ═══ Visual Analysis Handling ═══
-      const sceneEl = document.getElementById('scene-analysis-content');
-      const sceneModalContent = document.getElementById('scene-modal-content');
+        // ═══ Visual Analysis Handling ═══
+        const sceneEl = document.getElementById('scene-analysis-content');
+        const sceneModalContent = document.getElementById('scene-modal-content');
 
-      if (sceneAnalysis || (sceneFrames && sceneFrames.length > 0)) {
-        sceneEl.innerHTML = `
+        if (sceneAnalysis || (sceneFrames && sceneFrames.length > 0)) {
+          sceneEl.innerHTML = `
           <div style="padding: 30px 20px; text-align: center;">
             <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Style Analysis Ready</p>
             <button class="btn btn-accent" onclick="openSceneModal()">View Visual Profile</button>
@@ -2968,18 +3136,18 @@
           </div>
         `;
 
-        // Populate Visual Modal
-        let framesPreview = '';
-        if (sceneFrames && sceneFrames.length > 0) {
-          framesPreview = `
+          // Populate Visual Modal
+          let framesPreview = '';
+          if (sceneFrames && sceneFrames.length > 0) {
+            framesPreview = `
             <div style="display:flex; width:100%; height:180px; border-radius:var(--radius-lg); overflow:hidden; margin-bottom:24px; cursor:pointer; border:1px solid var(--border-medium); box-shadow:var(--shadow-lg);" class="scene-frames-preview">
               ${sceneFrames.map((src, idx) => `<img src="${src}" onclick="openGallery(${JSON.stringify(sceneFrames)}, ${idx})" style="flex:1; object-fit:cover; min-width:0; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.1)';" onmouseout="this.style.transform='scale(1)';">`).join('')}
             </div>
           `;
-        }
-        sceneModalContent.innerHTML = framesPreview + formatMarkdown(sceneAnalysis || "No visual metrics recorded yet.");
-      } else {
-        sceneEl.innerHTML = `
+          }
+          sceneModalContent.innerHTML = framesPreview + formatMarkdown(sceneAnalysis || "No visual metrics recorded yet.");
+        } else {
+          sceneEl.innerHTML = `
           <div class="synthesis-empty" style="padding: 40px 0;">
             <p style="margin-bottom: 20px; opacity: 0.6; font-size: 0.85rem;">Visual Analysis not yet performed.</p>
             <button class="btn btn-visual" onclick="triggerManualVisualAnalysis()">
@@ -2987,7 +3155,7 @@
             </button>
           </div>
         `;
-      }
+        }
       } catch (err) {
         console.error('Error rendering synthesis view:', err);
       }
@@ -2996,7 +3164,7 @@
     // ═══ Global Actions ═══
     const CHATGPT_URL = 'https://chatgpt.com/g/g-p-69ddde8c65a88191b308076bcb28bebf-channellens/project';
 
-    window.triggerManualSynthesis = async function() {
+    window.triggerManualSynthesis = async function () {
       if (!currentSession) return;
       // Mark as synthesizing so dashboard polls and shows 'Live'
       await fetch(`/api/session/${currentSession.id}`, {
@@ -3011,13 +3179,30 @@
     };
 
     window.triggerNicheBend = (sessionId, channelUrl) => {
-        const baseUrl = channelUrl.replace(/\/videos$/, '').replace(/\/$/, '');
-        // Landing on the base URL (Home) per user request for faster capture
-        const target = `${baseUrl}?capture_niche=true&sessionId=${sessionId}`;
-        window.open(target, '_blank');
+      const baseUrl = channelUrl.replace(/\/videos$/, '').replace(/\/$/, '');
+      // Landing on the base URL (Home) per user request for faster capture
+      const target = `${baseUrl}?capture_niche=true&sessionId=${sessionId}`;
+      window.open(target, '_blank');
     };
 
-    window.triggerManualNicheBend = async function() {
+    window.resetSessionStatus = async function () {
+      if (!currentSession) return;
+      if (!confirm("This will stop the synthesis monitoring and return the session to 'In Progress'. Are you sure?")) return;
+      
+      try {
+        await fetch(`/api/session/${currentSession.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'in-progress' })
+        });
+        showToast('Synthesis aborted. Session reset to In Progress.', 'info');
+        openSession(currentSession.id, true);
+      } catch (err) {
+        showToast('Failed to reset status: ' + err.message, 'error');
+      }
+    };
+
+    window.triggerManualNicheBend = async function () {
       if (!currentSession) return;
       // Mark as synthesizing so dashboard polls and shows 'Live'
       await fetch(`/api/session/${currentSession.id}`, {
@@ -3043,40 +3228,40 @@
       openSession(currentSession.id, true);
     };
 
-    window.triggerManualVisualAnalysis = function() {
+    window.triggerManualVisualAnalysis = function () {
       if (!currentSession || currentSession.videos.length === 0) return;
       const targetVideoId = currentSession.videos[0].videoId || currentSession.videos[0].id;
       window.open(`https://www.youtube.com/watch?v=${targetVideoId}&analyze_scene=true&sessionId=${currentSession.id}`, '_blank');
     };
 
-    window.openSopModal = function() {
+    window.openSopModal = function () {
       document.getElementById('sop-modal').style.display = 'flex';
     };
 
-    window.openNicheModal = function() {
+    window.openNicheModal = function () {
       document.getElementById('niche-modal').style.display = 'flex';
     };
 
-    window.openSceneModal = function() {
+    window.openSceneModal = function () {
       document.getElementById('scene-modal').style.display = 'flex';
     };
 
-    window.closeModal = function(id) {
+    window.closeModal = function (id) {
       document.getElementById(id).style.display = 'none';
       document.body.style.overflow = '';
     };
 
-    window.openSOPModal = function() {
+    window.openSOPModal = function () {
       if (!currentSession || !currentSession.synthesis) return;
       const modal = document.getElementById('sop-modal');
       const content = document.getElementById('sop-modal-content');
       const copyBtn = document.getElementById('btn-copy-sop');
       const dlBtn = document.getElementById('btn-download-md');
-      
+
       content.innerHTML = formatMarkdown(currentSession.synthesis);
       modal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
-      
+
       copyBtn.onclick = () => {
         navigator.clipboard.writeText(currentSession.synthesis);
         copyBtn.innerHTML = 'Copied SOP!';
@@ -3096,7 +3281,7 @@
       };
     };
 
-     window.closeSOPModal = function() {
+    window.closeSOPModal = function () {
       document.getElementById('sop-modal').style.display = 'none';
       document.body.style.overflow = '';
     };
@@ -3106,12 +3291,12 @@
       const sid = urlParams.get('sessionId');
       const tab = urlParams.get('tab');
       const layout = urlParams.get('layout');
-      
+
       if (sid) {
         console.log('Restoring Session from URL:', sid, tab, layout);
         openSession(sid).then(() => {
-            if (tab) switchTab(tab);
-            if (layout) switchLayout(layout);
+          if (tab) switchTab(tab);
+          if (layout) switchLayout(layout);
         });
       }
     });
@@ -3133,11 +3318,11 @@
       if (e.key === 'Escape') {
         const sopModal = document.getElementById('sop-modal');
         const galleryModal = document.getElementById('gallery-modal');
-        
+
         if (sopModal && sopModal.style.display === 'flex') closeSOPModal();
         if (galleryModal && galleryModal.style.display === 'flex') {
-            document.getElementById('gallery-modal').style.display = 'none';
-            document.body.style.overflow = '';
+          document.getElementById('gallery-modal').style.display = 'none';
+          document.body.style.overflow = '';
         }
       }
     });
@@ -3153,31 +3338,32 @@
           e.preventDefault();
           const startX = e.pageX;
           const startWidth = th.offsetWidth;
-          
+
           resizer.classList.add('resizing');
-          
+
           const onMouseMove = (e) => {
             const width = startWidth + (e.pageX - startX);
             if (width > 50) {
-                th.style.width = width + 'px';
-                th.style.minWidth = width + 'px';
+              th.style.width = width + 'px';
+              th.style.minWidth = width + 'px';
             }
           };
-          
+
           const onMouseUp = () => {
             resizer.classList.remove('resizing');
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
           };
-          
+
           document.addEventListener('mousemove', onMouseMove);
           document.addEventListener('mouseup', onMouseUp);
         });
       });
     }
-    
+
     // Call after initial load and whenever tab switches to metrics
     setTimeout(initResizableTable, 1000);
   </script>
 </body>
+
 </html>

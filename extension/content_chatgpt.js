@@ -10,13 +10,20 @@ style.textContent = `
     font-family: 'Inter', sans-serif;
   }
   .yt-ai-progress-bar {
-    width: 50%; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-bottom: 4px;
+    width: 40%; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-bottom: 4px;
   }
   #yt-ai-progress-fill {
     width: 0%; height: 100%; background: #6366f1;
     transition: width 0.8s ease;
   }
   #yt-ai-progress-text { color: #9b9a97; font-size: 10px; letter-spacing: 0.3px; font-weight: 500; }
+  .yt-ai-cancel-btn {
+    background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #94a3b8;
+    padding: 2px 8px; border-radius: 4px; font-size: 9px; cursor: pointer; margin-left: 12px;
+    font-family: inherit; transition: all 0.2s;
+  }
+  .yt-ai-cancel-btn:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+  .yt-ai-progress-row { display: flex; align-items: center; justify-content: center; width: 100%; }
   .yt-ai-toast {
     position: fixed; bottom: 20px; right: 20px; background: #252525; color: #ebebeb;
     padding: 8px 16px; border-radius: 4px; font-weight: 500; font-size: 12px; z-index: 10001;
@@ -35,6 +42,10 @@ const _err = (msg, ...a) => console.error(`YT-to-AI: [ChatGPT] ${msg}`, ...a);
 // Reliable file upload — uses ChatGPT's file input (paste doesn't work with React)
 async function uploadFilesToChatGPT(targetInput, files) {
   if (!files || !files.length) return;
+  
+  const hasImage = files.some(f => f.type.includes('image'));
+  const hasJSON = files.some(f => f.type.includes('json'));
+
   // ChatGPT Project/GPTs might have multiple inputs; find the one most likely in the prompt zone
   let fileInput = document.querySelector('#prompt-textarea')?.closest('form')?.querySelector('input[type="file"]');
   if (!fileInput) fileInput = document.querySelector('input[type="file"]');
@@ -45,17 +56,57 @@ async function uploadFilesToChatGPT(targetInput, files) {
     fileInput.files = dt.files;
     fileInput.dispatchEvent(new Event('change', { bubbles: true }));
     _log(`Uploaded ${files.length} files via file input: ${files.map(f => f.name).join(', ')}`);
-    // Project view often needs more time for the 'chips' to render and finalize the upload progress
-    await new Promise(r => setTimeout(r, 3500));
+    
+    // 🛡️ Guard: If it contains an image, we MUST also use the Atomic strategy (Paste + Drop)
+    // ChatGPT's new editor often ignores file-input changes for images
+    if (hasImage) {
+      _log('Image detected in batch. Triggering Atomic Injection fallback...');
+      const atomicFiles = files.filter(f => f.type.includes('image'));
+      await triggerAtomicInjection(targetInput, atomicFiles);
+    }
+
+    // Projects view often needs more time for the 'chips' to render
+    await new Promise(r => setTimeout(r, 4000));
     return;
   }
-  _warn('No file input found, trying paste fallback...');
+
+  _warn('No file input found, trying Atomic fallback...');
+  await triggerAtomicInjection(targetInput, files);
+  await new Promise(r => setTimeout(r, 3000));
+}
+
+/**
+ * 🍌 Standardized Atomic Injection (Paste + Drop)
+ * Matches the proven Gemini strategy for 100% reliability in React-based editors
+ */
+async function triggerAtomicInjection(el, files) {
   const dt = new DataTransfer();
   files.forEach(f => dt.items.add(f));
-  const evt = new ClipboardEvent('paste', { bubbles: true, cancelable: true });
-  Object.defineProperty(evt, 'clipboardData', { value: dt });
-  targetInput.dispatchEvent(evt);
-  await new Promise(r => setTimeout(r, 2200));
+
+  for (let i = 0; i < 2; i++) {
+    _log(`Atomic Injection attempt ${i + 1}/2...`);
+    el.focus();
+    el.click(); // Prime the editor state
+    await new Promise(r => setTimeout(r, 100));
+
+    // 1. Dispatch Paste
+    const pasteEvt = new ClipboardEvent('paste', { 
+      bubbles: true, 
+      cancelable: true, 
+      clipboardData: dt 
+    });
+    el.dispatchEvent(pasteEvt);
+
+    // 2. Dispatch Drop (Backup for strict paste listeners)
+    const dropEvt = new DragEvent('drop', { 
+      bubbles: true, 
+      cancelable: true, 
+      dataTransfer: dt 
+    });
+    el.dispatchEvent(dropEvt);
+
+    if (i === 0) await new Promise(r => setTimeout(r, 500));
+  }
 }
 
 // Legacy alias
@@ -180,9 +231,18 @@ function updateProgressBar(current, total) {
       <div class="yt-ai-progress-bar">
         <div id="yt-ai-progress-fill"></div>
       </div>
-      <div id="yt-ai-progress-text"></div>
+      <div class="yt-ai-progress-row">
+        <div id="yt-ai-progress-text"></div>
+        <button id="yt-ai-progress-cancel" class="yt-ai-cancel-btn">Cancel</button>
+      </div>
     `;
     document.body.appendChild(barContainer);
+
+    document.getElementById('yt-ai-progress-cancel').onclick = (e) => {
+      e.stopPropagation();
+      chrome.runtime.sendMessage({ action: 'STOP_EXECUTION' });
+      hideProgressBar();
+    };
   }
   const pct = (current / total) * 100;
   document.getElementById('yt-ai-progress-fill').style.width = `${pct}%`;
@@ -200,8 +260,12 @@ function hideProgressBar() {
   }
 }
 
-// --- Logic ---
+// --- Global Signal Handler ---
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'GLOBAL_STOP') {
+    hideProgressBar();
+    _log('Global Stop received. Clearing all intervals.');
+  }
   _log(`Message received: ${request.action}`);
   if (request.action === 'TRIGGER_STEP') {
     automateChatGPT(request.retryAttempt || 0);
@@ -520,7 +584,16 @@ async function monitorResponse(isFinal = false, channelName, sessionId) {
         _warn('ChatGPT Rate Limit Detected!');
         showToast('ChatGPT Rate Limit. Pausing Analysis.');
         clearInterval(interval);
-        // Fail step so we don't spam — user can Resume from Dashboard later
+        
+        if (isFinal && sessionId) {
+          _log('Notifying server of synthesis failure...');
+          fetch(`http://127.0.0.1:3005/api/session/${sessionId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'in-progress' })
+          }).catch(e => _err('Failed to reset session status:', e));
+        }
+
         if (!isFinal) chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'fail' });
         return;
       }
@@ -529,6 +602,15 @@ async function monitorResponse(isFinal = false, channelName, sessionId) {
         handled = true;
         console.error('YT-to-AI: Monitor timed out waiting for response.');
         clearInterval(interval);
+        
+        if (isFinal && sessionId) {
+          fetch(`http://127.0.0.1:3005/api/session/${sessionId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'in-progress' })
+          }).catch(e => _err('Failed to reset session status:', e));
+        }
+
         if (!isFinal) chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'fail' });
       }
       return;
@@ -919,14 +1001,26 @@ async function handleNicheBendTrigger(sessionId) {
     const metricsBlob = new Blob([JSON.stringify(sessionData.session.videos, null, 2)], { type: 'application/json' });
     dt.items.add(new File([metricsBlob], 'video_metrics.json', { type: 'application/json' }));
 
-    // 2. Attach the Golden Overview Screenshot
-    if (sessionData.session.popularScreenshot) {
-      _log(`Niche Bender: Harvesting Popular Overview screenshot...`);
+    // 2. Attach the Golden Overview Screenshot (The "Magic" Sauce)
+    if (sessionData.session.popularScreenshot && sessionData.session.popularScreenshot.startsWith('/data')) {
+      _log(`Niche Bender: Harvesting Popular Overview screenshot [${sessionData.session.popularScreenshot}]...`);
       try {
-        const res = await fetch(`http://127.0.0.1:3005${sessionData.session.popularScreenshot}`);
-        const blob = await res.blob();
-        dt.items.add(new File([blob], `popular_overview_sorted.png`, { type: 'image/png' }));
-      } catch (e) { _err(`Niche Bender: Screenshot fetch failed`, e); }
+        const screenshotUrl = `http://127.0.0.1:3005${sessionData.session.popularScreenshot}`;
+        const res = await fetch(screenshotUrl);
+        if (res.ok) {
+          const blob = await res.blob();
+          if (blob.size > 1000) { // Verify it's not a garbage response
+            dt.items.add(new File([blob], `popular_overview_sorted.png`, { type: 'image/png' }));
+            _log('Niche Bender: Screenshot added to upload pool.');
+          } else {
+            _warn('Niche Bender: Screenshot blob too small, likely invalid.');
+          }
+        } else {
+          _err(`Niche Bender: Screenshot fetch HTTP error: ${res.status}`);
+        }
+      } catch (e) { _err(`Niche Bender: Screenshot fetch network error`, e); }
+    } else {
+      _warn('Niche Bender: No valid popularScreenshot path found in session.');
     }
 
     if (dt.items.length > 0) {

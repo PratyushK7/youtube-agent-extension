@@ -60,21 +60,11 @@ async function handleNanoBananaSequence(sessionId) {
     
     showToast('Injecting 5 Cinematic Frames...');
     
-    // Construct File List
-    const dt = new DataTransfer();
-    for (let i = 0; i < sessData.session.sceneFrames.length; i++) {
-        const url = `http://127.0.0.1:3005${sessData.session.sceneFrames[i]}`;
-        const res = await fetch(url);
-        const blob = await res.blob();
-        const file = new File([blob], `scene_${i}.png`, { type: 'image/png' });
-        dt.items.add(file);
-    }
-
-    // 🍌 Image + Prompt Handoff (Single Transaction)
+    // 🍌 Atomic Buffer Handoff
+    showToast('Loading frames into buffer...');
     const dt = new DataTransfer();
     
-    // 1. Fetch images and add to buffer
-    showToast('Loading frames into buffer...');
+    // 1. Fetch images and add to virtual clipboard
     for (let i = 0; i < sessData.session.sceneFrames.length; i++) {
         const url = `http://127.0.0.1:3005${sessData.session.sceneFrames[i]}`;
         const res = await fetch(url);
@@ -83,18 +73,19 @@ async function handleNanoBananaSequence(sessionId) {
         dt.items.add(file);
     }
 
-    // 2. Fetch Prompt and add to same buffer
+    // 2. Fetch Master Prompt and add to same clipboard
+    console.log('YT-to-AI: [Gemini] Fetching Master prompt...');
     const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
     const promptsData = await promptsRes.json();
     const scenePrompt = promptsData.find(p => p.id === 'scene-analyzer.txt')?.content;
     const promptText = scenePrompt || "Analyze these images and provide a high-end style analysis and image prompt.";
     dt.items.add(promptText, 'text/plain');
 
-    // 3. Focus and Inject
+    // 3. Focus and Dispatch
     el.focus();
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 300));
 
-    console.log('YT-to-AI: [Gemini] Dispatching Mixed-Mode Paste Event');
+    console.log('YT-to-AI: [Gemini] Executing Atomic Paste');
     const pasteEvent = new ClipboardEvent('paste', { 
         bubbles: true, 
         cancelable: true, 
@@ -102,14 +93,11 @@ async function handleNanoBananaSequence(sessionId) {
     });
     el.dispatchEvent(pasteEvent);
 
-    // Fallback: Drop Event (some Gemini versions prefer this)
-    console.log('YT-to-AI: [Gemini] Dispatching Fallback Drop Event');
+    // D&D Fallback
     const dropZone = document.querySelector('.xap-uploader-dropzone') || document.querySelector('.chat-container') || el;
-    dropZone.dispatchEvent(new DragEvent('dragenter', { bubbles: true, dataTransfer: dt }));
-    dropZone.dispatchEvent(new DragEvent('dragover', { bubbles: true, dataTransfer: dt }));
     dropZone.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: dt }));
 
-    // 🛡️ Verify Upload (Strict Mode)
+    // 🛡️ Lock: Verify Upload before continuing
     showToast('Verifying Visual Data...');
     let encodingWait = 0;
     let imagesConfirmed = false;
@@ -119,7 +107,7 @@ async function handleNanoBananaSequence(sessionId) {
       encodingWait += 2000;
       
       const previews = document.querySelectorAll('img[src*="blob:"], .image-preview, .thumbnail-container img, [data-test-id="thumbnail"], .v-card-thumbnail');
-      console.log(`YT-to-AI: [Gemini] Buffer Status: ${previews.length} frames detected.`);
+      console.log(`YT-to-AI: [Gemini] Buffer Check: ${previews.length} frames detected.`);
       
       if (previews.length > 0) {
         imagesConfirmed = true;
@@ -128,13 +116,13 @@ async function handleNanoBananaSequence(sessionId) {
     }
     
     if (!imagesConfirmed) {
-      console.error('YT-to-AI: [Gemini] Aborting Send - Images missing from buffer.');
-      showToast('⚠️ Images missing. Please paste (Cmd+V) manually.');
+      console.error('YT-to-AI: [Gemini] Injection failed - verification lock active.');
+      showToast('⚠️ Images missing. Please Cmd+V manually.');
       return;
     }
 
     // Extra buffer for rendering
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 1200));
 
     setTimeout(() => {
       const sendBtn = document.querySelector(SEND_BUTTON_SELECTOR);
@@ -218,6 +206,14 @@ async function monitorNanoBananaResponse(sessionId) {
     lastText = currentText;
   }, 2000);
 }
+
+// --- Global Signal Handler ---
+chrome.runtime.onMessage.addListener((request) => {
+  if (request.action === 'GLOBAL_STOP') {
+    handled = true;
+    console.log('YT-to-AI: [Gemini] Global Stop received.');
+  }
+});
 
 window.addEventListener('load', () => {
   const params = new URLSearchParams(window.location.search);
