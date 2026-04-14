@@ -70,41 +70,47 @@ async function handleNanoBananaSequence(sessionId) {
         dt.items.add(file);
     }
 
-    // Attempt Direct File Injection
-    let fileInput = document.querySelector('input[type="file"][name="Filedata"]') || document.querySelector('input[type="file"]');
+    // 🍌 Image + Prompt Handoff (Single Transaction)
+    const dt = new DataTransfer();
     
-    if (!fileInput) {
-       console.log('YT-to-AI: [Gemini] Upload input not found. Attempting to wake up components...');
-       const plusBtn = document.querySelector('button[aria-label*="Open input area menu"], button[aria-label*="select tools"]');
-       if (plusBtn) {
-         plusBtn.click();
-         await new Promise(r => setTimeout(r, 600));
-         // Optional: Click the "Upload files" text if found to fully initialize
-         const items = Array.from(document.querySelectorAll('span, div, li, button'));
-         const uploadItem = items.find(el => el.textContent.trim() === 'Upload files' && el.offsetParent !== null);
-         if (uploadItem) uploadItem.click();
-         await new Promise(r => setTimeout(r, 600));
-       }
-       fileInput = document.querySelector('input[type="file"][name="Filedata"]') || document.querySelector('input[type="file"]');
+    // 1. Fetch images and add to buffer
+    showToast('Loading frames into buffer...');
+    for (let i = 0; i < sessData.session.sceneFrames.length; i++) {
+        const url = `http://127.0.0.1:3005${sessData.session.sceneFrames[i]}`;
+        const res = await fetch(url);
+        const blob = await res.blob();
+        const file = new File([blob], `scene_${i}.png`, { type: 'image/png' });
+        dt.items.add(file);
     }
 
-    if (fileInput) {
-        console.log('YT-to-AI: [Gemini] Injecting files via hidden input');
-        fileInput.files = dt.files;
-        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-    } else {
-        console.log('YT-to-AI: [Gemini] Falling back to full Drag-and-Drop cycle.');
-        const dropZone = document.querySelector('.xap-uploader-dropzone') || document.querySelector('.chat-container') || el;
-        // Full D&D Lifecycle simulation
-        dropZone.dispatchEvent(new DragEvent('dragenter', { bubbles: true, cancelable: true, dataTransfer: dt }));
-        dropZone.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt }));
-        setTimeout(() => {
-          dropZone.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
-        }, 100);
-    }
-    
-    // 🛡️ Adaptive wait for Gemini to process frames (up to 15s)
-    showToast('Encoding Visual Data (Processing Frames)...');
+    // 2. Fetch Prompt and add to same buffer
+    const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
+    const promptsData = await promptsRes.json();
+    const scenePrompt = promptsData.find(p => p.id === 'scene-analyzer.txt')?.content;
+    const promptText = scenePrompt || "Analyze these images and provide a high-end style analysis and image prompt.";
+    dt.items.add(promptText, 'text/plain');
+
+    // 3. Focus and Inject
+    el.focus();
+    await new Promise(r => setTimeout(r, 200));
+
+    console.log('YT-to-AI: [Gemini] Dispatching Mixed-Mode Paste Event');
+    const pasteEvent = new ClipboardEvent('paste', { 
+        bubbles: true, 
+        cancelable: true, 
+        clipboardData: dt 
+    });
+    el.dispatchEvent(pasteEvent);
+
+    // Fallback: Drop Event (some Gemini versions prefer this)
+    console.log('YT-to-AI: [Gemini] Dispatching Fallback Drop Event');
+    const dropZone = document.querySelector('.xap-uploader-dropzone') || document.querySelector('.chat-container') || el;
+    dropZone.dispatchEvent(new DragEvent('dragenter', { bubbles: true, dataTransfer: dt }));
+    dropZone.dispatchEvent(new DragEvent('dragover', { bubbles: true, dataTransfer: dt }));
+    dropZone.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: dt }));
+
+    // 🛡️ Verify Upload (Strict Mode)
+    showToast('Verifying Visual Data...');
     let encodingWait = 0;
     let imagesConfirmed = false;
     
@@ -112,9 +118,8 @@ async function handleNanoBananaSequence(sessionId) {
       await new Promise(r => setTimeout(r, 2000));
       encodingWait += 2000;
       
-      // Check for thumbnails (blob images or specifically class-named containers)
       const previews = document.querySelectorAll('img[src*="blob:"], .image-preview, .thumbnail-container img, [data-test-id="thumbnail"], .v-card-thumbnail');
-      console.log(`YT-to-AI: [Gemini] Image Verification: Found ${previews.length} frames.`);
+      console.log(`YT-to-AI: [Gemini] Buffer Status: ${previews.length} frames detected.`);
       
       if (previews.length > 0) {
         imagesConfirmed = true;
@@ -123,26 +128,14 @@ async function handleNanoBananaSequence(sessionId) {
     }
     
     if (!imagesConfirmed) {
-      console.error('YT-to-AI: [Gemini] CRITICAL - No images detected after injection.');
-      showToast('⚠️ Screenshot injection failed. Please drag images manually.');
-      // Stop here - do not send prompt yet to satisfy user request
+      console.error('YT-to-AI: [Gemini] Aborting Send - Images missing from buffer.');
+      showToast('⚠️ Images missing. Please paste (Cmd+V) manually.');
       return;
     }
 
     // Extra buffer for rendering
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 1000));
 
-    // Fetch Prompt
-    console.log('YT-to-AI: [Gemini] Fetching Master prompt...');
-    const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
-    const promptsData = await promptsRes.json();
-    const scenePrompt = promptsData.find(p => p.id === 'scene-analyzer.txt')?.content;
-    const promptText = scenePrompt || "Analyze these images and provide a high-end style analysis and image prompt.";
-
-    el.focus();
-    console.log('YT-to-AI: [Gemini] Injecting prompt text...');
-    document.execCommand('insertText', false, promptText);
-    
     setTimeout(() => {
       const sendBtn = document.querySelector(SEND_BUTTON_SELECTOR);
       if (sendBtn && !sendBtn.disabled) {
@@ -150,10 +143,10 @@ async function handleNanoBananaSequence(sessionId) {
         sendBtn.click();
         monitorNanoBananaResponse(sessionId);
       } else {
-        showToast('Images Pasted! Please click Send manually.');
+        showToast('Capture Ready! Please click Send.');
         monitorNanoBananaResponse(sessionId);
       }
-    }, 3000);
+    }, 2000);
 
   } catch (err) {
     console.error('Nano Banana failed:', err);
