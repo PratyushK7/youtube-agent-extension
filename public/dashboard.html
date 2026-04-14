@@ -2855,15 +2855,17 @@
     }
 
     // ═══ Global Actions ═══
+    const CHATGPT_URL = 'https://chatgpt.com/g/g-p-69ddde8c65a88191b308076bcb28bebf-channellens/project';
+
     window.triggerManualSynthesis = function() {
       if (!currentSession) return;
-      const url = `https://chatgpt.com/?trigger_synthesis=true&sessionId=${currentSession.id}&channelName=${encodeURIComponent(currentSession.channel)}&totalVideos=${currentSession.videos.length}`;
+      const url = `${CHATGPT_URL}?trigger_synthesis=true&sessionId=${currentSession.id}&channelName=${encodeURIComponent(currentSession.channel)}&totalVideos=${currentSession.videos.length}`;
       window.open(url, '_blank');
     };
 
     window.triggerManualNicheBend = function() {
       if (!currentSession) return;
-      window.open(`https://chatgpt.com/?niche_bend=true&sessionId=${currentSession.id}`, '_blank');
+      window.open(`${CHATGPT_URL}?niche_bend=true&sessionId=${currentSession.id}`, '_blank');
     };
 
     window.triggerManualVisualAnalysis = function() {

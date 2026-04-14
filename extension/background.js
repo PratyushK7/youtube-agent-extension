@@ -15,7 +15,7 @@ let state = {
 };
 
 const SERVER = 'http://127.0.0.1:3005';
-const PROJECT_URL = 'https://chatgpt.com/';
+const PROJECT_URL = 'https://chatgpt.com/g/g-p-69ddde8c65a88191b308076bcb28bebf-channellens/project';
 
 // Helper for delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));

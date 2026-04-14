@@ -399,8 +399,9 @@ if (urlParams.get('analyze_scene') === 'true') {
       if (data.success) {
         showPlayerStatus('✅ Upload Complete. Transferring to AI Brain...');
         await chrome.storage.local.set({ sceneFramesBlobReady: true });
+        const PROJECT_URL = 'https://chatgpt.com/g/g-p-69ddde8c65a88191b308076bcb28bebf-channellens/project';
         setTimeout(() => {
-          window.location.href = `https://chatgpt.com/?scene_analyze=true&sessionId=${sessionId}`;
+          window.location.href = `${PROJECT_URL}?scene_analyze=true&sessionId=${sessionId}`;
         }, 1200);
       } else {
         showPlayerStatus('❌ Server Failed to Save Frames');
