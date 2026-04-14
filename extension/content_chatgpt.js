@@ -185,6 +185,15 @@ function updateProgressBar(current, total) {
   document.getElementById('yt-ai-progress-text').innerText = `Analyzing video ${current} of ${total}`;
 }
 
+function hideProgressBar() {
+  const bar = document.getElementById('yt-ai-progress-container');
+  if (bar) {
+    bar.style.opacity = '0';
+    bar.style.transition = 'opacity 0.5s ease-out';
+    setTimeout(() => bar.remove(), 600);
+  }
+}
+
 // --- Logic ---
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   _log(`Message received: ${request.action}`);
@@ -498,6 +507,18 @@ async function monitorResponse(isFinal = false, channelName, sessionId) {
     if (tickCount % 15 === 0) _log(`Monitor tick ${tickCount}/${MAX_TICKS}, stability=${stabilityCount}`);
     const messages = document.querySelectorAll('div[data-message-author-role="assistant"]');
     if (messages.length <= initialMsgCount) {
+      // 🛑 Check for Rate Limit Error in the UI components
+      const hasRateLimit = !!Array.from(document.querySelectorAll('div')).find(el => el.innerText.includes('making requests too quickly') || el.innerText.includes('temporarily limited access'));
+      if (hasRateLimit) {
+        handled = true;
+        _warn('ChatGPT Rate Limit Detected!');
+        showToast('ChatGPT Rate Limit. Pausing Analysis.');
+        clearInterval(interval);
+        // Fail step so we don't spam — user can Resume from Dashboard later
+        if (!isFinal) chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'fail' });
+        return;
+      }
+
       if (tickCount > MAX_TICKS) {
         handled = true;
         console.error('YT-to-AI: Monitor timed out waiting for response.');
@@ -558,9 +579,15 @@ async function monitorResponse(isFinal = false, channelName, sessionId) {
       if (isFinal) {
         completeSession(currentText, sessionId).then(() => {
           showToast('Master Synthesis Complete ✓');
+          hideProgressBar();
         });
       } else {
-        saveVideoToSession(currentText).then(() => {
+        saveVideoToSession(currentText).then(async () => {
+          // 🏁 Cleanup: If this is the last video in the research queue, hide the progress bar
+          const data = await chrome.storage.local.get(['step', 'totalSteps']);
+          if (data.step && data.totalSteps && data.step >= data.totalSteps) {
+            hideProgressBar();
+          }
           chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'success' });
         }).catch(() => {
           chrome.runtime.sendMessage({ action: 'STEP_RESULT', status: 'success' });
@@ -828,7 +855,8 @@ async function generateMasterAnalysis(channelName, passedTotalSteps, passedSessi
 // Detect and report the specific conversation URL to background so it can be reused
 function reportChatUrl() {
   const url = window.location.href;
-  if (url.includes('chatgpt.com/c/')) {
+  // Support both standard conversations (/c/) and GPTs/Projects (/g/)
+  if (url.includes('chatgpt.com/c/') || url.includes('chatgpt.com/g/')) {
     chrome.storage.local.get('_bgState', (data) => {
       if (data._bgState && data._bgState.chatUrl !== url) {
         chrome.storage.local.set({ 
@@ -1065,6 +1093,12 @@ async function initializeTriggers() {
   if (params.get('niche_bend') === 'true' && sessionId) {
     showToast('🚀 Strategy Mode: Initializing Niche Bender...');
     handleNicheBendTrigger(sessionId);
+    return;
+  }
+
+  if (params.get('scene_analyze') === 'true' && sessionId) {
+    showToast('🚀 Vision Mode: Initializing Visual Analysis...');
+    handleSceneAnalyzerTrigger(sessionId);
     return;
   }
 

@@ -15,6 +15,7 @@ let state = {
 };
 
 const SERVER = 'http://127.0.0.1:3005';
+const PROJECT_URL = 'https://chatgpt.com/';
 
 // Helper for delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -216,7 +217,7 @@ async function handleDashboardTriggerSynthesis(request, sendResponse) {
         setTimeout(() => safeSendSynthesis(state.chatTabId), 1500);
       });
     } else {
-      chrome.tabs.create({ url: 'https://chatgpt.com/' }, (tab) => {
+      chrome.tabs.create({ url: PROJECT_URL }, (tab) => {
         state.chatTabId = tab.id;
         const listener = (tabId, changeInfo) => {
           if (tabId === tab.id && changeInfo.status === 'complete') {
@@ -423,7 +424,7 @@ async function handleVideoReady(request, sender) {
         state.chatTabId = existingTab.id;
         log('Found existing ChatGPT tab to reuse:', state.chatTabId);
         await chrome.tabs.update(state.chatTabId, { active: true });
-        await delay(1200); // Give content script time to stabilize if tab was inactive
+        await delay(1200);
         
         try {
           await chrome.tabs.sendMessage(state.chatTabId, { action: 'TRIGGER_STEP' });
@@ -438,9 +439,13 @@ async function handleVideoReady(request, sender) {
 
       // 3. Create new tab as last resort
       log('No ChatGPT tab found. Creating new one...');
-      const startUrl = state.chatUrl || 'https://chatgpt.com/';
+      const startUrl = state.chatUrl || PROJECT_URL;
       const newTab = await chrome.tabs.create({ url: startUrl });
       state.chatTabId = newTab.id;
+      // If we used the Project URL, save it as the chatUrl so we stay in this "folder" for the session
+      if (!state.chatUrl) {
+        state.chatUrl = PROJECT_URL;
+      }
       await saveState();
       return true;
     };
@@ -463,6 +468,11 @@ async function handleStepResult(request) {
     if (state.currentIndex < state.queue.length) {
       await chrome.storage.local.set({ currentIndex: state.currentIndex, totalSteps: state.queue.length });
       await saveState();
+      
+      // 🧘 'Breathing Room' Cooldown: Respect ChatGPT rate limits (15s delay)
+      log(`Resting for 15s to respect ChatGPT rate limits...`);
+      await delay(15000); 
+
       // Verify YT tab still exists
       try {
         await chrome.tabs.get(state.ytTabId);
@@ -501,8 +511,9 @@ async function handleStepResult(request) {
         try {
           await chrome.tabs.reload(state.chatTabId);
         } catch (e) {
-          const tab = await chrome.tabs.create({ url: 'https://chatgpt.com/' });
+          const tab = await chrome.tabs.create({ url: PROJECT_URL });
           state.chatTabId = tab.id;
+          state.chatUrl = PROJECT_URL;
           await saveState();
         }
       }

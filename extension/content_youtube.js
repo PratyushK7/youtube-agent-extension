@@ -13,11 +13,16 @@ function showStatusHUD(text) {
     document.body.appendChild(hud);
   }
   document.getElementById('yt-ai-status-text').innerText = text;
-  
-  clearTimeout(window.hudTimeout);
-  window.hudTimeout = setTimeout(() => {
-    if (hud) hud.remove();
-  }, 8000);
+  hud.style.opacity = '1';
+  hud.style.display = 'flex';
+}
+
+function hideStatusHUD() {
+  const hud = document.getElementById('yt-ai-status-hud');
+  if (hud) {
+    hud.style.opacity = '0';
+    setTimeout(() => { if (hud) hud.remove(); }, 500);
+  }
 }
 
 async function navigateToSort(sortText) {
@@ -175,7 +180,10 @@ function injectAnalyzerButton() {
          channelName: channelName,
          queue: queue
        }, (res) => {
-         if (res?.success) showStatusHUD(`Analyzing ${queue.length} videos...`);
+         if (res?.success) {
+           showStatusHUD(`Analyzing ${queue.length} videos...`);
+           setTimeout(hideStatusHUD, 1500);
+         }
        });
     } else {
        // Navigate to videos first

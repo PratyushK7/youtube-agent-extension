@@ -8,6 +8,21 @@ function showPlayerStatus(text) {
     document.body.appendChild(hud);
   }
   document.getElementById('yt-ai-status-text').innerText = text;
+  hud.style.display = 'flex';
+  hud.style.opacity = '1';
+  hud.style.transition = 'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+}
+
+function hidePlayerStatus() {
+  const hud = document.getElementById('yt-ai-status-hud');
+  if (hud) {
+    hud.style.opacity = '0';
+    setTimeout(() => { 
+      if (document.getElementById('yt-ai-status-hud')) {
+        hud.remove(); 
+      }
+    }, 600);
+  }
 }
 
 // Wait for video element to appear in DOM (YouTube SPA may not have it immediately)
@@ -275,6 +290,9 @@ async function harvestVideoInfo() {
     thumbnailUrl: thumbnailUrl || ''
   });
 
+  // Fade out the pill after data is sent
+  setTimeout(hidePlayerStatus, 1500);
+
   // Restore UI after a delay
   setTimeout(() => {
     if (sidebar) sidebar.style.opacity = '1';
@@ -382,7 +400,7 @@ if (urlParams.get('analyze_scene') === 'true') {
         showPlayerStatus('✅ Upload Complete. Transferring to AI Brain...');
         await chrome.storage.local.set({ sceneFramesBlobReady: true });
         setTimeout(() => {
-          window.location.href = `https://gemini.google.com/app?scene_analyze=true&sessionId=${sessionId}`;
+          window.location.href = `https://chatgpt.com/?scene_analyze=true&sessionId=${sessionId}`;
         }, 1200);
       } else {
         showPlayerStatus('❌ Server Failed to Save Frames');
