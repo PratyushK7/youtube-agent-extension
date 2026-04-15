@@ -61,6 +61,68 @@ app.get('/favicon.ico', (req, res) => {
 
 const PORT = process.env.PORT || 3005;
 
+// ─── Sanitization & Path Helpers ─────────────────────────────
+const sanitizeName = (name) => {
+  if (!name) return 'Unknown_Channel';
+  // Remove invalid filesystem chars, replace spaces/dots with underscores
+  return name.trim().replace(/[<>:"/\\|?*]/g, '').replace(/[\s\.]+/g, '_').substring(0, 100);
+};
+
+function getStoragePaths(session) {
+  const channelFolder = sanitizeName(session.channel);
+  const sessionId = session.id;
+  
+  const rootDir = join(__dirname, 'data', 'Channels', channelFolder, sessionId);
+  const assetsDir = join(rootDir, 'assets');
+  const thumbnailsDir = join(assetsDir, 'thumbnails');
+  const scenesDir = join(assetsDir, 'scenes');
+  const reportsDir = join(rootDir, 'reports');
+
+  // Relative paths for web access
+  const relativeRoot = `/data/Channels/${channelFolder}/${sessionId}`;
+  
+  return {
+    rootDir,
+    assetsDir,
+    thumbnailsDir,
+    scenesDir,
+    reportsDir,
+    relativeRoot,
+    relativeAssets: `${relativeRoot}/assets`,
+    relativeThumbnails: `${relativeRoot}/assets/thumbnails`,
+    relativeScenes: `${relativeRoot}/assets/scenes`,
+    relativeReports: `${relativeRoot}/reports`
+  };
+}
+
+function generateCSVContent(session) {
+  const headers = [
+    'Video #', 'Title', 'Views', 'Duration (sec)',
+    'Hook Type', 'Hook Text', 'Hook Framework',
+    'Opening Structure', 'Script Structure', 'Storytelling Framework',
+    'Rehooks Used', 'Retention Pattern', 'CTA Placement',
+    'Key Takeaways', 'Thumbnail Description'
+  ];
+
+  const stringify = (v) => Array.isArray(v) ? v.join('; ') : v;
+  const esc = (v) => { 
+    const s = String(v ?? ''); 
+    return (s.includes(',') || s.includes('"') || s.includes('\n')) ? '"' + s.replace(/"/g, '""') + '"' : s; 
+  };
+
+  let csv = headers.map(esc).join(',') + '\n';
+  session.videos.forEach(v => {
+    csv += [
+      v.stepNumber || v.videoNumber, v.title, v.views, v.durationSec,
+      v.hookType, v.hookText, v.hookFramework,
+      v.openingStructure, v.scriptStructure, v.storytellingFramework,
+      v.rehooksUsed, v.retentionPattern, v.ctaPlacement,
+      v.keyTakeaways, v.thumbnailDescription
+    ].map(val => esc(stringify(val))).join(',') + '\n';
+  });
+  return csv;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // SHARED UTILITIES
 // ═══════════════════════════════════════════════════════════════
@@ -206,15 +268,23 @@ app.post('/api/session/create', (req, res) => {
       const s = sessions[i];
       if (s.channel.trim().toLowerCase() === cleanChannel) {
         const oldSession = s;
-        const assetsDir = join(__dirname, 'data', 'channel_assets', oldSession.id);
-        if (existsSync(assetsDir)) {
+        // Also cleanup the folder if it follows the new structure
+        const paths = getStoragePaths(oldSession);
+        if (existsSync(paths.rootDir)) {
           try { 
-            rmSync(assetsDir, { recursive: true, force: true });
-            console.log(`🧹 Deleted old assets: ${assetsDir}`);
+            rmSync(paths.rootDir, { recursive: true, force: true });
+            console.log(`🧹 Deleted old channel folder: ${paths.rootDir}`);
           } catch (e) {
-            console.error(`❌ Failed to delete old assets: ${e.message}`);
+            console.error(`❌ Failed to delete old channel folder: ${e.message}`);
           }
         }
+        
+        // Cleanup old flat assets too if they exist
+        const oldAssetsDir = join(__dirname, 'data', 'channel_assets', oldSession.id);
+        if (existsSync(oldAssetsDir)) {
+          try { rmSync(oldAssetsDir, { recursive: true, force: true }); } catch (e) {}
+        }
+
         sessions.splice(i, 1);
         console.log(`🚮 Removed old session entry for "${channel}" (${oldSession.id})`);
       }
@@ -235,6 +305,12 @@ app.post('/api/session/create', (req, res) => {
       completedAt: null
     };
 
+    // Initialize the directory structure for this session
+    const paths = getStoragePaths(session);
+    if (!existsSync(paths.rootDir)) mkdirSync(paths.rootDir, { recursive: true });
+    if (!existsSync(paths.assetsDir)) mkdirSync(paths.assetsDir, { recursive: true });
+    if (!existsSync(paths.reportsDir)) mkdirSync(paths.reportsDir, { recursive: true });
+
     sessions.unshift(session);
     writeSessions(sessions);
     res.json({ success: true, session });
@@ -250,12 +326,12 @@ app.put('/api/session/:id/metadata', express.json(), (req, res) => {
     if (!session) return res.status(404).json({ error: 'Session not found' });
 
     if (popularScreenshot) {
-      const sessionAssetsDir = join(__dirname, 'data', 'channel_assets', id);
-      if (!existsSync(sessionAssetsDir)) mkdirSync(sessionAssetsDir, { recursive: true });
-      const imgPath = join(sessionAssetsDir, 'popular_overview.png');
+      const paths = getStoragePaths(session);
+      if (!existsSync(paths.assetsDir)) mkdirSync(paths.assetsDir, { recursive: true });
+      const imgPath = join(paths.assetsDir, 'popular_overview.png');
       const base64Data = popularScreenshot.replace(/^data:image\/\w+;base64,/, '');
       writeFileSync(imgPath, base64Data, 'base64');
-      session.popularScreenshot = `/data/channel_assets/${id}/popular_overview.png`;
+      session.popularScreenshot = `${paths.relativeAssets}/popular_overview.png`;
     }
 
     if (channelUrl) {
@@ -304,14 +380,13 @@ app.put('/api/session/:id/video', (req, res) => {
     // Save screenshot if provided
     let screenshotPath = '';
     if (screenshot && screenshot.length > 100) {
-      const sessionAssetsDir = join(__dirname, 'data', 'channel_assets', id);
-      const screenshotsDir = join(sessionAssetsDir, 'thumbnails');
-      if (!existsSync(screenshotsDir)) mkdirSync(screenshotsDir, { recursive: true });
-      const imgId = `${id}_v${session.videos.length + 1}`;
-      const imagePath = join(screenshotsDir, `${imgId}.png`);
+      const paths = getStoragePaths(session);
+      if (!existsSync(paths.thumbnailsDir)) mkdirSync(paths.thumbnailsDir, { recursive: true });
+      const imgId = `v${session.videos.length + 1}_thumb`;
+      const imagePath = join(paths.thumbnailsDir, `${imgId}.png`);
       const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, '');
       writeFileSync(imagePath, base64Data, 'base64');
-      screenshotPath = `/data/channel_assets/${id}/thumbnails/${imgId}.png`;
+      screenshotPath = `${paths.relativeThumbnails}/${imgId}.png`;
     }
 
     const entry = {
@@ -343,14 +418,34 @@ app.put('/api/session/:id/complete', (req, res) => {
     session.status = 'complete';
     session.completedAt = new Date().toISOString();
 
+    const paths = getStoragePaths(session);
+
+    // Write Strategic SOP Markdown Report
+    if (synthesis) {
+      if (!existsSync(paths.reportsDir)) mkdirSync(paths.reportsDir, { recursive: true });
+      const sopPath = join(paths.reportsDir, 'strategic_sop.md');
+      const content = `# Strategic Channel SOP: ${session.channel}\n\nGenerated on: ${new Date().toLocaleString()}\n\n${synthesis}`;
+      writeFileSync(sopPath, content);
+      console.log(`📝 Generated SOP report: ${sopPath}`);
+      
+      // Also export CSV automatically to reports folder
+      try {
+        const csvPath = join(paths.reportsDir, 'video_metrics.csv');
+        const csvContent = generateCSVContent(session);
+        writeFileSync(csvPath, csvContent);
+        console.log(`📊 Generated CSV report: ${csvPath}`);
+      } catch (e) {
+        console.error('Failed to auto-export CSV report:', e.message);
+      }
+    }
+
     // Save final synthesis screenshot
     if (screenshot && screenshot.length > 100) {
-      const screenshotsDir = join(__dirname, 'data', 'screenshots');
-      if (!existsSync(screenshotsDir)) mkdirSync(screenshotsDir, { recursive: true });
-      const imagePath = join(screenshotsDir, `${id}_final.png`);
+      if (!existsSync(paths.assetsDir)) mkdirSync(paths.assetsDir, { recursive: true });
+      const imagePath = join(paths.assetsDir, 'final_snapshot.png');
       const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, '');
       writeFileSync(imagePath, base64Data, 'base64');
-      session.finalScreenshot = `/data/screenshots/${id}_final.png`;
+      session.finalScreenshot = `${paths.relativeAssets}/final_snapshot.png`;
     }
 
     writeSessions(sessions);
@@ -369,6 +464,17 @@ app.put('/api/session/:id/niche-bends', (req, res) => {
     if (!session) return res.status(404).json({ error: 'Session not found' });
 
     session.nicheBends = nicheBends || '';
+    
+    // Write Niche Bends Markdown Report
+    if (nicheBends) {
+      const paths = getStoragePaths(session);
+      if (!existsSync(paths.reportsDir)) mkdirSync(paths.reportsDir, { recursive: true });
+      const reportPath = join(paths.reportsDir, 'niche_bends.md');
+      const content = `# Niche Bends & Creative Concepting: ${session.channel}\n\nGenerated on: ${new Date().toLocaleString()}\n\n${nicheBends}`;
+      writeFileSync(reportPath, content);
+      console.log(`📝 Generated Niche Bends report: ${reportPath}`);
+    }
+
     writeSessions(sessions);
     res.json({ success: true, session });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -389,16 +495,16 @@ app.post('/api/session/:id/scene-frames', express.json({ limit: '200mb' }), (req
     if (!session) return res.status(404).json({ error: 'Session not found' });
 
     const sessionAssetsDir = join(__dirname, 'data', 'channel_assets', id);
-    const scenesDir = join(sessionAssetsDir, 'scenes');
-    if (!existsSync(scenesDir)) mkdirSync(scenesDir, { recursive: true });
+    const paths = getStoragePaths(session);
+    if (!existsSync(paths.scenesDir)) mkdirSync(paths.scenesDir, { recursive: true });
 
     const savedPaths = [];
     frames.forEach((b64, idx) => {
-      const imgId = `${id}_frame_${idx}`;
-      const imagePath = join(scenesDir, `${imgId}.png`);
+      const imgId = `frame_${idx}`;
+      const imagePath = join(paths.scenesDir, `${imgId}.png`);
       const base64Data = b64.replace(/^data:image\/\w+;base64,/, '');
       writeFileSync(imagePath, base64Data, 'base64');
-      savedPaths.push(`/data/channel_assets/${id}/scenes/${imgId}.png`);
+      savedPaths.push(`${paths.relativeScenes}/${imgId}.png`);
     });
 
     session.sceneFrames = savedPaths;
@@ -418,6 +524,17 @@ app.put('/api/session/:id/scene-analysis', (req, res) => {
     if (!session) return res.status(404).json({ error: 'Session not found' });
 
     session.sceneAnalysis = sceneAnalysis || '';
+    
+    // Write Visual Analysis Markdown Report
+    if (sceneAnalysis) {
+      const paths = getStoragePaths(session);
+      if (!existsSync(paths.reportsDir)) mkdirSync(paths.reportsDir, { recursive: true });
+      const reportPath = join(paths.reportsDir, 'visual_profile.md');
+      const content = `# Visual Analysis Profile: ${session.channel}\n\nGenerated on: ${new Date().toLocaleString()}\n\n${sceneAnalysis}`;
+      writeFileSync(reportPath, content);
+      console.log(`📝 Generated Visual Profile report: ${reportPath}`);
+    }
+
     writeSessions(sessions);
     res.json({ success: true, session });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -431,14 +548,21 @@ app.delete('/api/session/:id', (req, res) => {
     const sessionIndex = sessions.findIndex(s => s.id === id);
     if (sessionIndex === -1) return res.status(404).json({ error: 'Session not found' });
 
-    // Delete associated assets folder
-    const assetsDir = join(__dirname, 'data', 'channel_assets', id);
-    if (existsSync(assetsDir)) {
+    const session = sessions[sessionIndex];
+    // Delete associated session folder (new structure)
+    const paths = getStoragePaths(session);
+    if (existsSync(paths.rootDir)) {
       try {
-        rmSync(assetsDir, { recursive: true, force: true });
+        rmSync(paths.rootDir, { recursive: true, force: true });
       } catch (e) {
-        console.error(`Failed to delete assets folder: ${assetsDir}`, e);
+        console.error(`Failed to delete session folder: ${paths.rootDir}`, e);
       }
+    }
+
+    // Fallback: Delete old flat assets folder
+    const oldAssetsDir = join(__dirname, 'data', 'channel_assets', id);
+    if (existsSync(oldAssetsDir)) {
+      try { rmSync(oldAssetsDir, { recursive: true, force: true }); } catch (e) {}
     }
 
     // Remove from sessions.json
@@ -508,28 +632,8 @@ app.get('/api/session/:id/csv', (req, res) => {
     const session = sessions.find(s => s.id === req.params.id);
     if (!session) return res.status(404).json({ error: 'Session not found' });
 
-    const headers = [
-      'Video #', 'Title', 'Views', 'Duration (sec)',
-      'Hook Type', 'Hook Text', 'Hook Framework',
-      'Opening Structure', 'Script Structure', 'Storytelling Framework',
-      'Rehooks Used', 'Retention Pattern', 'CTA Placement',
-      'Key Takeaways', 'Thumbnail Description'
-    ];
-
-    const stringify = (v) => Array.isArray(v) ? v.join('; ') : v;
-    const esc = (v) => { const s = String(v ?? ''); return (s.includes(',') || s.includes('"') || s.includes('\n')) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-
-    let csv = headers.map(esc).join(',') + '\n';
-    session.videos.forEach(v => {
-      csv += [
-        v.stepNumber || v.videoNumber, v.title, v.views, v.durationSec,
-        v.hookType, v.hookText, v.hookFramework,
-        v.openingStructure, v.scriptStructure, v.storytellingFramework,
-        v.rehooksUsed, v.retentionPattern, v.ctaPlacement,
-        v.keyTakeaways, v.thumbnailDescription
-      ].map(val => esc(stringify(val))).join(',') + '\n';
-    });
-
+    const csv = generateCSVContent(session);
+    
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="${session.channel || 'session'}_analysis.csv"`);
     res.send(csv);
