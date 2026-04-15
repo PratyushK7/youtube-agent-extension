@@ -1436,9 +1436,18 @@
       font-weight: 400 !important;
     }
 
-    .v-card-value .markdown-content p {
-      margin-bottom: 0px;
-      /* Tighten up card view */
+    .v-card-value .markdown-content img,
+    .v-card-value img,
+    #scene-modal-content img,
+    #niche-modal-content img,
+    #sop-modal-content img {
+      cursor: zoom-in;
+      transition: transform 0.2s ease;
+    }
+
+    .v-card-value .markdown-content img:hover,
+    .v-card-value img:hover {
+      transform: scale(1.02);
     }
 
     .v-card-divider {
@@ -2475,7 +2484,7 @@
 
     <!-- ═══ Frame Gallery Modal ═══ -->
     <div id="gallery-modal"
-      style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+      style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:11000; flex-direction:column; align-items:center; justify-content:center;">
       <button id="btn-close-gallery"
         style="position:absolute; top:20px; right:30px; background:transparent; border:none; color:white; font-size:2rem; cursor:pointer;">&times;</button>
 
@@ -3270,9 +3279,10 @@
           // Populate Visual Modal
           let framesPreview = '';
           if (sceneFrames && sceneFrames.length > 0) {
+            const framesEscaped = JSON.stringify(sceneFrames).replace(/"/g, '&quot;');
             framesPreview = `
-            <div style="display:flex; width:100%; height:180px; border-radius:var(--radius-lg); overflow:hidden; margin-bottom:24px; cursor:pointer; border:1px solid var(--border-medium); box-shadow:var(--shadow-lg);" class="scene-frames-preview">
-              ${sceneFrames.map((src, idx) => `<img src="${src}" onclick="openGallery(${JSON.stringify(sceneFrames)}, ${idx})" style="flex:1; object-fit:cover; min-width:0; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.1)';" onmouseout="this.style.transform='scale(1)';">`).join('')}
+            <div style="display:flex; width:100%; height:180px; border-radius:var(--radius-lg); overflow:hidden; margin-bottom:24px; cursor:default; border:1px solid var(--border-medium); box-shadow:var(--shadow-lg);" class="scene-frames-preview">
+              ${sceneFrames.map((src, idx) => `<img src="${src}" onclick="openGallery(${framesEscaped}, ${idx})" style="flex:1; object-fit:cover; min-width:0; transition: transform 0.3s ease; cursor:zoom-in;" onmouseover="this.style.transform='scale(1.1)';" onmouseout="this.style.transform='scale(1)';">`).join('')}
             </div>
           `;
           }
@@ -3416,6 +3426,18 @@
       document.getElementById('sop-modal').style.display = 'none';
       document.body.style.overflow = '';
     };
+
+    // --- Global Image Click Handler for Markdown content ---
+    document.addEventListener('click', (e) => {
+      if (e.target.tagName === 'IMG' && e.target.closest('.markdown-content, .v-card-value, #scene-modal-content, #niche-modal-content, #sop-modal-content')) {
+        // If it doesn't already have an inline click handler, open it in gallery
+        if (!e.target.hasAttribute('onclick')) {
+          e.preventDefault();
+          e.stopPropagation();
+          window.openGallery([e.target.src]);
+        }
+      }
+    });
 
     loadSessions().then(() => {
       const urlParams = new URLSearchParams(window.location.search);
