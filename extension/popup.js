@@ -1,17 +1,36 @@
 const dot = document.getElementById('server-dot');
 const txt = document.getElementById('server-txt');
 const resetBtn = document.getElementById('reset-session');
+const serverToggle = document.getElementById('server-toggle');
+const managerStatus = document.getElementById('manager-status');
+
+const MANAGER_URL = 'http://localhost:3006';
 
 // Server
 async function init() {
+  // Check main server status
   let online = false;
   try {
-    const r = await fetch('http://127.0.0.1:3005/api/sessions', { signal: AbortSignal.timeout(2000) });
+    const r = await fetch('http://127.0.0.1:3005/api/sessions', { signal: AbortSignal.timeout(1000) });
     online = r.ok;
   } catch {}
   dot.className = online ? 'dot dot-green' : 'dot dot-red';
   txt.textContent = online ? 'Online' : 'Offline';
   txt.style.color = online ? '#22c55e' : '#ef4444';
+
+  // Check native manager status via background
+  chrome.runtime.sendMessage({ action: 'GET_SERVER_STATUS' }, (res) => {
+    if (res && res.status !== 'offline') {
+      managerStatus.textContent = 'Auto-Bridge Active';
+      managerStatus.style.color = '#6366f1';
+      serverToggle.disabled = false;
+      serverToggle.checked = !!res.running;
+    } else {
+      managerStatus.textContent = 'Bridge Offline (run setup.sh)';
+      managerStatus.style.color = '#ef4444';
+      serverToggle.disabled = true;
+    }
+  });
 
   // Show reset if stuck
   const d = await chrome.storage.local.get(['isSequential', '_bgState']);
@@ -19,6 +38,20 @@ async function init() {
     resetBtn.classList.remove('hidden');
   }
 }
+
+// Toggle logic
+serverToggle.onchange = async () => {
+  const start = serverToggle.checked;
+  serverToggle.disabled = true;
+  chrome.runtime.sendMessage({ action: 'TOGGLE_SERVER', start }, (res) => {
+    if (res && res.success) {
+      setTimeout(init, 1500);
+    } else {
+      console.error('Failed to toggle server:', res?.error);
+      init();
+    }
+  });
+};
 
 // Buttons
 document.getElementById('open-yt').onclick = () => chrome.tabs.create({ url: 'https://youtube.com' });
@@ -30,22 +63,6 @@ resetBtn.onclick = () => {
   });
 };
 
-document.getElementById('copy-logs').onclick = async () => {
-  const btn = document.getElementById('copy-logs');
-  try {
-    const data = await chrome.storage.local.get(null);
-    const s = { ...data };
-    ['imageData','activePrompt','basePrompt','transcript'].forEach(k => {
-      if (s[k] && s[k].length > 500) s[k] = `[${(s[k].length/1024).toFixed(1)}KB]`;
-    });
-    if (s._bgState && s._bgState.basePrompt && s._bgState.basePrompt.length > 500) s._bgState.basePrompt = '[truncated]';
-    let srv = 'UNKNOWN', errs = '';
-    try { const r = await fetch('http://127.0.0.1:3005/api/sessions',{signal:AbortSignal.timeout(2000)}); srv = r.ok ? `OK (${(await r.json()).length})` : `HTTP ${r.status}`; } catch(e) { srv = 'OFFLINE'; }
-    try { const r = await fetch('http://127.0.0.1:3005/data/error.log',{signal:AbortSignal.timeout(2000)}); if(r.ok) errs = (await r.text()).split('\n').slice(-30).join('\n'); } catch {}
-    await navigator.clipboard.writeText(`=== ChannelLens Logs ===\n${new Date().toISOString()}\nServer: ${srv}\n\n${JSON.stringify(s,null,2)}\n\n--- Errors ---\n${errs||'(none)'}\n=== End ===`);
-    btn.textContent = 'Copied!'; btn.style.color = '#22c55e';
-    setTimeout(() => { btn.textContent = 'Copy Debug Logs'; btn.style.color = ''; }, 1500);
-  } catch { btn.textContent = 'Failed'; setTimeout(() => { btn.textContent = 'Copy Debug Logs'; }, 1500); }
-};
-
 init();
+// Poll every 5 seconds
+setInterval(init, 5000);

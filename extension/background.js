@@ -183,8 +183,69 @@ function routeMessage(request, sender, sendResponse) {
     handleStopExecution(sendResponse);
     return true;
   }
+
+  // --- Native Manager Bridge ---
+  if (request.action === 'GET_SERVER_STATUS') {
+    getServerStatus(sendResponse);
+    return true;
+  }
+  if (request.action === 'TOGGLE_SERVER') {
+    toggleServer(request.start, sendResponse);
+    return true;
+  }
   
   return false;
+}
+
+// ─── Native Host Management ──────────────────────────────────
+let nativePort = null;
+
+function connectToNativeHost() {
+  if (nativePort) return nativePort;
+  try {
+    nativePort = chrome.runtime.connectNative('com.youtube_agent.native_manager');
+    nativePort.onMessage.addListener((msg) => {
+      log('Native Host Message:', msg);
+      // Sync state if needed
+      if (msg.status === 'running') {
+        chrome.storage.local.set({ serverRunning: true });
+      } else {
+        chrome.storage.local.set({ serverRunning: false });
+      }
+    });
+    nativePort.onDisconnect.addListener(() => {
+      logErr('Native Host disconnected:', chrome.runtime.lastError?.message);
+      nativePort = null;
+      chrome.storage.local.set({ serverRunning: false });
+    });
+    return nativePort;
+  } catch (e) {
+    logErr('Failed to connect to native host:', e.message);
+    return null;
+  }
+}
+
+function getServerStatus(sendResponse) {
+  const port = connectToNativeHost();
+  if (!port) return sendResponse({ status: 'offline' });
+  
+  // Since native messaging is async, we yield via storage or a callback
+  // For simplicity, we'll send a status check and the popup will poll storage
+  port.postMessage({ action: 'STATUS' });
+  chrome.storage.local.get(['serverRunning'], (d) => {
+    sendResponse({ running: !!d.serverRunning });
+  });
+}
+
+function toggleServer(start, sendResponse) {
+  if (!start) handleStopExecution(); // Always clean up UI when toggling OFF
+
+  const port = connectToNativeHost();
+  if (!port) return sendResponse({ success: false, error: 'Native Host not registered' });
+  
+  port.postMessage({ action: start ? 'START' : 'STOP' });
+  
+  sendResponse({ success: true });
 }
 
 // --- Logic Handlers ---
@@ -333,7 +394,7 @@ async function handleResetSession(sendResponse) {
   ]);
   
   log('RESET_SESSION: State cleared successfully.');
-  sendResponse({ success: true });
+  if (sendResponse) sendResponse({ success: true });
 }
 
 async function handleVideoReady(request, sender) {
@@ -667,12 +728,13 @@ async function focusDashboardTab() {
       chrome.windows.update(dashboardTab.windowId, { focused: true });
       
       // Force an immediate UI refresh
-      chrome.tabs.sendMessage(dashboardTab.id, { action: 'FORCE_REFRESH' });
+      chrome.tabs.sendMessage(dashboardTab.id, { action: 'FORCE_REFRESH' }).catch(() => {});
     } else {
       console.warn('YT-to-AI: Dashboard tab not found. Please keep it open at http://127.0.0.1:3005');
     }
   });
 }
+
 async function handleCaptureYoutubeOverview(request, sender, sendResponse) {
   let lastError = '';
   const windowId = sender?.tab?.windowId;
@@ -718,18 +780,17 @@ async function handleCaptureYoutubeOverview(request, sender, sendResponse) {
   logErr('Critical Capture Bridge Failure:', lastError);
   sendResponse({ success: false, error: lastError });
 }
+
 async function handleStopExecution(sendResponse) {
   log('STOP_EXECUTION: Global kill signal received.');
   
   // 1. Reset Internal State
-  await handleResetSession(() => {});
+  await handleResetSession();
   
   // 2. Broadcast to all Tabs
   chrome.tabs.query({}, (tabs) => {
     tabs.forEach(tab => {
-      try {
-        chrome.tabs.sendMessage(tab.id, { action: 'GLOBAL_STOP' });
-      } catch (e) { /* ignore tabs without content scripts */ }
+      chrome.tabs.sendMessage(tab.id, { action: 'GLOBAL_STOP' }).catch(() => {});
     });
   });
 

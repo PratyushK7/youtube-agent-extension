@@ -6,38 +6,9 @@ import { YoutubeTranscript } from 'youtube-transcript/dist/youtube-transcript.es
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// ─── Persistent Error Logging ──────────────────────────────
-const ERROR_LOG = join(__dirname, 'data', 'error.log');
-
-const MAX_ERROR_LOG_BYTES = 1024 * 1024; // 1MB max
-
-const logError = (err, context = 'Server') => {
-  const timestamp = new Date().toISOString();
-  const message = `[${timestamp}] [${context}] ${err.stack || err}\n`;
-  console.error(message);
-  try {
-    const dataDir = join(__dirname, 'data');
-    if (!existsSync(dataDir)) { try { mkdirSync(dataDir, { recursive: true }); } catch { } }
-    // Rotate if log exceeds size limit
-    if (existsSync(ERROR_LOG)) {
-      try {
-        const stats = statSync(ERROR_LOG);
-        if (stats.size > MAX_ERROR_LOG_BYTES) {
-          const content = readFileSync(ERROR_LOG, 'utf-8');
-          const lines = content.split('\n');
-          const truncated = lines.slice(-500).join('\n');
-          writeFileSync(ERROR_LOG, truncated);
-        }
-      } catch (rotateErr) { /* ignore rotation errors */ }
-    }
-    appendFileSync(ERROR_LOG, message);
-  } catch (e) {
-    console.error('Failed to write to error log:', e);
-  }
-};
-
-process.on('uncaughtException', (err) => logError(err, 'Uncaught Exception'));
-process.on('unhandledRejection', (reason) => logError(reason, 'Unhandled Rejection'));
+// ─── Error Handling ─────────────────────────────────────────
+process.on('uncaughtException', (err) => console.error('[Uncaught Exception]', err));
+process.on('unhandledRejection', (reason) => console.error('[Unhandled Rejection]', reason));
 
 const app = express();
 
@@ -514,7 +485,8 @@ app.get('/api/sessions', (req, res) => {
       startedAt: s.startedAt,
       completedAt: s.completedAt,
       finalScreenshot: s.finalScreenshot || (s.videos.length ? s.videos[0].screenshot : ''),
-      hasSynthesis: !!s.synthesis
+      hasSynthesis: !!s.synthesis,
+      pinned: !!s.pinned
     }));
     res.json(summaries);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -571,8 +543,8 @@ app.get('/api/session/:id/csv', (req, res) => {
 
 // Global Error Handler for Express (must be after all routes)
 app.use((err, req, res, next) => {
-  logError(err, `${req.method} ${req.url}`);
-  res.status(500).json({ error: 'Internal Server Error', details: err.message });
+  console.error(`[${req.method} ${req.url}]`, err);
+  res.status(500).json({ error: 'Internal Server Error' });
 });
 
 // JSON 404 Handler

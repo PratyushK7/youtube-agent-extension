@@ -2218,7 +2218,7 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
           </svg>
-          Pinned
+          Favorites
         </div>
       </div>
 
@@ -2635,7 +2635,7 @@
         });
         const data = await res.json();
         if (data.success) {
-          showToast(data.session.pinned ? 'Added to Pinned' : 'Removed from Pinned', 'info');
+          showToast(data.session.pinned ? 'Added to Favorites' : 'Removed from Favorites', 'info');
           loadSessions();
         }
       } catch (err) {
@@ -2705,7 +2705,7 @@
         }
 
         if (displaySessions.length === 0) {
-          const msg = window.sidebarSearchQuery ? `No matches for "${esc(window.sidebarSearchQuery)}"` : (window.currentLibraryFilter === 'pinned' ? 'No pinned sessions yet' : 'No sessions analyzed yet');
+          const msg = window.sidebarSearchQuery ? `No matches for "${esc(window.sidebarSearchQuery)}"` : (window.currentLibraryFilter === 'pinned' ? 'No favorites yet' : 'No sessions analyzed yet');
           grid.innerHTML = `<div style="grid-column: 1/-1; padding: 60px; text-align: center; opacity: 0.5;">${msg}</div>`;
           return;
         }
@@ -2714,7 +2714,7 @@
           try {
             return `
               <div class="card" onclick="openSession('${s.id}')" style="position:relative;">
-                <button class="btn-pin-session ${s.pinned ? 'is-pinned' : ''}" onclick="event.stopPropagation(); togglePin('${s.id}', ${!!s.pinned})">
+                <button class="btn-pin-session ${s.pinned ? 'is-pinned' : ''}" title="${s.pinned ? 'Remove from Favorites' : 'Favorite'}" onclick="event.stopPropagation(); togglePin('${s.id}', ${!!s.pinned})">
                    <svg width="14" height="14" viewBox="0 0 24 24" fill="${s.pinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
                 </button>
                 <button class="btn-delete-session" onclick="event.stopPropagation(); confirmDelete('${s.id}', '${esc(s.channel)}')">

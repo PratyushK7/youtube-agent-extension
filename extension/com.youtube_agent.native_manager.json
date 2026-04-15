@@ -1,0 +1,9 @@
+{
+  "name": "com.youtube_agent.native_manager",
+  "description": "Native host for ChannelLens server management",
+  "path": "/Users/pratyushkumar/.gemini/antigravity/youtube/extension/native_host.js",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://ggnaelbaegnfpkfnecginmhcopnhopeb/"
+  ]
+}

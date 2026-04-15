@@ -33,13 +33,35 @@
     <span class="hdr-name">ChannelLens</span>
     <span class="hdr-status"><span id="server-dot" class="dot dot-red"></span><span id="server-txt">Offline</span></span>
   </div>
+
+  <!-- Server Toggle -->
+  <div style="padding: 12px 14px 4px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.04);">
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <span style="font-size: 11px; font-weight: 600; color: #94a3b8;">Dev Server</span>
+      <span id="manager-status" style="font-size: 9px; color: #475569;">Manager Offline</span>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="server-toggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <style>
+    .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #1e293b; transition: .3s; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
+    .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 2px; background-color: #64748b; transition: .3s; border-radius: 50%; }
+    input:checked + .slider { background-color: #6366f1; border-color: #818cf8; }
+    input:checked + .slider:before { transform: translateX(16px); background-color: white; }
+    input:disabled + .slider { opacity: 0.5; cursor: not-allowed; }
+  </style>
+
   <div class="actions">
     <button id="reset-session" class="btn btn-warn hidden">Reset Stuck Session</button>
     <div class="row">
       <button id="open-yt" class="btn btn-primary">YouTube</button>
       <button id="view-db" class="btn btn-primary">Dashboard</button>
     </div>
-    <button id="copy-logs" class="btn btn-ghost">Copy Debug Logs</button>
   </div>
   <script src="popup.js"></script>
 </body>
