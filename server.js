@@ -123,6 +123,159 @@ function generateCSVContent(session) {
   return csv;
 }
 
+// ─── Robust JSON Extraction (Ported from Extension) ─────────
+function fixUnescapedQuotes(jsonText) {
+  jsonText = jsonText
+    .replace(/\u2013/g, '-')  
+    .replace(/\u2014/g, '-')  
+    .replace(/\u2192/g, '->') 
+    .replace(/\u2022/g, '-'); 
+
+  const lines = jsonText.split('\n');
+  const result = [];
+  let currentKey = null;
+  let currentValue = "";
+  let inString = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const kvMatch = line.match(/^"([^"]*)"\s*:\s*(.*)$/);
+    if (kvMatch && !inString) {
+      const key = kvMatch[1];
+      let val = kvMatch[2].trim();
+      if (val.startsWith('"')) {
+        if (val.endsWith('",') || val.endsWith('"') || val.endsWith('"},') || val.endsWith('"}')) {
+          const endIdx = val.lastIndexOf('"');
+          const content = val.substring(1, endIdx);
+          const suffix = val.substring(endIdx);
+          const fixed = content.replace(/\\"/g, '%%ESC%%').replace(/"/g, '\\"').replace(/%%ESC%%/g, '\\"');
+          result.push(`  "${key}": "${fixed}${suffix}`);
+        } else {
+          currentKey = key;
+          currentValue = val.substring(1);
+          inString = true;
+        }
+      } else {
+        result.push(`  ${line}`);
+      }
+    } else if (inString) {
+      if (line.endsWith('",') || line.endsWith('"') || line.endsWith('"},') || line.endsWith('"}')) {
+        const endIdx = line.lastIndexOf('"');
+        const content = line.substring(0, endIdx);
+        const suffix = line.substring(endIdx);
+        const fixed = (currentValue + "\\n" + content).replace(/\\"/g, '%%ESC%%').replace(/"/g, '\\"').replace(/%%ESC%%/g, '\\"');
+        result.push(`  "${currentKey}": "${fixed}${suffix}`);
+        inString = false;
+        currentKey = null;
+        currentValue = "";
+      } else {
+        currentValue += "\\n" + line;
+      }
+    } else {
+      result.push(line);
+    }
+  }
+  const finalJson = result.join('\n');
+  return finalJson.startsWith('{') ? finalJson : '{' + finalJson + '}';
+}
+
+function safeJSONParse(text) {
+  try { return JSON.parse(text); } catch (e) { }
+  try {
+    const fixed = fixUnescapedQuotes(text);
+    return JSON.parse(fixed);
+  } catch (e) { }
+  try {
+    const fixed = text.replace(/,\s*([\]}])/g, '$1');
+    return JSON.parse(fixed);
+  } catch (e) { }
+  try {
+    const result = {};
+    const props = [
+      'videoNumber', 'title', 'views', 'duration', 'thumbnailDescription',
+      'hookType', 'hookText', 'hookFramework', 'openingStructure',
+      'scriptStructure', 'storytellingFramework', 'rehooksUsed',
+      'retentionPattern', 'ctaPlacement', 'keyTakeaways'
+    ];
+    props.forEach(prop => {
+      const sRegex = new RegExp(`"${prop}"\\s*:\\s*"([\\s\\S]*?)"\\s*(?:,|\\}|$)`, 'i');
+      const sMatch = text.match(sRegex);
+      if (sMatch) {
+        result[prop] = sMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').trim();
+        return;
+      }
+      const aRegex = new RegExp(`"${prop}"\\s*:\\s*\\[([\\s\\S]*?)\\]`, 'i');
+      const aMatch = text.match(aRegex);
+      if (aMatch) {
+         try {
+           const items = aMatch[1].split('",').map(s => s.replace(/["\s\[\]]/g, '').trim()).filter(Boolean);
+           result[prop] = items;
+         } catch (e) {}
+      }
+    });
+    if (Object.keys(result).length > 2) return result;
+  } catch (e) { }
+  return null;
+}
+
+function extractVideoJSON(text) {
+  text = text
+    .replace(/^Copy code\s*/gm, '')
+    .replace(/^\s*json\s*\n/i, '')
+    .replace(/\u00A0/g, ' ')
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/\r\n/g, '\n')
+    .trim();
+
+  try {
+    const codeFenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)```/);
+    if (codeFenceMatch) {
+      const inside = codeFenceMatch[1].trim();
+      const parsed = safeJSONParse(inside);
+      if (parsed) return { success: true, data: Array.isArray(parsed) ? parsed[0] : parsed, raw: text };
+    }
+  } catch (e) { }
+
+  try {
+    const firstBrace = text.indexOf('{');
+    if (firstBrace !== -1) {
+      let depth = 0; let inStr = false; let esc = false; let endIndex = -1;
+      for (let i = firstBrace; i < text.length; i++) {
+        const ch = text[i];
+        if (esc) { esc = false; continue; }
+        if (ch === '\\' && inStr) { esc = true; continue; }
+        if (ch === '"') { inStr = !inStr; continue; }
+        if (inStr) continue;
+        if (ch === '{') depth++;
+        else if (ch === '}') {
+          depth--;
+          if (depth === 0) { endIndex = i; break; }
+        }
+      }
+      if (endIndex !== -1) {
+        const candidate = text.substring(firstBrace, endIndex + 1);
+        const parsed = safeJSONParse(candidate);
+        if (parsed) return { success: true, data: parsed, raw: text };
+      }
+    }
+  } catch (e) { }
+
+  try {
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      let candidate = text.substring(firstBrace, lastBrace + 1);
+      candidate = candidate.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      const parsed = safeJSONParse(candidate);
+      if (parsed) return { success: true, data: parsed, raw: text };
+    }
+  } catch (e) { }
+
+  return { success: false, data: null, raw: text };
+}
+
 // ═══════════════════════════════════════════════════════════════
 // SHARED UTILITIES
 // ═══════════════════════════════════════════════════════════════
@@ -401,6 +554,48 @@ app.put('/api/session/:id/video', (req, res) => {
     session.updatedAt = new Date().toISOString();
     writeSessions(sessions);
     res.json({ success: true, videoCount: session.videos.length, entry });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Update a video's raw response and re-parse it
+app.put('/api/session/:id/video/:idx/raw-response', (req, res) => {
+  try {
+    const { id, idx } = req.params;
+    const { rawResponse } = req.body;
+    const sessions = readSessions();
+    const session = sessions.find(s => s.id === id);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+    
+    const vIdx = parseInt(idx);
+    const video = session.videos[vIdx];
+    if (!video) return res.status(404).json({ error: 'Video not found' });
+
+    // Update raw response
+    video.rawResponse = rawResponse || '';
+
+    // Re-parse the response to update structured fields
+    const extraction = extractVideoJSON(video.rawResponse);
+    if (extraction.success) {
+      console.log(`♻️ Re-parsed video ${idx} for session ${id}`);
+      // Merge extracted fields, preserving existing metadata if not found in new JSON
+      const newData = extraction.data;
+      const strategyFields = [
+        'title', 'thumbnailDescription', 'hookType', 'hookText', 
+        'hookFramework', 'openingStructure', 'scriptStructure', 
+        'storytellingFramework', 'rehooksUsed', 'retentionPattern', 
+        'ctaPlacement', 'keyTakeaways'
+      ];
+      
+      strategyFields.forEach(field => {
+        if (newData[field] !== undefined) {
+          video[field] = newData[field];
+        }
+      });
+    }
+
+    session.updatedAt = new Date().toISOString();
+    writeSessions(sessions);
+    res.json({ success: true, entry: video });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

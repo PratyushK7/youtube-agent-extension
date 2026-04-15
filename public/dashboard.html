@@ -3128,8 +3128,17 @@
            
            ${v.rawResponse ? `
              <details style="margin-top:24px;">
-                <summary style="color:var(--text-muted); font-size:0.75rem; cursor:pointer;">Raw response</summary>
-                <div style="margin-top:8px; background:var(--bg-secondary); padding:12px; border:1px solid var(--border-subtle); border-radius:var(--radius-sm); font-size:0.75rem; font-family:var(--font-mono); white-space:pre-wrap; max-height:300px; overflow:auto;">${esc(v.rawResponse)}</div>
+                <summary style="color:var(--text-muted); font-size:0.75rem; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                  <span>Raw response</span>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn-ghost btn-edit-raw" onclick="event.preventDefault(); toggleEditRaw(this)" style="font-size:0.6rem; padding:2px 6px;">Edit</button>
+                    <button class="btn btn-primary btn-save-raw" onclick="event.preventDefault(); saveRawResponse(this, ${index})" style="font-size:0.6rem; padding:2px 6px; display:none;">Save</button>
+                  </div>
+                </summary>
+                <div class="raw-display" style="margin-top:8px; background:var(--bg-secondary); padding:12px; border:1px solid var(--border-subtle); border-radius:var(--radius-sm); font-size:0.75rem; font-family:var(--font-mono); white-space:pre-wrap; max-height:300px; overflow:auto;">${esc(v.rawResponse)}</div>
+                <div class="raw-editor" style="display:none; margin-top:8px;">
+                  <textarea style="width:100%; height:200px; background:var(--bg-elevated); color:var(--text-primary); border:1px solid var(--accent-primary); border-radius:var(--radius-sm); padding:10px; font-family:var(--font-mono); font-size:0.75rem; resize:vertical;">${esc(v.rawResponse)}</textarea>
+                </div>
              </details>
            ` : ''}
         </div>
@@ -3164,7 +3173,21 @@
             <div class="v-card-sections">
               ${fields.map(([label, val, wide]) => val ? `<div class="v-card-section ${wide ? 'full-width' : ''}"><div class="v-card-label">${label}</div><div class="v-card-value">${formatMarkdown(val)}</div></div>` : '').join('')}
             </div>
-            ${v.rawResponse ? `<div class="v-card-divider"></div><details class="v-card-raw" onclick="event.stopPropagation()"><summary>Raw ChatGPT Response</summary><div class="v-card-raw-content">${esc(v.rawResponse)}</div></details>` : ''}
+            ${v.rawResponse ? `
+              <div class="v-card-divider"></div>
+              <details class="v-card-raw" onclick="event.stopPropagation()">
+                <summary style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>Raw ChatGPT Response</span>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn-ghost btn-edit-raw" onclick="event.preventDefault(); toggleEditRaw(this)" style="font-size:0.6rem; padding:2px 6px;">Edit</button>
+                    <button class="btn btn-primary btn-save-raw" onclick="event.preventDefault(); saveRawResponse(this, ${i})" style="font-size:0.6rem; padding:2px 6px; display:none;">Save</button>
+                  </div>
+                </summary>
+                <div class="raw-display v-card-raw-content">${esc(v.rawResponse)}</div>
+                <div class="raw-editor" style="display:none; margin-top:8px;">
+                  <textarea style="width:100%; height:150px; background:var(--bg-elevated); color:var(--text-primary); border:1px solid var(--accent-primary); border-radius:var(--radius-sm); padding:10px; font-family:var(--font-mono); font-size:0.75rem; resize:vertical;">${esc(v.rawResponse)}</textarea>
+                </div>
+              </details>` : ''}
           </div>`;
         }).join('');
       } catch (err) {
@@ -3425,6 +3448,62 @@
     window.closeSOPModal = function () {
       document.getElementById('sop-modal').style.display = 'none';
       document.body.style.overflow = '';
+    };
+
+    window.toggleEditRaw = function(btn) {
+      const container = btn.closest('details');
+      const display = container.querySelector('.raw-display');
+      const editor = container.querySelector('.raw-editor');
+      
+      if (editor.style.display === 'none') {
+        editor.style.display = 'block';
+        display.style.display = 'none';
+        btn.textContent = 'Cancel';
+        container.querySelector('.btn-save-raw').style.display = 'inline-block';
+      } else {
+        editor.style.display = 'none';
+        display.style.display = 'block';
+        btn.textContent = 'Edit';
+        container.querySelector('.btn-save-raw').style.display = 'none';
+      }
+    };
+
+    window.saveRawResponse = async function(btn, index) {
+      const container = btn.closest('details');
+      const textarea = container.querySelector('textarea');
+      const newText = textarea.value;
+      
+      try {
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+        
+        const res = await fetch(`/api/session/${currentSession.id}/video/${index}/raw-response`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rawResponse: newText })
+        });
+        
+        if (!res.ok) throw new Error('Failed to save');
+        const data = await res.json();
+        
+        // Update local state with the fully updated (re-parsed) video object
+        currentSession.videos[index] = data.entry;
+        
+        // Reset UI
+        window.toggleEditRaw(container.querySelector('.btn-edit-raw'));
+        showToast('Raw response updated & re-parsed', 'success');
+        
+        // RE-RENDER: Important to refresh all strategy fields in the UI
+        selectVideoInList(index, document.querySelector(`.video-list-item[onclick*="selectVideoInList(${index}"]`));
+        // Also refresh metrics cards if visible
+        renderMetricsCards(currentSession.videos);
+        
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save';
+      }
     };
 
     // --- Global Image Click Handler for Markdown content ---
