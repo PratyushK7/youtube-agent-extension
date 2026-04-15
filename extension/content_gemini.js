@@ -73,19 +73,18 @@ async function handleNanoBananaSequence(sessionId) {
         dt.items.add(file);
     }
 
-    // 2. Fetch Master Prompt and add to same clipboard
+    // 2. Fetch Master Prompt (Keep separate from file buffer)
     console.log('YT-to-AI: [Gemini] Fetching Master prompt...');
     const promptsRes = await fetch('http://127.0.0.1:3005/api/prompts');
     const promptsData = await promptsRes.json();
     const scenePrompt = promptsData.find(p => p.id === 'scene-analyzer.txt')?.content;
     const promptText = scenePrompt || "Analyze these images and provide a high-end style analysis and image prompt.";
-    dt.items.add(promptText, 'text/plain');
 
-    // 3. Focus and Dispatch
+    // 3. Focus and Dispatch Images
     el.focus();
     await new Promise(r => setTimeout(r, 300));
 
-    console.log('YT-to-AI: [Gemini] Executing Atomic Paste');
+    console.log('YT-to-AI: [Gemini] Executing Image Paste');
     const pasteEvent = new ClipboardEvent('paste', { 
         bubbles: true, 
         cancelable: true, 
@@ -93,9 +92,27 @@ async function handleNanoBananaSequence(sessionId) {
     });
     el.dispatchEvent(pasteEvent);
 
-    // D&D Fallback
+    // D&D Fallback for images
     const dropZone = document.querySelector('.xap-uploader-dropzone') || document.querySelector('.chat-container') || el;
     dropZone.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: dt }));
+
+    // 4. Manually Insert Text Prompt
+    // We do this separately because Gemini's paste listener often ignores text when files are present
+    await new Promise(r => setTimeout(r, 500));
+    console.log('YT-to-AI: [Gemini] Injecting Prompt Text...');
+    try {
+      el.focus();
+      // Use execCommand for better compatibility with rich editors behavior
+      if (!document.execCommand('insertText', false, promptText)) {
+        // Fallback to innerText + input event
+        el.innerText = promptText;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    } catch (e) {
+      console.warn('YT-to-AI: [Gemini] Primary text injection failed, trying fallback:', e);
+      el.innerText = promptText;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
 
     // 🛡️ Lock: Verify Upload before continuing
     showToast('Verifying Visual Data...');
@@ -111,18 +128,26 @@ async function handleNanoBananaSequence(sessionId) {
       
       if (previews.length > 0) {
         imagesConfirmed = true;
-        if (previews.length >= sessData.session.sceneFrames.length) break;
+        // Check if send button is enabled (means upload finished and text is present)
+        const sBtn = document.querySelector(SEND_BUTTON_SELECTOR);
+        if (previews.length >= sessData.session.sceneFrames.length && sBtn && !sBtn.disabled) break;
       }
     }
     
     if (!imagesConfirmed) {
       console.error('YT-to-AI: [Gemini] Injection failed - verification lock active.');
-      showToast('⚠️ Images missing. Please Cmd+V manually.');
+      showToast('⚠️ Data missing. Please try manually.');
       return;
     }
 
-    // Extra buffer for rendering
-    await new Promise(r => setTimeout(r, 1200));
+    // Final check for text before clicking send
+    const currentInputText = el.innerText || el.textContent;
+    if (!currentInputText || currentInputText.length < 10) {
+        console.warn('YT-to-AI: [Gemini] Text still missing, re-injecting...');
+        el.innerText = promptText;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        await new Promise(r => setTimeout(r, 1000));
+    }
 
     setTimeout(() => {
       const sendBtn = document.querySelector(SEND_BUTTON_SELECTOR);
@@ -134,7 +159,8 @@ async function handleNanoBananaSequence(sessionId) {
         showToast('Capture Ready! Please click Send.');
         monitorNanoBananaResponse(sessionId);
       }
-    }, 2000);
+    }, 1500);
+
 
   } catch (err) {
     console.error('Nano Banana failed:', err);
