@@ -67,22 +67,49 @@
         <a href="#contact" class="btn btn-primary">Get in touch</a>
         <a href="assets/Pratyush_Kumar_Resume.pdf" id="resumeBtn" class="btn btn-ghost" download>Download résumé</a>
       </div>
-      <div class="hero-stats reveal">
-        <div class="stat">
-          <span class="stat-num" data-count="4">0</span><span class="stat-suffix">+</span>
-          <span class="stat-label">Years experience</span>
+      <div class="dash-panel reveal" role="group" aria-label="Live engineering metrics">
+        <div class="dash-head">
+          <span class="dash-live"><span class="dash-live-dot"></span>LIVE</span>
+          <span class="dash-head-title">JobScheduler · production metrics</span>
         </div>
-        <div class="stat">
-          <span class="stat-num" data-count="10">0</span><span class="stat-suffix">M+</span>
-          <span class="stat-label">Records/day processed</span>
+        <div class="dash-grid">
+          <div class="dash-tile">
+            <span class="dash-tile-label">Years in production</span>
+            <div class="dash-tile-value"><span class="stat-num" data-count="4">0</span><span class="stat-suffix">+</span></div>
+            <svg class="sparkline" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">
+              <path class="sparkline-path" d="M0,24 L14,22 L28,23 L42,17 L56,19 L70,12 L84,14 L100,6" />
+            </svg>
+          </div>
+          <div class="dash-tile">
+            <span class="dash-tile-label">Records / day</span>
+            <div class="dash-tile-value"><span class="stat-num" data-count="10">0</span><span class="stat-suffix">M+</span></div>
+            <svg class="sparkline" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">
+              <path class="sparkline-path" d="M0,26 L14,20 L28,22 L42,14 L56,16 L70,9 L84,11 L100,3" />
+            </svg>
+          </div>
+          <div class="dash-tile">
+            <span class="dash-tile-label">External tenants</span>
+            <div class="dash-tile-value"><span class="stat-num" data-count="200">0</span><span class="stat-suffix">+</span></div>
+            <svg class="sparkline" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">
+              <path class="sparkline-path" d="M0,25 L14,23 L28,18 L42,19 L56,13 L70,15 L84,8 L100,5" />
+            </svg>
+          </div>
+          <div class="dash-tile">
+            <span class="dash-tile-label">Secrets eliminated</span>
+            <div class="dash-tile-value"><span class="stat-num" data-count="40">0</span><span class="stat-suffix">+</span></div>
+            <svg class="sparkline" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">
+              <path class="sparkline-path" d="M0,10 L14,12 L28,9 L42,15 L56,18 L70,20 L84,24 L100,27" />
+            </svg>
+          </div>
         </div>
-        <div class="stat">
-          <span class="stat-num" data-count="200">0</span><span class="stat-suffix">+</span>
-          <span class="stat-label">External tenants served</span>
-        </div>
-        <div class="stat">
-          <span class="stat-num" data-count="40">0</span><span class="stat-suffix">+</span>
-          <span class="stat-label">Secrets eliminated</span>
+        <div class="dash-stamps">
+          <span class="dash-stamps-label">12 regional stamps · sharded fan-out</span>
+          <div class="dash-stamps-row" aria-hidden="true">
+            <span class="dash-stamp"></span><span class="dash-stamp"></span><span class="dash-stamp"></span>
+            <span class="dash-stamp"></span><span class="dash-stamp"></span><span class="dash-stamp"></span>
+            <span class="dash-stamp"></span><span class="dash-stamp"></span><span class="dash-stamp"></span>
+            <span class="dash-stamp"></span><span class="dash-stamp"></span><span class="dash-stamp"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -236,43 +263,257 @@
     </div>
   </section>
 
-  <!-- HIGHLIGHTS / PROJECTS -->
+  <!-- HIGHLIGHTS / CASE STUDIES -->
   <section class="section" id="projects">
     <div class="section-inner">
       <p class="section-kicker reveal">04 · Highlights</p>
-      <h2 class="section-title reveal">Selected work.</h2>
-      <div class="project-grid reveal">
-        <article class="project-card">
-          <div class="project-card-top">
-            <span class="project-tag">Distributed Systems</span>
+      <h2 class="section-title reveal">Selected work, from problem to result.</h2>
+      <p class="about-text reveal case-intro">Scroll through each build — the diagram assembles itself as the story does.</p>
+
+      <!-- CASE STUDY 1 — JobScheduler -->
+      <div class="case-study" data-case="jobscheduler">
+        <div class="case-visual-wrap">
+          <div class="case-visual">
+            <span class="project-tag case-visual-tag">Distributed Systems</span>
+            <svg viewBox="0 0 560 400" class="case-svg" role="img" aria-label="JobScheduler architecture: PowerShell cmdlet replaced by an async fan-out engine over sharded Azure Table and Event Hub storage, across 12 regional stamps.">
+              <defs>
+                <marker id="arw-1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 z" fill="var(--case-line)" />
+                </marker>
+              </defs>
+
+              <g class="case-el" data-step="1">
+                <rect x="180" y="14" width="200" height="52" rx="12" class="case-node case-node-legacy" />
+                <text x="280" y="36" class="case-node-title" text-anchor="middle">PowerShell cmdlet</text>
+                <text x="280" y="54" class="case-node-sub" text-anchor="middle">legacy · synchronous</text>
+              </g>
+
+              <g class="case-el" data-step="2">
+                <line x1="280" y1="66" x2="280" y2="98" class="case-edge" marker-end="url(#arw-1)" />
+                <rect x="160" y="100" width="240" height="60" rx="14" class="case-node case-node-primary" />
+                <text x="280" y="126" class="case-node-title case-node-title-accent" text-anchor="middle">JobScheduler</text>
+                <text x="280" y="144" class="case-node-sub" text-anchor="middle">async · distributed engine</text>
+              </g>
+
+              <g class="case-el" data-step="3">
+                <line x1="220" y1="160" x2="120" y2="200" class="case-edge" marker-end="url(#arw-1)" />
+                <line x1="280" y1="160" x2="280" y2="200" class="case-edge" marker-end="url(#arw-1)" />
+                <line x1="340" y1="160" x2="440" y2="200" class="case-edge" marker-end="url(#arw-1)" />
+                <rect x="60" y="202" width="120" height="38" rx="10" class="case-node case-node-shard" />
+                <text x="120" y="226" class="case-node-title-sm" text-anchor="middle">Shard A</text>
+                <rect x="220" y="202" width="120" height="38" rx="10" class="case-node case-node-shard" />
+                <text x="280" y="226" class="case-node-title-sm" text-anchor="middle">Shard B</text>
+                <rect x="380" y="202" width="120" height="38" rx="10" class="case-node case-node-shard" />
+                <text x="440" y="226" class="case-node-title-sm" text-anchor="middle">Shard C</text>
+                <line x1="120" y1="240" x2="180" y2="270" class="case-edge case-edge-thin" />
+                <line x1="280" y1="240" x2="280" y2="270" class="case-edge case-edge-thin" />
+                <line x1="440" y1="240" x2="380" y2="270" class="case-edge case-edge-thin" />
+                <rect x="40" y="272" width="480" height="52" rx="12" class="case-node case-node-store" />
+                <text x="280" y="294" class="case-node-title" text-anchor="middle">Azure Table · Event Hub</text>
+                <text x="280" y="312" class="case-node-sub" text-anchor="middle">sharded storage, per-tenant concurrency</text>
+              </g>
+
+              <g class="case-el" data-step="4">
+                <rect x="20" y="348" width="168" height="36" rx="18" class="case-badge" />
+                <text x="104" y="371" class="case-badge-text" text-anchor="middle">50K+ searches/day</text>
+                <rect x="198" y="348" width="168" height="36" rx="18" class="case-badge" />
+                <text x="282" y="371" class="case-badge-text" text-anchor="middle">10M+ records/day</text>
+                <rect x="376" y="348" width="164" height="36" rx="18" class="case-badge" />
+                <text x="458" y="371" class="case-badge-text" text-anchor="middle">12 regional stamps</text>
+              </g>
+            </svg>
           </div>
-          <h3>JobScheduler</h3>
-          <p>Asynchronous, sharded audit-search engine handling 50K+ searches and 10M+ records daily across 12 regional stamps — replaced a legacy synchronous PowerShell path for internal M365 products.</p>
-          <div class="tl-tags"><span>Azure Table</span><span>Event Hub</span><span>Fan-out</span></div>
-        </article>
-        <article class="project-card">
-          <div class="project-card-top">
-            <span class="project-tag">Public API</span>
+        </div>
+        <div class="case-steps">
+          <div class="case-step" data-step="1">
+            <span class="case-step-tag">Problem</span>
+            <h3>A synchronous cmdlet couldn't keep up with audit volume.</h3>
+            <p>Internal M365 tools (Insider Risk Management, DataInsights) leaned on a synchronous PowerShell cmdlet path for audit search — it didn't scale, and every query blocked on the last.</p>
           </div>
-          <h3>Graph Security API Integration</h3>
-          <p>Exposed the audit-search backend to 200+ external tenants and ISV apps with app &amp; delegated OAuth, RBAC, and strict multi-tenant isolation — reusing the core engine.</p>
-          <div class="tl-tags"><span>OAuth 2.0</span><span>RBAC</span><span>Multi-tenant</span></div>
-        </article>
-        <article class="project-card">
-          <div class="project-card-top">
-            <span class="project-tag">AI / Agentic</span>
+          <div class="case-step" data-step="2">
+            <span class="case-step-tag">Approach</span>
+            <h3>Architected JobScheduler as an async distributed engine.</h3>
+            <p>Replaced the cmdlet path entirely with a purpose-built asynchronous job engine, decoupling query submission from execution.</p>
           </div>
-          <h3>Audit Analytics</h3>
-          <p>Agentic AI tool built on the Claude API that turns natural-language questions into live audit-data visualizations through intent parsing, query synthesis, retrieval, and rendering with self-correction loops.</p>
-          <div class="tl-tags"><span>Claude API</span><span>Agentic Pipelines</span><span>HackWeek</span></div>
-        </article>
-        <article class="project-card">
-          <div class="project-card-top">
-            <span class="project-tag">Modernization</span>
+          <div class="case-step" data-step="3">
+            <span class="case-step-tag">Architecture</span>
+            <h3>Parallel per-shard fan-out over sharded storage.</h3>
+            <p>Per-tenant concurrency control and parallel fan-out across shards, backed by sharded Azure Table and Event Hub storage.</p>
           </div>
+          <div class="case-step" data-step="4">
+            <span class="case-step-tag">Result</span>
+            <h3>50K+ searches and 10M+ records a day, across 12 stamps.</h3>
+            <p>Now the backbone of audit search across 12 regional stamps — and the same engine that later powers the public Graph Security API.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- CASE STUDY 2 — Graph Security API -->
+      <div class="case-study" data-case="graph-api">
+        <div class="case-visual-wrap">
+          <div class="case-visual">
+            <span class="project-tag case-visual-tag">Public API</span>
+            <svg viewBox="0 0 560 400" class="case-svg" role="img" aria-label="Graph Security API architecture: the internal JobScheduler engine exposed externally via OAuth app and delegated auth, RBAC, and multi-tenant isolation, reaching 200+ tenants.">
+              <defs>
+                <marker id="arw-2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 z" fill="var(--case-line)" />
+                </marker>
+              </defs>
+
+              <g class="case-el" data-step="1">
+                <rect x="180" y="14" width="200" height="52" rx="12" class="case-node case-node-legacy" />
+                <text x="280" y="36" class="case-node-title" text-anchor="middle">JobScheduler core</text>
+                <text x="280" y="54" class="case-node-sub" text-anchor="middle">internal only</text>
+              </g>
+
+              <g class="case-el" data-step="2">
+                <line x1="280" y1="66" x2="280" y2="98" class="case-edge" marker-end="url(#arw-2)" />
+                <rect x="140" y="100" width="280" height="60" rx="14" class="case-node case-node-primary" />
+                <text x="280" y="126" class="case-node-title case-node-title-accent" text-anchor="middle">Microsoft Graph Security API</text>
+                <text x="280" y="144" class="case-node-sub" text-anchor="middle">public surface, same backend</text>
+              </g>
+
+              <g class="case-el" data-step="3">
+                <line x1="220" y1="160" x2="150" y2="200" class="case-edge" marker-end="url(#arw-2)" />
+                <line x1="340" y1="160" x2="410" y2="200" class="case-edge" marker-end="url(#arw-2)" />
+                <rect x="70" y="202" width="160" height="42" rx="10" class="case-node case-node-shard" />
+                <text x="150" y="228" class="case-node-title-sm" text-anchor="middle">OAuth · app</text>
+                <rect x="330" y="202" width="160" height="42" rx="10" class="case-node case-node-shard" />
+                <text x="410" y="228" class="case-node-title-sm" text-anchor="middle">OAuth · delegated</text>
+                <line x1="150" y1="244" x2="200" y2="274" class="case-edge case-edge-thin" />
+                <line x1="410" y1="244" x2="360" y2="274" class="case-edge case-edge-thin" />
+                <rect x="60" y="276" width="440" height="50" rx="12" class="case-node case-node-store" />
+                <text x="280" y="298" class="case-node-title" text-anchor="middle">RBAC · multi-tenant isolation</text>
+                <text x="280" y="315" class="case-node-sub" text-anchor="middle">strict boundary per tenant</text>
+              </g>
+
+              <g class="case-el" data-step="4">
+                <rect x="90" y="348" width="190" height="36" rx="18" class="case-badge" />
+                <text x="185" y="371" class="case-badge-text" text-anchor="middle">200+ external tenants</text>
+                <rect x="292" y="348" width="178" height="36" rx="18" class="case-badge" />
+                <text x="381" y="371" class="case-badge-text" text-anchor="middle">ISV apps onboarded</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+        <div class="case-steps">
+          <div class="case-step" data-step="1">
+            <span class="case-step-tag">Problem</span>
+            <h3>The audit-search engine only served internal Microsoft tools.</h3>
+            <p>JobScheduler was fast and reliable — but locked inside Microsoft's own products, unreachable by customers or ISV partners.</p>
+          </div>
+          <div class="case-step" data-step="2">
+            <span class="case-step-tag">Approach</span>
+            <h3>Exposed it through the Microsoft Graph Security API.</h3>
+            <p>Rather than building a parallel system, the same backend was surfaced publicly — no duplicated logic, no drift between internal and external behavior.</p>
+          </div>
+          <div class="case-step" data-step="3">
+            <span class="case-step-tag">Architecture</span>
+            <h3>App &amp; delegated OAuth, behind strict tenant isolation.</h3>
+            <p>Full OAuth 2.0 support for both app and delegated auth, with RBAC and multi-tenant isolation so no tenant could ever see another's data.</p>
+          </div>
+          <div class="case-step" data-step="4">
+            <span class="case-step-tag">Result</span>
+            <h3>Adopted by 200+ external tenants and ISV apps.</h3>
+            <p>The same engine built for internal audit search now powers a public, multi-tenant surface at scale.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- CASE STUDY 3 — Audit Analytics -->
+      <div class="case-study" data-case="audit-analytics">
+        <div class="case-visual-wrap">
+          <div class="case-visual">
+            <span class="project-tag case-visual-tag">AI / Agentic</span>
+            <svg viewBox="0 0 560 400" class="case-svg" role="img" aria-label="Audit Analytics pipeline: natural-language question through intent parsing, query synthesis, retrieval, and rendering, with a self-correction feedback loop, presented at HackWeek.">
+              <defs>
+                <marker id="arw-3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 z" fill="var(--case-line)" />
+                </marker>
+              </defs>
+
+              <g class="case-el" data-step="1">
+                <rect x="160" y="14" width="240" height="52" rx="12" class="case-node case-node-legacy" />
+                <text x="280" y="36" class="case-node-title" text-anchor="middle">"Which tenants had spikes</text>
+                <text x="280" y="52" class="case-node-title" text-anchor="middle">in failed sign-ins last week?"</text>
+              </g>
+
+              <g class="case-el" data-step="2">
+                <line x1="280" y1="66" x2="280" y2="94" class="case-edge" marker-end="url(#arw-3)" />
+                <rect x="30" y="96" width="150" height="46" rx="10" class="case-node case-node-shard" />
+                <text x="105" y="124" class="case-node-title-sm" text-anchor="middle">Intent parsing</text>
+                <line x1="180" y1="119" x2="208" y2="119" class="case-edge" marker-end="url(#arw-3)" />
+                <rect x="210" y="96" width="150" height="46" rx="10" class="case-node case-node-shard" />
+                <text x="285" y="124" class="case-node-title-sm" text-anchor="middle">Query synthesis</text>
+                <line x1="360" y1="119" x2="388" y2="119" class="case-edge" marker-end="url(#arw-3)" />
+                <rect x="390" y="96" width="150" height="46" rx="10" class="case-node case-node-shard" />
+                <text x="465" y="124" class="case-node-title-sm" text-anchor="middle">Retrieval</text>
+              </g>
+
+              <g class="case-el" data-step="3">
+                <line x1="465" y1="142" x2="465" y2="170" class="case-edge" marker-end="url(#arw-3)" />
+                <line x1="465" y1="170" x2="290" y2="170" class="case-edge" />
+                <rect x="200" y="172" width="180" height="52" rx="12" class="case-node case-node-primary" />
+                <text x="290" y="196" class="case-node-title case-node-title-accent" text-anchor="middle">Rendering</text>
+                <text x="290" y="213" class="case-node-sub" text-anchor="middle">live audit-data visualization</text>
+                <path d="M 200,198 C 90,198 90,110 208,110" class="case-edge case-edge-loop" marker-end="url(#arw-3)" fill="none" />
+                <text x="70" y="160" class="case-node-sub case-loop-label" text-anchor="middle">self-correction loop</text>
+              </g>
+
+              <g class="case-el" data-step="4">
+                <rect x="130" y="348" width="170" height="36" rx="18" class="case-badge" />
+                <text x="215" y="371" class="case-badge-text" text-anchor="middle">50+ leaders · HackWeek</text>
+                <rect x="312" y="348" width="120" height="36" rx="18" class="case-badge" />
+                <text x="372" y="371" class="case-badge-text" text-anchor="middle">Claude API</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+        <div class="case-steps">
+          <div class="case-step" data-step="1">
+            <span class="case-step-tag">Problem</span>
+            <h3>Answering an audit question meant writing a query by hand.</h3>
+            <p>Getting insight out of the audit data meant knowing the schema and hand-writing a query — a wall between the question and the answer.</p>
+          </div>
+          <div class="case-step" data-step="2">
+            <span class="case-step-tag">Approach</span>
+            <h3>Built an agentic pipeline on the Claude API.</h3>
+            <p>Natural-language questions flow through intent parsing, query synthesis, and retrieval — no schema knowledge required.</p>
+          </div>
+          <div class="case-step" data-step="3">
+            <span class="case-step-tag">Architecture</span>
+            <h3>Rendering, with a self-correction loop back into the pipeline.</h3>
+            <p>Results render as live visualizations; when something looks off, the loop routes back to re-synthesize the query automatically.</p>
+          </div>
+          <div class="case-step" data-step="4">
+            <span class="case-step-tag">Result</span>
+            <h3>Presented to 50+ engineering leaders at HackWeek.</h3>
+            <p>Audit Analytics turned a manual, schema-bound task into a conversation — demoed live to leadership.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional impact — compact grid -->
+      <div class="mini-grid reveal">
+        <article class="mini-card">
+          <span class="project-tag">Modernization</span>
           <h3>Zero-Downtime Auth Cutover</h3>
-          <p>Led migration from legacy AAD/OWIN to MISE across 6 clouds — commercial and government — with feature-flagged, reversible rollout and zero auth downtime.</p>
-          <div class="tl-tags"><span>MISE</span><span>Feature Flags</span><span>GOV Cloud</span></div>
+          <p>Migrated from legacy AAD/OWIN to MISE across 6 clouds — commercial and government — with feature-flagged, reversible rollout and zero auth downtime.</p>
+        </article>
+        <article class="mini-card">
+          <span class="project-tag">Product</span>
+          <h3>In-App Task Orchestration</h3>
+          <p>Service-worker-driven task framework for B2B Acrobat users — 45% increase in task completion on a flow tied to $500K+ in annual revenue.</p>
+        </article>
+        <article class="mini-card">
+          <span class="project-tag">Platform</span>
+          <h3>A/B Platform → Microservices</h3>
+          <p>Redesigned the A/B experimentation platform onto Docker and Kubernetes — $200K+ in annual infrastructure savings.</p>
+        </article>
+        <article class="mini-card">
+          <span class="project-tag">Migration</span>
+          <h3>C++ UI → ReactJS</h3>
+          <p>Migrated legacy C++ UI components to ReactJS, removing 20K+ lines of legacy code and cutting feature-delivery time by ~40%.</p>
         </article>
       </div>
     </div>
